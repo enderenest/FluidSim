@@ -1,120 +1,142 @@
 #include<iostream>
 #include<glad/glad.h>
 #include<GLFW/glfw3.h>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
+#include "Fluid.h"
 #include"shaderClass.h"
 #include"VAO.h"
 #include"VBO.h"
 #include"EBO.h"
 
+#include <vector>
+#include <cmath>
+
+const unsigned int WIDTH = 800, HEIGHT = 800;
+const unsigned int PARTICLE_COUNT = 1500;
+const unsigned int CIRCLE_SEGMENTS = 16;
+const float PARTICLE_RADIUS = 0.05f;
+const float GRAVITY = 9.81f;
+const float COLLISION_DAMPING = 0.8f;
+const float BOUNDARY_X = 0.9f;
+const float BOUNDARY_Y = 0.9f;
+const float BOUNDARY_Z = 0.9f;
+const float SPACING = 0.03f;
+const float SMOOTHING_RADIUS = 0.1f;
 
 
-// Vertices coordinates
-GLfloat vertices[] =
+void static CreateUnitCircle(std::vector<glm::vec3>& vertices, std::vector<GLuint>& indices, int segments = 16, float radius = 0.1f) {
+    vertices.clear();
+    indices.clear();
+
+    float angle = 360.0f / segments;
+	int triangleCount = segments - 2;
+
+    for (int i = 0; i < segments; i++)
+    {
+        float currentAngle = angle * i;
+        float x = radius * cos(glm::radians(currentAngle));
+        float y = radius * sin(glm::radians(currentAngle));
+        float z = 0.0f; // Assuming a 2D circle in the XY plane
+
+        vertices.push_back(glm::vec3(x, y, z));
+    }
+
+    for (int i = 0; i < triangleCount; i++)
+    {
+        indices.push_back(0);
+        indices.push_back(i + 1);
+        indices.push_back(i + 2);
+    }
+}
+
+
+int main() 
 {
-	-0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Lower left corner
-	0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f, // Lower right corner
-	0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f, // Upper corner
-	-0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f, // Inner left
-	0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f, // Inner right
-	0.0f, -0.5f * float(sqrt(3)) / 3, 0.0f // Inner down
-};
+    glfwInit();
 
-// Indices for vertices order
-GLuint indices[] =
-{
-	0, 3, 5, // Lower left triangle
-	3, 2, 4, // Lower right triangle
-	5, 4, 1 // Upper triangle
-};
-
-
-
-int main()
-{
-	// Initialize GLFW
-	glfwInit();
-
-	// Tell GLFW what version of OpenGL we are using 
-	// In this case we are using OpenGL 3.3
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	// Tell GLFW we are using the CORE profile
-	// So that means we only have the modern functions
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	// Create a GLFWwindow object of 800 by 800 pixels, naming it "YoutubeOpenGL"
-	GLFWwindow* window = glfwCreateWindow(800, 800, "YoutubeOpenGL", NULL, NULL);
-	// Error check if the window fails to create
-	if (window == NULL)
-	{
+	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Fluid Particles", NULL, NULL);
+
+    if (window == NULL) {
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
 		return -1;
-	}
-	// Introduce the window into the current context
+    }
+
 	glfwMakeContextCurrent(window);
 
-	//Load GLAD so it configures OpenGL
-	gladLoadGL();
-	// Specify the viewport of OpenGL in the Window
-	// In this case the viewport goes from x = 0, y = 0, to x = 800, y = 800
-	glViewport(0, 0, 800, 800);
+    gladLoadGL();
+	glViewport(0, 0, WIDTH, HEIGHT);
 
-
-
-	// Generates Shader object using shaders defualt.vert and default.frag
 	Shader shaderProgram("default.vert", "default.frag");
 
+	Fluid fluid(PARTICLE_COUNT, GRAVITY, COLLISION_DAMPING, SPACING);
 
+    std::vector<glm::vec3> circleVertices;
+    std::vector<GLuint> circleIndices;
+    CreateUnitCircle(circleVertices, circleIndices, CIRCLE_SEGMENTS, PARTICLE_RADIUS);
 
-	// Generates Vertex Array Object and binds it
-	VAO VAO1;
-	VAO1.Bind();
+    VAO vao1;
+	vao1.Bind();
 
-	// Generates Vertex Buffer Object and links it to vertices
-	VBO VBO1(vertices, sizeof(vertices));
-	// Generates Element Buffer Object and links it to indices
-	EBO EBO1(indices, sizeof(indices));
+    VBO vboCircle(circleVertices.data(), circleVertices.size() * sizeof(glm::vec3));
+    vao1.LinkVBO(vboCircle, 0);
 
-	// Links VBO to VAO
-	VAO1.LinkVBO(VBO1, 0);
-	// Unbind all to prevent accidentally modifying them
-	VAO1.Unbind();
-	VBO1.Unbind();
-	EBO1.Unbind();
+	EBO ebo1(circleIndices.data(), circleIndices.size() * sizeof(GLuint));
 
+    std::vector<glm::vec3> instancePositions(PARTICLE_COUNT);
+    VBO instanceVBO(instancePositions.data(), instancePositions.size() * sizeof(glm::vec3));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+    glVertexAttribDivisor(1, 1);
 
+    vao1.Unbind();
+	vboCircle.Unbind();
+	instanceVBO.Unbind();
+	ebo1.Unbind();
 
-	// Main while loop
-	while (!glfwWindowShouldClose(window))
-	{
-		// Specify the color of the background
-		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
-		// Clean the back buffer and assign the new color to it
-		glClear(GL_COLOR_BUFFER_BIT);
-		// Tell OpenGL which Shader Program we want to use
-		shaderProgram.Activate();
-		// Bind the VAO so OpenGL knows to use it
-		VAO1.Bind();
-		// Draw primitives, number of indices, datatype of indices, index of indices
-		glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
-		// Swap the back buffer with the front buffer
-		glfwSwapBuffers(window);
-		// Take care of all GLFW events
-		glfwPollEvents();
-	}
+    // Time
+    float lastTime = glfwGetTime();
+    const float radius = 0.2f;
 
+    while (!glfwWindowShouldClose(window)) {
+        float currentTime = glfwGetTime();
+        float deltaTime = currentTime - lastTime;
+        lastTime = currentTime;
 
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
 
-	// Delete all the objects we've created
-	VAO1.Delete();
-	VBO1.Delete();
-	EBO1.Delete();
-	shaderProgram.Delete();
-	// Delete window before ending the program
-	glfwDestroyWindow(window);
-	// Terminate GLFW before ending the program
-	glfwTerminate();
-	return 0;
+        // Simulate
+        fluid.update(deltaTime);
+        fluid.resolveCollision(BOUNDARY_X, BOUNDARY_Y, BOUNDARY_Z);
+		fluid.getParticlePositions(instancePositions);
+
+        glBindBuffer(GL_ARRAY_BUFFER, instanceVBO.ID);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, instancePositions.size() * sizeof(glm::vec3), instancePositions.data());
+
+        // Draw
+        shaderProgram.Activate();
+		vao1.Bind();
+        glUniform1f(glGetUniformLocation(shaderProgram.ID, "radius"), radius);
+        glDrawElementsInstanced(GL_TRIANGLES, circleIndices.size(), GL_UNSIGNED_INT, 0, PARTICLE_COUNT);
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    vao1.Delete();
+    vboCircle.Delete();
+    instanceVBO.Delete();
+    ebo1.Delete();
+    shaderProgram.Delete();
+    glfwDestroyWindow(window);
+    glfwTerminate();
+    return 0;
 }
+
