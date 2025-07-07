@@ -1,7 +1,10 @@
 #ifndef FLUID_CLASS_H
 #define FLUID_CLASS_H
 
+
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
+#include <glm/gtx/string_cast.hpp>
 #include <vector>
 #include <algorithm>
 
@@ -17,30 +20,32 @@ struct Particle {
 
 class Fluid {
 	private :
-		std::vector<Particle> particles; // List of particles in the fluid
-		std::vector<float> particleProperties; // Density of each particle
-		std::vector<float> densities;
+		std::vector<Particle> _particles; // List of particles in the fluid
+		std::vector<float> _particleProperties; // Density of each particle
+		std::vector<float> _densities;
 
-		float particleCount = 0; // Number of particles in the fluid
-		float mass = 1.0f; // Default mass, can be adjusted
-		float gravity = 0.0f; // Gravity acceleration in m/s^2
-		float collisionDamping = 1.0f; // Damping factor to simulate collision response
-		float smoothingRadius = 0.1f; // Smoothing radius for density calculations
+		float _particleCount; // Number of particles in the fluid
+		float _mass; // Default mass, can be adjusted
+		float _gravityAcceleration; // Gravity acceleration in m/s^2
+		float _collisionDamping; // Damping factor to simulate collision response
+		float _smoothingRadius; // Smoothing radius for density calculations
+		float _targetDensity;
+		float _pressureMultiplier;
 
 	public:
-		Fluid(const unsigned int particleCount, const float gravity, const float collisionDamping, float spacing); // Removed qualified name
-		void update(float dt);
-		void getParticlePositions(std::vector<glm::vec3>& outPositions);
-		const glm::vec3& getPosition(int i) const;
-		const glm::vec3& getVelocity(int i) const;
-		void applyForce(const glm::vec3& force);
-		void resolveCollision(float boundryX, float boundaryY, float boundaryZ);
-		static float smoothingKernel(float radius, float distance);
-		static float smoothingKernelDerivative(float radius, float distance);
+		Fluid(const unsigned int particleCount, const float mass, const float gravity, const float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, float smoothingRadius);
+		void Update(float dt);
+		void GetParticlePositions(std::vector<glm::vec3>& outPositions);
+		const glm::vec3& GetPosition(int i) const;
+		const glm::vec3& GetVelocity(int i) const;
+		void HandleBoundaryCollisions(float boundryX, float boundaryY, float boundaryZ);
+		static float SmoothingKernel(float radius, float distance);
+		static float SmoothingKernelDerivative(float radius, float distance);
 		float CalculateDensity(const glm::vec3& samplePosition) const;
-		float CalculateProperty(const glm::vec3& samplePosition) const;
-		void updateDensities();
-		glm::vec3 calculatePropertyGradient(const glm::vec3& samplePosition);
+		float DensityToPressure(float density);
+		glm::vec3 CalculatePressureForce(int particleIndex);
+		float CalculateSharedPressure(float densityA, float densityB);
+		static glm::vec3 GetRandomDirection3D();
 };
 
 #endif
