@@ -1,4 +1,5 @@
 #ifndef FLUID_CLASS_H  
+
 #define FLUID_CLASS_H  
 
 #define GLM_ENABLE_EXPERIMENTAL  
