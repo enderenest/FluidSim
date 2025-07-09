@@ -13,20 +13,30 @@
 #include <vector>
 #include <cmath>
 
+// influence = SmmothingKernel(smmothingRadius, distance)
+// density += influence * mass;
+// slope = SmoothingKernelDerivative(smoothingRadius, distance)
+// pressureForce = ConvertDensityToPressure(density) * slope * direction * mass / density;
+// pressureAcceleration = pressureForce / density;
+// velocity += pressureAcceleration * dt;
+
+
 const unsigned int WIDTH = 800, HEIGHT = 800;
-const unsigned int PARTICLE_COUNT = 200;
-const unsigned int CIRCLE_SEGMENTS = 16;
-const float PARTICLE_RADIUS = 0.1f;
-const float MASS = 1.0f;
-const float GRAVITY = 0.0f;
-const float COLLISION_DAMPING = 1.0f;
-const float BOUNDARY_X = 0.9f;
-const float BOUNDARY_Y = 0.9f;
-const float BOUNDARY_Z = 0.9f;
+const unsigned int PARTICLE_COUNT = 1000;
+const unsigned int CIRCLE_SEGMENTS = 6;
+const unsigned int SPATIAL_HASH_SIZE = 8192;
+const float PARTICLE_RADIUS = 0.08f;
+const float MASS = 0.08f;
+const float GRAVITY = 9.81f;
+const float COLLISION_DAMPING = 0.2f;
+const float BOUNDARY_X = 0.8f;
+const float BOUNDARY_Y = 0.8f;
+const float BOUNDARY_Z = 0.8f;
 const float SPACING = 0.03f;
-const float SMOOTHING_RADIUS = 0.2f;
+const float SMOOTHING_RADIUS = 0.085f;
 const float PRESSURE_MULTIPLIER = 10.0f;
-const float TARGET_DENSITY = 30.0f;
+const float TARGET_DENSITY = 120.0f;
+const float DELTA_TIME = 0.016f;
 
 
 void static CreateUnitCircle(std::vector<glm::vec3>& vertices, std::vector<GLuint>& indices, int segments = 16, float radius = 0.1f) {
@@ -78,10 +88,11 @@ int main()
 
 	Shader shaderProgram("default.vert", "default.frag");
 
-    Fluid fluid(PARTICLE_COUNT, MASS, GRAVITY, COLLISION_DAMPING, SPACING, PRESSURE_MULTIPLIER, TARGET_DENSITY, SMOOTHING_RADIUS);
+    Fluid fluid(PARTICLE_COUNT, PARTICLE_RADIUS, MASS, GRAVITY, COLLISION_DAMPING, SPACING, PRESSURE_MULTIPLIER, TARGET_DENSITY, SMOOTHING_RADIUS, SPATIAL_HASH_SIZE);
 
     std::vector<glm::vec3> circleVertices;
     std::vector<GLuint> circleIndices;
+
     CreateUnitCircle(circleVertices, circleIndices, CIRCLE_SEGMENTS, PARTICLE_RADIUS);
 
     VAO vao1;
@@ -103,22 +114,18 @@ int main()
 	instanceVBO.Unbind();
 	ebo1.Unbind();
 
-    // Time
-    float lastTime = glfwGetTime();
-
     while (!glfwWindowShouldClose(window)) {
-        float currentTime = glfwGetTime();
-        float deltaTime = currentTime - lastTime;
-        lastTime = currentTime;
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         // Simulate
-        fluid.Update(deltaTime);
+        fluid.Update(DELTA_TIME);
         fluid.HandleBoundaryCollisions(BOUNDARY_X, BOUNDARY_Y, BOUNDARY_Z);
 		fluid.GetParticlePositions(instancePositions);
 
+        // Update GPU buffer with particle positions (efficiently)
+        glBindBuffer(GL_ARRAY_BUFFER, instanceVBO.ID);
         glBindBuffer(GL_ARRAY_BUFFER, instanceVBO.ID);
         glBufferSubData(GL_ARRAY_BUFFER, 0, instancePositions.size() * sizeof(glm::vec3), instancePositions.data());
 

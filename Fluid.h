@@ -1,51 +1,82 @@
-#ifndef FLUID_CLASS_H
-#define FLUID_CLASS_H
+#ifndef FLUID_CLASS_H  
+#define FLUID_CLASS_H  
 
-
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-#include <glm/gtx/string_cast.hpp>
-#include <vector>
-#include <algorithm>
+#define GLM_ENABLE_EXPERIMENTAL  
+#include <glm/glm.hpp>  
+#include <glm/gtx/string_cast.hpp>  
+#include <vector>  
+#include <algorithm>  
+#include <limits>  
+#include <unordered_map>
+#include <numeric>
+#include <execution>
+#include <omp.h>
 
 const float PI = 3.14159265359f;
+const float twoPI = 2.0f * PI;
+const unsigned int MAX_INT = std::numeric_limits<unsigned int>::max();
 
-struct Particle {
-	glm::vec3 position; // x, y, z
-	glm::vec3 velocity; // vx, vy, vz
-	float radius;
 
-	Particle() : position(0.0f), velocity(0.0f), radius(0.1f) {} // Default constructor
+class Entry {
+public:
+	int index;
+	unsigned int key;
+
+	Entry() : index(-1), key(0) {}
+	Entry(int i, unsigned int k) : index(i), key(k) {}
+
+	bool operator<(const Entry& other) const {
+		return key < other.key;
+	}
 };
 
-class Fluid {
-	private :
-		std::vector<Particle> _particles; // List of particles in the fluid
-		std::vector<float> _particleProperties; // Density of each particle
-		std::vector<float> _densities;
+static std::pair<int, int> cellOffsets[9] = {
+	{0, 0}, {1, 0}, {0, 1},
+	{-1, 0}, {0, -1}, {1, 1},
+	{-1, -1}, {1, -1}, {-1, 1}
+};
 
-		float _particleCount; // Number of particles in the fluid
-		float _mass; // Default mass, can be adjusted
-		float _gravityAcceleration; // Gravity acceleration in m/s^2
-		float _collisionDamping; // Damping factor to simulate collision response
-		float _smoothingRadius; // Smoothing radius for density calculations
-		float _targetDensity;
+
+class Fluid {  
+	private :  
+		std::vector<glm::vec3> _positions;
+		std::vector<glm::vec3> _velocities; 
+		std::vector<float> _densities;  
+		std::vector<glm::vec3> _predictedPositions;
+		std::vector<Entry> _spatialLookup;
+		std::vector<unsigned int> _startIndices;
+
+
+		unsigned int _particleCount; // Number of particles in the fluid
+		unsigned int _hashSize; // Size of the spatial hash table
+		float _particleRadius; // Radius of each particle
+		float _mass; // Default mass, can be adjusted  
+		float _gravityAcceleration; // Gravity acceleration in m/s^2  
+		float _collisionDamping; // Damping factor to simulate collision response  
+		float _smoothingRadius; // Smoothing radius for density calculations  
+		float _targetDensity;  
 		float _pressureMultiplier;
+		float _radius2; // Smoothing radius squared for performance optimization
+		float _radius4; // Smoothing radius to the power of 4 for performance optimization
+		float _formulaConstant;
 
-	public:
-		Fluid(const unsigned int particleCount, const float mass, const float gravity, const float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, float smoothingRadius);
-		void Update(float dt);
+	public:  
+		Fluid(const unsigned int particleCount, const float particleRadius, const float mass, const float gravity, const float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, float smoothingRadius, unsigned int hashSize);  
+		void Update(float dt);  
 		void GetParticlePositions(std::vector<glm::vec3>& outPositions);
-		const glm::vec3& GetPosition(int i) const;
-		const glm::vec3& GetVelocity(int i) const;
-		void HandleBoundaryCollisions(float boundryX, float boundaryY, float boundaryZ);
-		static float SmoothingKernel(float radius, float distance);
-		static float SmoothingKernelDerivative(float radius, float distance);
-		float CalculateDensity(const glm::vec3& samplePosition) const;
-		float DensityToPressure(float density);
-		glm::vec3 CalculatePressureForce(int particleIndex);
-		float CalculateSharedPressure(float densityA, float densityB);
+		void GetParticleVelocities(std::vector<glm::vec3>& outVelocities);
+		void HandleBoundaryCollisions(float boundryX, float boundaryY, float boundaryZ);  
+		float SmoothingKernel(float radius, float distance);  
+		float SmoothingKernelDerivative(float radius, float distance);  
+		float CalculateDensity(const int i);  
+		float DensityToPressure(float density);  
+		glm::vec3 CalculatePressureForce(int particleIndex);  
+		float CalculateSharedPressure(float densityA, float densityB);  
 		static glm::vec3 GetRandomDirection3D();
-};
+		glm::ivec3 PositionsToCellCoord(glm::vec3 point, float radius);
+		unsigned int HashCell(int cellX, int cellY);
+		unsigned int GetKeyFromHash(unsigned int hash);
+		void UpdateSpatialLookup(float radius);
+};  
 
-#endif
+#endif // FLUID_CLASS_H
