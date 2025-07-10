@@ -2,7 +2,7 @@
 #include <iostream>
 
 
-Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const float mass, const float gravity, const float collisionDamping, const float spacing, const float pressureMultiplier, const float targetDensity, const float smoothingRadius, const unsigned int hashSize, const float interactionRadius, const float interactionStrength)
+Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const float mass, const float gravity, const float collisionDamping, const float spacing, const float pressureMultiplier, const float targetDensity, const float smoothingRadius, const unsigned int hashSize, const float interactionRadius, const float interactionStrength, float viscosityStrength, float nearDensity)
 {
     _gravityAcceleration = gravity;
     _mass = mass;
@@ -13,8 +13,11 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
     _smoothingRadius = smoothingRadius;
     _particleRadius = particleRadius;
     _hashSize = hashSize;
+	_viscosityStrength = viscosityStrength;
+	_nearDensity = nearDensity;
 	_radius2 = _smoothingRadius * _smoothingRadius;
 	_radius4 = _radius2 * _radius2;
+    _radius8 = _radius4 * _radius4;
     _formulaConstant = (PI * _radius4);
 	_interactionRadius = interactionRadius;
 	_interactionStrength = interactionStrength;
@@ -61,9 +64,12 @@ void Fluid::Update(float dt) {
     #pragma omp parallel for
     for (int i = 0; i < _particleCount; ++i) {
         glm::vec3 pressureForce = CalculatePressureForce(i);
+        glm::vec3 viscosityForce = CalculateViscosityForce(i);
         float density = _densities[i];
         glm::vec3 pressureAcceleration = pressureForce / density; // Calculate acceleration from force
+		glm::vec3 viscosityAcceleration = viscosityForce / density; // Calculate acceleration from viscosity force
         _velocities[i] += pressureAcceleration * dt; // Update velocity based on acceleration
+		_velocities[i] += viscosityAcceleration * dt; // Update velocity based on viscosity force
     }
 
     #pragma omp parallel for
@@ -246,6 +252,52 @@ void Fluid::UpdateSpatialLookup(float radius) {
 }
 
 
+float Fluid::ViscosityKernel(float radius, float distance) {
+    if (distance > radius) return 0.0f;
+    
+	float volume = PI * _radius8 / 6.0f;
+	float value = std::max(0.0f, _radius2 - distance * distance);
+	return value * value * value / volume;
+}
+
+float Fluid::ViscosityKernelDerivative(float radius, float distance) {
+    if (distance > radius) return 0.0f;
+
+    float scale = 12.0f / (PI * _radius4);
+    return (distance - radius) * scale;
+}
+
+glm::vec3 Fluid::CalculateViscosityForce(int i) {
+    glm::vec3 viscosityForce(0.0f);
+    glm::vec3 cellCoord = PositionsToCellCoord(_predictedPositions[i], _smoothingRadius);
+    int centerX = cellCoord.x;
+    int centerY = cellCoord.y;
+    float sqrRadius = _smoothingRadius * _smoothingRadius;
+    for (int k = 0; k < 9; ++k) {
+        int offsetX = cellOffsets[k].first;
+        int offsetY = cellOffsets[k].second;
+        unsigned int key = GetKeyFromHash(HashCell(centerX + offsetX, centerY + offsetY));
+        int cellStartIndex = _startIndices[key];
+        if (cellStartIndex == MAX_INT) continue;
+        for (int j = cellStartIndex; j < _spatialLookup.size(); ++j) {
+            if (_spatialLookup[j].key != key) break;
+            int particleIndex = _spatialLookup[j].index;
+            if (particleIndex == i) continue;
+
+            glm::vec3 offset = _predictedPositions[particleIndex] - _predictedPositions[i];
+            float sqrDistance = glm::dot(offset, offset);
+            if (sqrDistance < sqrRadius) {
+                float distance = std::sqrt(sqrDistance);
+				float influence = ViscosityKernel(_smoothingRadius, distance);
+                viscosityForce += (_velocities[particleIndex] - _velocities[i]) * influence;
+            }
+        }
+    }
+
+	return viscosityForce * _viscosityStrength;
+}
+
+
 void Fluid::ApplyInteractionForce(glm::vec2 inputPos, float radius, float strength) {
     glm::vec3 inputPos3D(inputPos, 0.0f); // extend to 3D for consistency
     glm::vec3 cellCoord = PositionsToCellCoord(inputPos3D, _smoothingRadius);
@@ -305,6 +357,9 @@ void Fluid::SetGravity(float g) { _gravityAcceleration = g; }
 float Fluid::GetGravity() {return _gravityAcceleration;}
 
 void Fluid::SetPaused(bool isPaused) { _isPaused = isPaused; }
+
+float Fluid::GetViscosityStrength() { return _viscosityStrength; }
+void Fluid::SetViscosityStrength(float viscosityStrength) { _viscosityStrength = viscosityStrength; }
 
 
 

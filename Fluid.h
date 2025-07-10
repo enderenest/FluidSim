@@ -58,8 +58,11 @@ class Fluid {
 		float _smoothingRadius; // Smoothing radius for density calculations  
 		float _targetDensity;  
 		float _pressureMultiplier;
-		float _radius2; // Smoothing radius squared for performance optimization
-		float _radius4; // Smoothing radius to the power of 4 for performance optimization
+		float _viscosityStrength;
+		float _nearDensity;
+		float _radius2;
+		float _radius4;
+		float _radius8;
 		float _formulaConstant;
 
 		bool _isPaused = false;
@@ -68,7 +71,7 @@ class Fluid {
 		float _interactionStrength;
 
 	public:  
-		Fluid(const unsigned int particleCount, const float particleRadius, const float mass, const float gravity, const float collisionDamping, const float spacing, const float pressureMultiplier, const float targetDensity, const float smoothingRadius, const unsigned int hashSize, const float interactionRadius, const float interactionStrength);  
+		Fluid(unsigned int particleCount, float particleRadius, const float mass, const float gravity, const float collisionDamping, const float spacing, const float pressureMultiplier, const float targetDensity, const float smoothingRadius, const unsigned int hashSize, const float interactionRadius, const float interactionStrength, float viscosityStrength, float nearDensity);  
 		void Update(float dt);  
 		void GetParticlePositions(std::vector<glm::vec3>& outPositions);
 		void GetParticleVelocities(std::vector<glm::vec3>& outVelocities);
@@ -79,6 +82,9 @@ class Fluid {
 		float GetGravity();
 		void SetGravity(float g);
 		void SetPaused(bool isPaused);
+		float GetViscosityStrength();
+		void SetViscosityStrength(float strength);
+
 		void HandleBoundaryCollisions(float boundryX, float boundaryY, float boundaryZ);  
 		float SmoothingKernel(float radius, float distance);  
 		float SmoothingKernelDerivative(float radius, float distance);  
@@ -92,6 +98,9 @@ class Fluid {
 		unsigned int GetKeyFromHash(unsigned int hash);
 		void UpdateSpatialLookup(float radius);
 		void ApplyInteractionForce(glm::vec2 inputPos, float radius, float strength);
+		float ViscosityKernel(float radius, float distance);
+		float ViscosityKernelDerivative(float radius, float distance);
+		glm::vec3 CalculateViscosityForce(int particleIndex);
 };  
 
 #endif // FLUID_CLASS_H
