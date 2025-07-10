@@ -2,7 +2,7 @@
 #include <iostream>
 
 
-Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const float mass, const float gravity, const float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, float smoothingRadius, unsigned int hashSize)
+Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const float mass, const float gravity, const float collisionDamping, const float spacing, const float pressureMultiplier, const float targetDensity, const float smoothingRadius, const unsigned int hashSize, const float interactionRadius, const float interactionStrength)
 {
     _gravityAcceleration = gravity;
     _mass = mass;
@@ -16,6 +16,8 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
 	_radius2 = _smoothingRadius * _smoothingRadius;
 	_radius4 = _radius2 * _radius2;
     _formulaConstant = (PI * _radius4);
+	_interactionRadius = interactionRadius;
+	_interactionStrength = interactionStrength;
 
 	_positions.resize(particleCount, glm::vec3(0.0f));
 	_velocities.resize(particleCount, glm::vec3(0.0f));
@@ -93,10 +95,35 @@ void Fluid::GetParticlePositions(std::vector<glm::vec3>& outPositions) {
     outPositions = _positions;
 }
 
+
 void Fluid::GetParticleVelocities(std::vector<glm::vec3>& outVelocities) {
     outVelocities.clear();
     outVelocities = _velocities;
 }
+
+
+float Fluid::GetPressureMultiplier() {
+    return _pressureMultiplier;
+}
+
+
+void Fluid::SetPressureMultiplier(float pressureMultiplier) {
+    _pressureMultiplier = pressureMultiplier;
+}
+
+
+float Fluid::GetTargetDensity() {
+    return _targetDensity;
+}
+
+
+void Fluid::SetTargetDensity(float targetDensity) {
+    _targetDensity = targetDensity;
+}
+
+
+void Fluid::SetGravity(float g) { _gravityAcceleration = g; }
+
 
 
 float Fluid::SmoothingKernel(float radius, float distance) {  
@@ -177,7 +204,7 @@ glm::vec3 Fluid::CalculatePressureForce(int i) {
 			int particleIndex = _spatialLookup[j].index;
             if (particleIndex == i) continue;
 
-			glm::vec3 offset = _predictedPositions[particleIndex] - _predictedPositions[i]; // positions mý predictedPositions mý?
+			glm::vec3 offset = _predictedPositions[particleIndex] - _predictedPositions[i];
 			float sqrDistance = glm::dot(offset, offset);
 
             if (sqrDistance < sqrRadius) {
@@ -251,6 +278,46 @@ void Fluid::UpdateSpatialLookup(float radius) {
         }
     }
 }
+
+
+void Fluid::ApplyInteractionForce(glm::vec2 inputPos, float radius, float strength) {
+    glm::vec3 inputPos3D(inputPos, 0.0f); // extend to 3D for consistency
+    glm::vec3 cellCoord = PositionsToCellCoord(inputPos3D, _smoothingRadius);
+    int centerX = static_cast<int>(cellCoord.x);
+    int centerY = static_cast<int>(cellCoord.y);
+
+    float sqrRadius = radius * radius;
+
+    for (int k = 0; k < 9; ++k) {
+        int offsetX = cellOffsets[k].first;
+        int offsetY = cellOffsets[k].second;
+
+        unsigned int key = GetKeyFromHash(HashCell(centerX + offsetX, centerY + offsetY));
+        int cellStartIndex = _startIndices[key];
+        if (cellStartIndex == MAX_INT) continue;
+
+        for (int j = cellStartIndex; j < _spatialLookup.size(); ++j) {
+            if (_spatialLookup[j].key != key) break;
+
+            int particleIndex = _spatialLookup[j].index;
+            glm::vec2 offset = inputPos - glm::vec2(_positions[particleIndex]);  // 2D offset
+            float sqrDist = glm::dot(offset, offset);
+            if (sqrDist < sqrRadius) {
+                float dist = sqrt(sqrDist);
+                glm::vec2 direction = (dist <= 1e-6f) ? glm::vec2(0.0f) : offset / dist;
+                float influence = 1.0f - dist / radius;
+                glm::vec2 force2D = (direction * strength - glm::vec2(_velocities[particleIndex])) * influence;
+
+                // Apply force to X and Y components
+                _velocities[particleIndex].x += force2D.x;
+                _velocities[particleIndex].y += force2D.y;
+            }
+        }
+    }
+}
+
+
+
 
 
 

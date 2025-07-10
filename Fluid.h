@@ -15,6 +15,7 @@
 
 const float PI = 3.14159265359f;
 const float twoPI = 2.0f * PI;
+const float EPSILON = std::numeric_limits<float>::epsilon();
 const unsigned int MAX_INT = std::numeric_limits<unsigned int>::max();
 
 
@@ -61,11 +62,19 @@ class Fluid {
 		float _radius4; // Smoothing radius to the power of 4 for performance optimization
 		float _formulaConstant;
 
+		float _interactionRadius;
+		float _interactionStrength;
+
 	public:  
-		Fluid(const unsigned int particleCount, const float particleRadius, const float mass, const float gravity, const float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, float smoothingRadius, unsigned int hashSize);  
+		Fluid(const unsigned int particleCount, const float particleRadius, const float mass, const float gravity, const float collisionDamping, const float spacing, const float pressureMultiplier, const float targetDensity, const float smoothingRadius, const unsigned int hashSize, const float interactionRadius, const float interactionStrength);  
 		void Update(float dt);  
 		void GetParticlePositions(std::vector<glm::vec3>& outPositions);
 		void GetParticleVelocities(std::vector<glm::vec3>& outVelocities);
+		float GetPressureMultiplier();
+		void SetPressureMultiplier(float pressureMultiplier);
+		float GetTargetDensity();
+		void SetTargetDensity(float targetDensity);
+		void SetGravity(float g);
 		void HandleBoundaryCollisions(float boundryX, float boundaryY, float boundaryZ);  
 		float SmoothingKernel(float radius, float distance);  
 		float SmoothingKernelDerivative(float radius, float distance);  
@@ -78,6 +87,7 @@ class Fluid {
 		unsigned int HashCell(int cellX, int cellY);
 		unsigned int GetKeyFromHash(unsigned int hash);
 		void UpdateSpatialLookup(float radius);
+		void ApplyInteractionForce(glm::vec2 inputPos, float radius, float strength);
 };  
 
 #endif // FLUID_CLASS_H

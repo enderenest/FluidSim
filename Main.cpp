@@ -16,27 +16,32 @@
 // influence = SmmothingKernel(smmothingRadius, distance)
 // density += influence * mass;
 // slope = SmoothingKernelDerivative(smoothingRadius, distance)
-// pressureForce = ConvertDensityToPressure(density) * slope * direction * mass / density;
+// float densityError = density - _targetDensity;
+// float pressure = _pressureMultiplier * densityError;
+// pressureForce = pressure * slope * direction * mass / density;
 // pressureAcceleration = pressureForce / density;
 // velocity += pressureAcceleration * dt;
 
 
 const unsigned int WIDTH = 800, HEIGHT = 800;
-const unsigned int PARTICLE_COUNT = 1200;
-const unsigned int CIRCLE_SEGMENTS = 6;
-const unsigned int SPATIAL_HASH_SIZE = 8192;
+const unsigned int PARTICLE_COUNT = 1000;
+const unsigned int CIRCLE_SEGMENTS = 8;
+const unsigned int SPATIAL_HASH_SIZE = 4096;
 const float PARTICLE_RADIUS = 0.08f;
 const float MASS = 0.08f;
-const float GRAVITY = 9.81f;
+const float GRAVITY = 5.81f;
 const float COLLISION_DAMPING = 0.3f;
 const float BOUNDARY_X = 0.8f;
 const float BOUNDARY_Y = 0.8f;
 const float BOUNDARY_Z = 0.8f;
-const float SPACING = 0.03f;
+const float SPACING = 0.02f;
 const float SMOOTHING_RADIUS = 0.1f;
-const float PRESSURE_MULTIPLIER = 10.0f;
-const float TARGET_DENSITY = 80.0f;
+const float PRESSURE_MULTIPLIER = 12.0f;
+const float TARGET_DENSITY = 130.0f;
 const float DELTA_TIME = 0.016f;
+
+const float INTERACTION_RADIUS = 0.2f;
+const float INTERACTION_STRENGTH = 2.0f;
 
 
 void static CreateUnitCircle(std::vector<glm::vec3>& vertices, std::vector<GLuint>& indices, int segments = 16, float radius = 0.1f) {
@@ -82,9 +87,10 @@ int main() {
     gladLoadGL();
     glViewport(0, 0, WIDTH, HEIGHT);
 
+
     Shader shaderProgram("default.vert", "default.frag");
 
-    Fluid fluid(PARTICLE_COUNT, PARTICLE_RADIUS, MASS, GRAVITY, COLLISION_DAMPING, SPACING, PRESSURE_MULTIPLIER, TARGET_DENSITY, SMOOTHING_RADIUS, SPATIAL_HASH_SIZE);
+    Fluid fluid(PARTICLE_COUNT, PARTICLE_RADIUS, MASS, GRAVITY, COLLISION_DAMPING, SPACING, PRESSURE_MULTIPLIER, TARGET_DENSITY, SMOOTHING_RADIUS, SPATIAL_HASH_SIZE, INTERACTION_RADIUS, INTERACTION_STRENGTH);
 
     std::vector<glm::vec3> circleVertices;
     std::vector<GLuint> circleIndices;
@@ -122,6 +128,45 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        // ------------------ MOUSE INTERACTION -----------------------
+        double mouseX, mouseY;
+        glfwGetCursorPos(window, &mouseX, &mouseY);
+
+        // Convert to Normalized Device Coordinates [-1, 1]
+        float x = 2.0f * static_cast<float>(mouseX) / WIDTH - 1.0f;
+        float y = 1.0f - 2.0f * static_cast<float>(mouseY) / HEIGHT;
+        glm::vec2 worldMousePos = glm::vec2(x, y);
+
+        // Apply force on left-click
+        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+            fluid.ApplyInteractionForce(worldMousePos, INTERACTION_RADIUS, INTERACTION_STRENGTH);
+        }
+
+        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+            fluid.ApplyInteractionForce(worldMousePos, INTERACTION_RADIUS, -INTERACTION_STRENGTH);
+        }
+        // ------------------------------------------------------------
+
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+            fluid.SetPressureMultiplier(fluid.GetPressureMultiplier() + 1.0f);
+
+        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+            fluid.SetPressureMultiplier(fluid.GetPressureMultiplier() - 1.0f);
+
+        if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+            fluid.SetTargetDensity(fluid.GetTargetDensity() + 3.0f);
+
+        if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
+            fluid.SetTargetDensity(fluid.GetTargetDensity() - 3.0f);
+
+        if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) {
+            fluid.SetGravity(0.0f);  // Or toggle gravity on/off
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+            fluid.SetGravity(9.81f);  // Or toggle gravity on/off
+        }
 
         fluid.Update(DELTA_TIME);
         fluid.HandleBoundaryCollisions(BOUNDARY_X, BOUNDARY_Y, 0.0f);
