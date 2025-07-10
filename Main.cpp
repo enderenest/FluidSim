@@ -29,19 +29,24 @@ const unsigned int CIRCLE_SEGMENTS = 8;
 const unsigned int SPATIAL_HASH_SIZE = 4096;
 const float PARTICLE_RADIUS = 0.08f;
 const float MASS = 0.08f;
-const float GRAVITY = 5.81f;
-const float COLLISION_DAMPING = 0.3f;
+const float GRAVITY = 2.0f;
+const float COLLISION_DAMPING = 0.8f;
 const float BOUNDARY_X = 0.8f;
 const float BOUNDARY_Y = 0.8f;
 const float BOUNDARY_Z = 0.8f;
 const float SPACING = 0.02f;
 const float SMOOTHING_RADIUS = 0.1f;
-const float PRESSURE_MULTIPLIER = 12.0f;
-const float TARGET_DENSITY = 130.0f;
+const float PRESSURE_MULTIPLIER = 15.0f;
+const float TARGET_DENSITY = 80.0f;
 const float DELTA_TIME = 0.016f;
 
 const float INTERACTION_RADIUS = 0.2f;
 const float INTERACTION_STRENGTH = 2.0f;
+
+bool upLastFrame = false;
+bool downLastFrame = false;
+bool oneLastFrame = false;
+bool twoLastFrame = false;
 
 
 void static CreateUnitCircle(std::vector<glm::vec3>& vertices, std::vector<GLuint>& indices, int segments = 16, float radius = 0.1f) {
@@ -148,25 +153,47 @@ int main() {
         }
         // ------------------------------------------------------------
 
-        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+
+		// ------------------ KEYBOARD CONTROLS -----------------------
+        int upState = glfwGetKey(window, GLFW_KEY_UP);
+        if (upState == GLFW_PRESS && !upLastFrame) {
             fluid.SetPressureMultiplier(fluid.GetPressureMultiplier() + 1.0f);
+        }
+        upLastFrame = (upState == GLFW_PRESS);
 
-        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        int downState = glfwGetKey(window, GLFW_KEY_DOWN);
+        if (downState == GLFW_PRESS && !downLastFrame) {
             fluid.SetPressureMultiplier(fluid.GetPressureMultiplier() - 1.0f);
+        }
+        downLastFrame = (downState == GLFW_PRESS);
 
-        if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+        int oneState = glfwGetKey(window, GLFW_KEY_1);
+        if (oneState == GLFW_PRESS && !oneLastFrame) {
             fluid.SetTargetDensity(fluid.GetTargetDensity() + 3.0f);
+        }
+        oneLastFrame = (oneState == GLFW_PRESS);
 
-        if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
+        int twoState = glfwGetKey(window, GLFW_KEY_2);
+        if (twoState == GLFW_PRESS && !twoLastFrame) {
             fluid.SetTargetDensity(fluid.GetTargetDensity() - 3.0f);
-
-        if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) {
-            fluid.SetGravity(0.0f);  // Or toggle gravity on/off
         }
+        twoLastFrame = (twoState == GLFW_PRESS);
 
-        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-            fluid.SetGravity(9.81f);  // Or toggle gravity on/off
+        if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) 
+                fluid.SetGravity(0.0f);
+
+        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+            fluid.SetGravity(9.81f);
+
+        if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
+			fluid.SetPaused(true);
+		}
+
+        if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) {
+            fluid.SetPaused(false);
         }
+		// ------------------------------------------------------------
+
 
         fluid.Update(DELTA_TIME);
         fluid.HandleBoundaryCollisions(BOUNDARY_X, BOUNDARY_Y, 0.0f);

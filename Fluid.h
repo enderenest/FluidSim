@@ -62,6 +62,8 @@ class Fluid {
 		float _radius4; // Smoothing radius to the power of 4 for performance optimization
 		float _formulaConstant;
 
+		bool _isPaused = false;
+
 		float _interactionRadius;
 		float _interactionStrength;
 
@@ -74,7 +76,9 @@ class Fluid {
 		void SetPressureMultiplier(float pressureMultiplier);
 		float GetTargetDensity();
 		void SetTargetDensity(float targetDensity);
+		float GetGravity();
 		void SetGravity(float g);
+		void SetPaused(bool isPaused);
 		void HandleBoundaryCollisions(float boundryX, float boundaryY, float boundaryZ);  
 		float SmoothingKernel(float radius, float distance);  
 		float SmoothingKernelDerivative(float radius, float distance);  

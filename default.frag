@@ -7,15 +7,14 @@ out vec4 FragColor;
 
 vec3 velocityToColor(float t)
 {
-    // t in [0, 1]
     if (t < 0.25)
-        return mix(vec3(0.0, 0.0, 1.0), vec3(0.0, 1.0, 1.0), t / 0.25);        // Blue ? Cyan
+        return mix(vec3(0.0, 0.0, 1.0), vec3(0.0, 1.0, 1.0), smoothstep(0.0, 0.25, t));        
     else if (t < 0.5)
-        return mix(vec3(0.0, 1.0, 1.0), vec3(0.0, 1.0, 0.0), (t - 0.25) / 0.25); // Cyan ? Green
+        return mix(vec3(0.0, 1.0, 1.0), vec3(0.0, 1.0, 0.0), smoothstep(0.25, 0.5, t)); 
     else if (t < 0.75)
-        return mix(vec3(0.0, 1.0, 0.0), vec3(1.0, 1.0, 0.0), (t - 0.5) / 0.25);  // Green ? Yellow
+        return mix(vec3(0.0, 1.0, 0.0), vec3(1.0, 1.0, 0.0), smoothstep(0.5, 0.75, t));  
     else
-        return mix(vec3(1.0, 1.0, 0.0), vec3(1.0, 0.0, 0.0), (t - 0.75) / 0.25); // Yellow ? Red
+        return mix(vec3(1.0, 1.0, 0.0), vec3(1.0, 0.0, 0.0), smoothstep(0.75, 1.0, t)); 
 }
 
 void main()

@@ -43,6 +43,8 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
 
 
 void Fluid::Update(float dt) {
+    if (_isPaused) {return; }
+
     #pragma omp parallel for
     for (int i = 0; i < _particleCount; ++i) {
 		_velocities[i] += glm::vec3(0.0f, -_gravityAcceleration * dt, 0.0f);
@@ -88,42 +90,6 @@ void Fluid::HandleBoundaryCollisions(float boundaryX, float boundaryY, float bou
         _positions[i].z = 0.0f;
     }
 }
-
-
-void Fluid::GetParticlePositions(std::vector<glm::vec3>& outPositions) {
-	outPositions.clear();
-    outPositions = _positions;
-}
-
-
-void Fluid::GetParticleVelocities(std::vector<glm::vec3>& outVelocities) {
-    outVelocities.clear();
-    outVelocities = _velocities;
-}
-
-
-float Fluid::GetPressureMultiplier() {
-    return _pressureMultiplier;
-}
-
-
-void Fluid::SetPressureMultiplier(float pressureMultiplier) {
-    _pressureMultiplier = pressureMultiplier;
-}
-
-
-float Fluid::GetTargetDensity() {
-    return _targetDensity;
-}
-
-
-void Fluid::SetTargetDensity(float targetDensity) {
-    _targetDensity = targetDensity;
-}
-
-
-void Fluid::SetGravity(float g) { _gravityAcceleration = g; }
-
 
 
 float Fluid::SmoothingKernel(float radius, float distance) {  
@@ -315,6 +281,30 @@ void Fluid::ApplyInteractionForce(glm::vec2 inputPos, float radius, float streng
         }
     }
 }
+
+
+
+void Fluid::GetParticlePositions(std::vector<glm::vec3>& outPositions) {
+    outPositions.clear();
+    outPositions = _positions;
+}
+
+void Fluid::GetParticleVelocities(std::vector<glm::vec3>& outVelocities) {
+    outVelocities.clear();
+    outVelocities = _velocities;
+}
+
+float Fluid::GetPressureMultiplier() { return _pressureMultiplier; }
+void Fluid::SetPressureMultiplier(float pressureMultiplier) { _pressureMultiplier = pressureMultiplier; }
+
+
+float Fluid::GetTargetDensity() { return _targetDensity; }
+void Fluid::SetTargetDensity(float targetDensity) { _targetDensity = targetDensity; }
+
+void Fluid::SetGravity(float g) { _gravityAcceleration = g; }
+float Fluid::GetGravity() {return _gravityAcceleration;}
+
+void Fluid::SetPaused(bool isPaused) { _isPaused = isPaused; }
 
 
 
