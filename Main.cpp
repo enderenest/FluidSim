@@ -24,16 +24,16 @@
 
 
 const unsigned int WIDTH = 800, HEIGHT = 800;
-const unsigned int PARTICLE_COUNT = 1000;
+const unsigned int PARTICLE_COUNT = 1500;
 const unsigned int CIRCLE_SEGMENTS = 8;
 const unsigned int SPATIAL_HASH_SIZE = 4096;
 const float PARTICLE_RADIUS = 0.08f;
 const float MASS = 0.08f;
-const float GRAVITY = 2.0f;
-const float COLLISION_DAMPING = 0.8f;
-const float BOUNDARY_X = 0.8f;
-const float BOUNDARY_Y = 0.8f;
-const float BOUNDARY_Z = 0.8f;
+const float GRAVITY = 3.0f;
+const float COLLISION_DAMPING = 0.35f;
+const float BOUNDARY_X = 0.9f;
+const float BOUNDARY_Y = 0.9f;
+const float BOUNDARY_Z = 0.9f;
 const float SPACING = 0.02f;
 const float SMOOTHING_RADIUS = 0.1f;
 const float PRESSURE_MULTIPLIER = 15.0f;
@@ -95,6 +95,28 @@ int main() {
 
     Shader shaderProgram("default.vert", "default.frag");
 
+    Shader lineShader("line.vert", "line.frag");
+
+	float bx = BOUNDARY_X - PARTICLE_RADIUS;
+	float by = BOUNDARY_Y - PARTICLE_RADIUS;
+    std::vector<glm::vec3> boundaryLines = {
+        {-bx, -by, 0.0f}, { bx, -by, 0.0f},
+        { bx, -by, 0.0f}, { bx,  by, 0.0f},
+        { bx,  by, 0.0f}, {-bx,  by, 0.0f},
+        {-bx,  by, 0.0f}, {-bx, -by, 0.0f}
+    };
+
+    GLuint boundaryVAO, boundaryVBO;
+    glGenVertexArrays(1, &boundaryVAO);
+    glGenBuffers(1, &boundaryVBO);
+
+    glBindVertexArray(boundaryVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, boundaryVBO);
+    glBufferData(GL_ARRAY_BUFFER, boundaryLines.size() * sizeof(glm::vec3), boundaryLines.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+    glBindVertexArray(0);
+
     Fluid fluid(PARTICLE_COUNT, PARTICLE_RADIUS, MASS, GRAVITY, COLLISION_DAMPING, SPACING, PRESSURE_MULTIPLIER, TARGET_DENSITY, SMOOTHING_RADIUS, SPATIAL_HASH_SIZE, INTERACTION_RADIUS, INTERACTION_STRENGTH);
 
     std::vector<glm::vec3> circleVertices;
@@ -148,6 +170,7 @@ int main() {
             fluid.ApplyInteractionForce(worldMousePos, INTERACTION_RADIUS, INTERACTION_STRENGTH);
         }
 
+        // Apply force on right-click
         if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
             fluid.ApplyInteractionForce(worldMousePos, INTERACTION_RADIUS, -INTERACTION_STRENGTH);
         }
@@ -183,7 +206,7 @@ int main() {
                 fluid.SetGravity(0.0f);
 
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-            fluid.SetGravity(9.81f);
+            fluid.SetGravity(GRAVITY);
 
         if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
 			fluid.SetPaused(true);
@@ -211,6 +234,11 @@ int main() {
         glUniform1f(glGetUniformLocation(shaderProgram.ID, "scale"), PARTICLE_RADIUS);
         glDrawElementsInstanced(GL_TRIANGLES, circleIndices.size(), GL_UNSIGNED_INT, 0, PARTICLE_COUNT);
 
+        lineShader.Activate();
+        glBindVertexArray(boundaryVAO);
+        glDrawArrays(GL_LINES, 0, boundaryLines.size());
+        glBindVertexArray(0);
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -221,6 +249,9 @@ int main() {
     instanceVelVBO.Delete();
     ebo1.Delete();
     shaderProgram.Delete();
+    glDeleteVertexArrays(1, &boundaryVAO);
+    glDeleteBuffers(1, &boundaryVBO);
+    lineShader.Delete();
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;

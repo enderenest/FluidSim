@@ -64,5 +64,11 @@
     <None Include="default.vert">
       <Filter>Resource Files\Shaders</Filter>
     </None>
+    <None Include="line.vert">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="line.frag">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
