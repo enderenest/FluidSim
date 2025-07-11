@@ -44,26 +44,33 @@ class Fluid {
 		std::vector<glm::vec3> _positions;
 		std::vector<glm::vec3> _velocities; 
 		std::vector<float> _densities;  
+		std::vector<float> _nearDensities;
 		std::vector<glm::vec3> _predictedPositions;
 		std::vector<Entry> _spatialLookup;
 		std::vector<unsigned int> _startIndices;
 
 
-		unsigned int _particleCount; // Number of particles in the fluid
-		unsigned int _hashSize; // Size of the spatial hash table
-		float _particleRadius; // Radius of each particle
-		float _mass; // Default mass, can be adjusted  
-		float _gravityAcceleration; // Gravity acceleration in m/s^2  
-		float _collisionDamping; // Damping factor to simulate collision response  
-		float _smoothingRadius; // Smoothing radius for density calculations  
+		unsigned int _particleCount;
+		unsigned int _hashSize; 
+		float _spacing;
+		float _particleRadius;
+		float _mass; 
+		float _gravityAcceleration; 
+		float _collisionDamping;
+		float _smoothingRadius;
 		float _targetDensity;  
 		float _pressureMultiplier;
 		float _viscosityStrength;
-		float _nearDensity;
+		float _nearDensityMultiplier;
 		float _radius2;
 		float _radius4;
 		float _radius8;
 		float _formulaConstant;
+		float _spikyKernelPow2Factor;
+		float _derivativeSpikyPow2Factor;
+		float _spikyKernelPow3Factor;
+		float _derivativeSpikyPow3Factor;
+
 
 		bool _isPaused = false;
 
@@ -71,7 +78,7 @@ class Fluid {
 		float _interactionStrength;
 
 	public:  
-		Fluid(unsigned int particleCount, float particleRadius, const float mass, const float gravity, const float collisionDamping, const float spacing, const float pressureMultiplier, const float targetDensity, const float smoothingRadius, const unsigned int hashSize, const float interactionRadius, const float interactionStrength, float viscosityStrength, float nearDensity);  
+		Fluid(unsigned int particleCount, float particleRadius, const float mass, const float gravity, const float collisionDamping, const float spacing, const float pressureMultiplier, const float targetDensity, const float smoothingRadius, const unsigned int hashSize, const float interactionRadius, const float interactionStrength, float viscosityStrength, float nearDensityMultiplier);  
 		void Update(float dt);  
 		void GetParticlePositions(std::vector<glm::vec3>& outPositions);
 		void GetParticleVelocities(std::vector<glm::vec3>& outVelocities);
@@ -84,14 +91,18 @@ class Fluid {
 		void SetPaused(bool isPaused);
 		float GetViscosityStrength();
 		void SetViscosityStrength(float strength);
+		float GetNearDensityMultiplier();
+		void SetNearDensityMultiplier(float nearDensityMultiplier);
 
 		void HandleBoundaryCollisions(float boundryX, float boundaryY, float boundaryZ);  
 		float SmoothingKernel(float radius, float distance);  
 		float SmoothingKernelDerivative(float radius, float distance);  
-		float CalculateDensity(const int i);  
-		float DensityToPressure(float density);  
+		std::pair<float, float> CalculateDensity(const int i);
+		float DensityToPressure(float density); 
+		float NearDensityToPressure(float nearDensity);
 		glm::vec3 CalculatePressureForce(int particleIndex);  
-		float CalculateSharedPressure(float densityA, float densityB);  
+		float CalculateSharedPressure(float densityA, float densityB);
+		float CalculateNearSharedPressure(float densityA, float densityB);
 		static glm::vec3 GetRandomDirection3D();
 		glm::ivec3 PositionsToCellCoord(glm::vec3 point, float radius);
 		unsigned int HashCell(int cellX, int cellY);
@@ -101,6 +112,8 @@ class Fluid {
 		float ViscosityKernel(float radius, float distance);
 		float ViscosityKernelDerivative(float radius, float distance);
 		glm::vec3 CalculateViscosityForce(int particleIndex);
+		float NearSmoothingKernel(float radius, float distance);
+		float NearSmoothingKernelDerivative(float radius, float distance);
 };  
 
 #endif // FLUID_CLASS_H

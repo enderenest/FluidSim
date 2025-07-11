@@ -30,16 +30,16 @@ const unsigned int SPATIAL_HASH_SIZE = 4096;
 const float PARTICLE_RADIUS = 0.08f;
 const float MASS = 0.08f;
 const float GRAVITY = 3.0f;
-const float COLLISION_DAMPING = 0.3f;
+const float COLLISION_DAMPING = 0.2f;
 const float BOUNDARY_X = 0.8f;
 const float BOUNDARY_Y = 0.8f;
 const float BOUNDARY_Z = 0.8f;
 const float SPACING = 0.02f;
-const float SMOOTHING_RADIUS = 0.11f;
-const float PRESSURE_MULTIPLIER = 15.0f;
-const float TARGET_DENSITY = 80.0f;
-const float VISCOSITY_STRENGTH = 0.1f;
-const float NEAR_DENSITY = 0.9f;
+const float SMOOTHING_RADIUS = 0.1f;
+const float PRESSURE_MULTIPLIER = 8.0f;
+const float TARGET_DENSITY = 500.0f;
+const float VISCOSITY_STRENGTH = 0.35f;
+const float NEAR_DENSITY_MULTIPLIER = 0.2f;
 const float DELTA_TIME = 0.016f;
 
 const float INTERACTION_RADIUS = 0.2f;
@@ -51,6 +51,8 @@ bool oneLastFrame = false;
 bool twoLastFrame = false;
 bool vLastFrame = false;
 bool bLastFrame = false;
+bool nLastFrame = false;
+bool mLastFrame = false;
 
 
 void static CreateUnitCircle(std::vector<glm::vec3>& vertices, std::vector<GLuint>& indices, int segments = 16, float radius = 0.1f) {
@@ -101,13 +103,13 @@ int main() {
 
     Shader lineShader("line.vert", "line.frag");
 
-	float bx = BOUNDARY_X - PARTICLE_RADIUS;
-	float by = BOUNDARY_Y - PARTICLE_RADIUS;
+	float line_boundary_x = BOUNDARY_X - PARTICLE_RADIUS;
+	float line_boundary_y = BOUNDARY_Y - PARTICLE_RADIUS;
     std::vector<glm::vec3> boundaryLines = {
-        {-bx, -by, 0.0f}, { bx, -by, 0.0f},
-        { bx, -by, 0.0f}, { bx,  by, 0.0f},
-        { bx,  by, 0.0f}, {-bx,  by, 0.0f},
-        {-bx,  by, 0.0f}, {-bx, -by, 0.0f}
+        {-line_boundary_x, -line_boundary_y, 0.0f}, { line_boundary_x, -line_boundary_y, 0.0f},
+        { line_boundary_x, -line_boundary_y, 0.0f}, { line_boundary_x,  line_boundary_y, 0.0f},
+        { line_boundary_x,  line_boundary_y, 0.0f}, {-line_boundary_x,  line_boundary_y, 0.0f},
+        {-line_boundary_x,  line_boundary_y, 0.0f}, {-line_boundary_x, -line_boundary_y, 0.0f}
     };
 
     GLuint boundaryVAO, boundaryVBO;
@@ -121,7 +123,7 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
     glBindVertexArray(0);
 
-    Fluid fluid(PARTICLE_COUNT, PARTICLE_RADIUS, MASS, GRAVITY, COLLISION_DAMPING, SPACING, PRESSURE_MULTIPLIER, TARGET_DENSITY, SMOOTHING_RADIUS, SPATIAL_HASH_SIZE, INTERACTION_RADIUS, INTERACTION_STRENGTH, VISCOSITY_STRENGTH, NEAR_DENSITY);
+    Fluid fluid(PARTICLE_COUNT, PARTICLE_RADIUS, MASS, GRAVITY, COLLISION_DAMPING, SPACING, PRESSURE_MULTIPLIER, TARGET_DENSITY, SMOOTHING_RADIUS, SPATIAL_HASH_SIZE, INTERACTION_RADIUS, INTERACTION_STRENGTH, VISCOSITY_STRENGTH, NEAR_DENSITY_MULTIPLIER);
 
     std::vector<glm::vec3> circleVertices;
     std::vector<GLuint> circleIndices;
@@ -196,35 +198,49 @@ int main() {
 
         int oneState = glfwGetKey(window, GLFW_KEY_1);
         if (oneState == GLFW_PRESS && !oneLastFrame) {
-            fluid.SetTargetDensity(fluid.GetTargetDensity() + 3.0f);
+            fluid.SetTargetDensity(fluid.GetTargetDensity() + 10.0f);
         }
         oneLastFrame = (oneState == GLFW_PRESS);
 
         int twoState = glfwGetKey(window, GLFW_KEY_2);
         if (twoState == GLFW_PRESS && !twoLastFrame) {
 			if (fluid.GetTargetDensity() > 3.0f)
-                fluid.SetTargetDensity(fluid.GetTargetDensity() - 3.0f);
+                fluid.SetTargetDensity(fluid.GetTargetDensity() - 10.0f);
         }
         twoLastFrame = (twoState == GLFW_PRESS);
 
 		int vState = glfwGetKey(window, GLFW_KEY_V);
         if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
-            fluid.SetViscosityStrength(fluid.GetViscosityStrength() + 0.05f);
+            fluid.SetViscosityStrength(fluid.GetViscosityStrength() + 0.2f);
         }
 		vLastFrame = (vState == GLFW_PRESS);
 
 		int bState = glfwGetKey(window, GLFW_KEY_B);
         if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
-			if (fluid.GetViscosityStrength() > 0.05f)
-                fluid.SetViscosityStrength(fluid.GetViscosityStrength() - 0.05f);
+			if (fluid.GetViscosityStrength() > 0.2f)
+                fluid.SetViscosityStrength(fluid.GetViscosityStrength() - 0.2f);
         }
 		bLastFrame = (bState == GLFW_PRESS);
+
+		int nState = glfwGetKey(window, GLFW_KEY_N);
+        if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
+            fluid.SetNearDensityMultiplier(fluid.GetNearDensityMultiplier() + 0.1f);
+		}
+		nLastFrame = (nState == GLFW_PRESS);
+
+		int mState = glfwGetKey(window, GLFW_KEY_M);
+		if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
+            if (fluid.GetNearDensityMultiplier() > 0.1f)
+				fluid.SetNearDensityMultiplier(fluid.GetNearDensityMultiplier() - 0.1f);
+		}
+		mLastFrame = (mState == GLFW_PRESS);
 
         if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) 
                 fluid.SetGravity(0.0f);
 
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
             fluid.SetGravity(GRAVITY);
+
 
         if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
 			fluid.SetPaused(true);
