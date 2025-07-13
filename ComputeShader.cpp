@@ -42,6 +42,11 @@ void ComputeShader::setInt(const char* name, int value) const
 	glUniform1i(glGetUniformLocation(ID, name), value);
 }
 
+void ComputeShader::wait() const 
+{
+	glMemoryBarrier(GL_ALL_BARRIER_BITS);
+}
+
 std::string ComputeShader::loadShaderSource(const char* filePath) const {
 	std::ifstream in(filePath);
 	if (!in.is_open()) {

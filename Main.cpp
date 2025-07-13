@@ -43,8 +43,8 @@ const float VISCOSITY_STRENGTH = 0.35f;
 const float NEAR_DENSITY_MULTIPLIER = 0.2f;
 const float DELTA_TIME = 0.016f;
 
-const float INTERACTION_RADIUS = 0.3f;
-const float INTERACTION_STRENGTH = 0.8f;
+const float INTERACTION_RADIUS = 0.25f;
+const float INTERACTION_STRENGTH = 0.7f;
 
 bool upLastFrame = false;
 bool downLastFrame = false;

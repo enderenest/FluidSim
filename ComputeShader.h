@@ -18,10 +18,14 @@ public:
 
 		void setInt(const char* name, int value) const;
 
+		void wait() const;
+
 
 private:
 		unsigned int ID;
+
 		std::string loadShaderSource(const char* filePath) const;
+
 		void checkCompileErrors(GLuint object, const std::string& type) const;
 };
 
