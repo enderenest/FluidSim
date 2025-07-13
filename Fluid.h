@@ -11,7 +11,6 @@
 #include <unordered_map>
 #include <numeric>
 #include <execution>
-#include <omp.h>
 
 const float PI = 3.14159265359f;
 const float twoPI = 2.0f * PI;
@@ -70,6 +69,7 @@ class Fluid {
 		float _derivativeSpikyPow2Factor;
 		float _spikyKernelPow3Factor;
 		float _derivativeSpikyPow3Factor;
+		float _poly6Factor;
 
 
 		bool _isPaused = false;
@@ -110,7 +110,6 @@ class Fluid {
 		void UpdateSpatialLookup(float radius);
 		void ApplyInteractionForce(glm::vec2 inputPos, float radius, float strength);
 		float ViscosityKernel(float radius, float distance);
-		float ViscosityKernelDerivative(float radius, float distance);
 		glm::vec3 CalculateViscosityForce(int particleIndex);
 		float NearSmoothingKernel(float radius, float distance);
 		float NearSmoothingKernelDerivative(float radius, float distance);

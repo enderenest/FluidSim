@@ -135,6 +135,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ComputeShader.cpp" />
     <ClCompile Include="EBO.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="Main.cpp" />
@@ -146,6 +147,7 @@
   <ItemGroup>
     <ClInclude Include="EBO.h" />
     <ClInclude Include="Fluid.h" />
+    <ClInclude Include="ComputeShader.h" />
     <ClInclude Include="shaderClass.h" />
     <ClInclude Include="VAO.h" />
     <ClInclude Include="VBO.h" />
@@ -153,6 +155,7 @@
   <ItemGroup>
     <None Include="default.frag" />
     <None Include="default.vert" />
+    <None Include="fluid_update.comp" />
     <None Include="line.frag" />
     <None Include="line.vert" />
   </ItemGroup>

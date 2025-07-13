@@ -6,6 +6,7 @@
 
 #include "Fluid.h"
 #include"shaderClass.h"
+#include"ComputeShader.h"
 #include"VAO.h"
 #include"VBO.h"
 #include"EBO.h"
@@ -24,16 +25,16 @@
 
 
 const unsigned int WIDTH = 800, HEIGHT = 800;
-const unsigned int PARTICLE_COUNT = 1000;
+const unsigned int PARTICLE_COUNT = 1200;
 const unsigned int CIRCLE_SEGMENTS = 8;
-const unsigned int SPATIAL_HASH_SIZE = 4096;
+const unsigned int SPATIAL_HASH_SIZE = 4960;
 const float PARTICLE_RADIUS = 0.08f;
 const float MASS = 0.08f;
 const float GRAVITY = 3.0f;
-const float COLLISION_DAMPING = 0.2f;
-const float BOUNDARY_X = 0.8f;
-const float BOUNDARY_Y = 0.8f;
-const float BOUNDARY_Z = 0.8f;
+const float COLLISION_DAMPING = 0.8f;
+const float BOUNDARY_X = 0.9f;
+const float BOUNDARY_Y = 0.9f;
+const float BOUNDARY_Z = 0.9f;
 const float SPACING = 0.02f;
 const float SMOOTHING_RADIUS = 0.1f;
 const float PRESSURE_MULTIPLIER = 8.0f;
@@ -42,8 +43,8 @@ const float VISCOSITY_STRENGTH = 0.35f;
 const float NEAR_DENSITY_MULTIPLIER = 0.2f;
 const float DELTA_TIME = 0.016f;
 
-const float INTERACTION_RADIUS = 0.2f;
-const float INTERACTION_STRENGTH = 2.0f;
+const float INTERACTION_RADIUS = 0.3f;
+const float INTERACTION_STRENGTH = 0.8f;
 
 bool upLastFrame = false;
 bool downLastFrame = false;
@@ -83,7 +84,7 @@ void static CreateUnitCircle(std::vector<glm::vec3>& vertices, std::vector<GLuin
 
 int main() {
     glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -95,7 +96,12 @@ int main() {
     }
 
     glfwMakeContextCurrent(window);
-    gladLoadGL();
+
+    if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        std::cerr << "Failed to initialize GLAD\n";
+        return -1;
+    }
+
     glViewport(0, 0, WIDTH, HEIGHT);
 
 

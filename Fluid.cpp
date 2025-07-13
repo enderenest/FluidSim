@@ -26,6 +26,7 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
     _derivativeSpikyPow2Factor = 15 / (PI * std::pow(_smoothingRadius, 5));
     _spikyKernelPow3Factor = 15 / (PI * std::pow(_smoothingRadius, 6));
     _derivativeSpikyPow3Factor = 45 / (PI * std::pow(_smoothingRadius, 6));
+    _poly6Factor = 315 / (64 * PI * std::pow(std::abs(_smoothingRadius), 9));
 
 	_positions.resize(particleCount, glm::vec3(0.0f));
 	_velocities.resize(particleCount, glm::vec3(0.0f));
@@ -289,17 +290,8 @@ void Fluid::UpdateSpatialLookup(float radius) {
 float Fluid::ViscosityKernel(float radius, float distance) {
     if (distance > radius) return 0.0f;
     
-	float volume = PI * _radius8 / 6.0f;
 	float value = std::max(0.0f, _radius2 - distance * distance);
-	return value * value * value / volume;
-}
-
-
-float Fluid::ViscosityKernelDerivative(float radius, float distance) {
-    if (distance > radius) return 0.0f;
-
-    float scale = 12.0f / (PI * _radius4);
-    return (distance - radius) * scale;
+	return value * value * value * _poly6Factor;
 }
 
 
@@ -376,7 +368,7 @@ void Fluid::ApplyInteractionForce(glm::vec2 inputPos, float radius, float streng
                 float dist = sqrt(sqrDist);
                 glm::vec2 direction = (dist <= EPSILON) ? glm::vec2(0.0f) : offset / dist;
                 float influence = 1.0f - dist / radius;
-                glm::vec2 force2D = (direction * strength - glm::vec2(_velocities[particleIndex])) * influence;
+                glm::vec2 force2D = direction * strength - glm::vec2(_velocities[particleIndex]) * influence;
 
                 // Apply force to X and Y components
                 _velocities[particleIndex].x += force2D.x;
