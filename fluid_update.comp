@@ -35,10 +35,21 @@ const float boundaryX = 0.9f;
 const float boundaryY = 0.9f;
 const float boundaryZ = 0.9f;
 
+const ivec2 cellOffsets[9] = ivec2[](
+    ivec2(0, 0), ivec2(1, 0), ivec2(0, 1),
+    ivec2(-1, 0), ivec2(0, -1), ivec2(1, 1),
+    ivec2(-1, -1), ivec2(1, -1), ivec2(-1, 1)
+);
+
 
 void main() {
     uint index = gl_GlobalInvocationID.x;
     if (index >= positions.length()) return;
+
+    velocities[idx].y -= gravity * dt; // Apply gravity
+    predictedPositions[idx] = positions[idx] + velocities[idx] * dt;
+
+    
 
 }
 
@@ -97,3 +108,80 @@ float Poly6Kernel(float radius, float distance) {
     float factor = 315 / (64 * PI * pow(abs(radius), 9));
 	return v * v * v * factor;
 }
+
+float RandomFloat(uint seed) {
+    return fract(sin(float(seed) * 12.9898) * 43758.5453);
+}
+
+vec3 GetRandomDirection3D(uint idx) {
+    float x = RandomFloat(idx * 928371u) * 2.0 - 1.0; // [-1, 1]
+    float y = RandomFloat(idx * 128931u) * 2.0 - 1.0; // [-1, 1]
+    float z = 0.0f;
+    return normalize(vec3(x, y, z));
+}
+
+ivec3 PositionsToCellCoord(vec3 point, float radius) {
+    return ivec3(
+        int(floor(point.x / radius)),
+        int(floor(point.y / radius)),
+        0
+    );
+}
+
+uint HashCell(int x, int y) {
+    const uint p1 = 73856093u;
+    const uint p2 = 19349663u;
+    return uint(x) * p1 ^ uint(y) * p2;
+}
+
+uint GetKeyFromHash(uint hash) {
+    return hash % hashSize;
+}
+
+vec2 CalculateDensity(uint i) {
+    ivec3 cellCoord = PositionsToCellCoord(predictedPositions[i], smoothingRadius);
+    float density = 0.0;
+    float nearDensity = 0.0;
+
+    int centerX = cellCoord.x;
+    int centerY = cellCoord.y;
+    float sqrRadius = smoothingRadius * smoothingRadius;
+
+    for (int k = 0; k < 9; ++k) {
+        int offsetX = cellOffsets[k].x;
+        int offsetY = cellOffsets[k].y;
+
+        uint key = GetKeyFromHash(HashCell(centerX + offsetX, centerY + offsetY));
+        uint cellStartIndex = uint(startIndices[key]);
+        if (cellStartIndex == MAX_INT) continue;
+
+        for (uint j = cellStartIndex; j < spatialLookup.length(); ++j) {
+            if (uint(spatialLookup[j].key) != key) break;
+
+            uint particleIndex = uint(spatialLookup[j].index);
+            if (particleIndex == i) continue;
+
+            vec3 offset = predictedPositions[particleIndex] - predictedPositions[i];
+            float sqrDistance = dot(offset, offset);
+
+            if (sqrDistance < sqrRadius) {
+                float distance = sqrt(sqrDistance);
+                density += SpikyPow2Kernel(smoothingRadius, distance) * mass;
+                nearDensity += SpikyPow3Kernel(smoothingRadius, distance) * mass;
+            }
+        }
+    }
+    return vec2(density, nearDensity);
+}
+
+float DensityToPressure(float density) {
+	float densityError = density - targetDensity;
+	float pressure = pressureMultiplier * densityError;
+    return pressure;
+}
+
+float NearDensityToPressure(float nearDensity)
+{
+    return nearDensityMultiplier * nearDensity;
+}
+
