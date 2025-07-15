@@ -6,8 +6,8 @@ template<typename T>
 SSBO<T>::SSBO(size_t count, GLenum usage)
     : _count(count)
 {
-    glGenBuffers(1, &_handle);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _handle);
+    glGenBuffers(1, &_id);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _id);
     glBufferData(
         GL_SHADER_STORAGE_BUFFER,
         _count * sizeof(T),
@@ -19,14 +19,14 @@ SSBO<T>::SSBO(size_t count, GLenum usage)
 // Destructor: delete the GPU buffer
 template<typename T>
 SSBO<T>::~SSBO() {
-    glDeleteBuffers(1, &_handle);
+    glDeleteBuffers(1, &_id);
 }
 
 // Upload data via glBufferSubData
 template<typename T>
 void SSBO<T>::upload(const std::vector<T>& data) {
     assert(data.size() == _count);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _handle);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _id);
     glBufferSubData(
         GL_SHADER_STORAGE_BUFFER,
         0,
@@ -41,14 +41,14 @@ void SSBO<T>::bindTo(GLuint bindingIndex) const {
     glBindBufferBase(
         GL_SHADER_STORAGE_BUFFER,
         bindingIndex,
-        _handle
+        _id
     );
 }
 
 // Map buffer range for direct access
 template<typename T>
 T* SSBO<T>::map(GLbitfield access) {
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _handle);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _id);
     return static_cast<T*>(
         glMapBufferRange(
             GL_SHADER_STORAGE_BUFFER,

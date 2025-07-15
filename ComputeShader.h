@@ -22,7 +22,7 @@ public:
 
 
 private:
-		unsigned int ID;
+		unsigned int _id;
 
 		std::string loadShaderSource(const char* filePath) const;
 

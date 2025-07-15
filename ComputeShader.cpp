@@ -13,22 +13,22 @@ ComputeShader::ComputeShader(const char* computePath)
 	glCompileShader(shader);
 	checkCompileErrors(shader, "COMPUTE");
 
-	ID = glCreateProgram();
-	glAttachShader(ID, shader);
-	glLinkProgram(ID);
-	checkCompileErrors(ID, "PROGRAM");
+	_id = glCreateProgram();
+	glAttachShader(_id, shader);
+	glLinkProgram(_id);
+	checkCompileErrors(_id, "PROGRAM");
 
 	glDeleteShader(shader);
 }
 
 ComputeShader::~ComputeShader() 
 {
-	glDeleteProgram(ID);
+	glDeleteProgram(_id);
 }
 
 void ComputeShader::use() const 
 {
-	glUseProgram(ID);
+	glUseProgram(_id);
 }
 
 void ComputeShader::dispatch(unsigned int groupsX, unsigned int groupsY, unsigned int groupsZ) const 
@@ -39,7 +39,7 @@ void ComputeShader::dispatch(unsigned int groupsX, unsigned int groupsY, unsigne
 
 void ComputeShader::setInt(const char* name, int value) const 
 {
-	glUniform1i(glGetUniformLocation(ID, name), value);
+	glUniform1i(glGetUniformLocation(_id, name), value);
 }
 
 void ComputeShader::wait() const 

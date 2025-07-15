@@ -31,7 +31,7 @@ public:
     size_t count() const;
 
 private:
-    GLuint _handle;   // OpenGL buffer handle
+    GLuint _id;   // OpenGL buffer handle
     size_t _count;    // Number of T elements
 };
 
