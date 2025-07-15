@@ -30,7 +30,7 @@ const unsigned int CIRCLE_SEGMENTS = 8;
 const unsigned int SPATIAL_HASH_SIZE = 4960;
 const float PARTICLE_RADIUS = 0.08f;
 const float MASS = 0.08f;
-const float GRAVITY = 3.0f;
+const float GRAVITY_ACCELERATION = 3.0f;
 const float COLLISION_DAMPING = 0.8f;
 const float BOUNDARY_X = 0.9f;
 const float BOUNDARY_Y = 0.9f;
@@ -129,7 +129,7 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
     glBindVertexArray(0);
 
-    Fluid fluid(PARTICLE_COUNT, PARTICLE_RADIUS, MASS, GRAVITY, COLLISION_DAMPING, SPACING, PRESSURE_MULTIPLIER, TARGET_DENSITY, SMOOTHING_RADIUS, SPATIAL_HASH_SIZE, INTERACTION_RADIUS, INTERACTION_STRENGTH, VISCOSITY_STRENGTH, NEAR_DENSITY_MULTIPLIER);
+    Fluid fluid(PARTICLE_COUNT, PARTICLE_RADIUS, MASS, GRAVITY_ACCELERATION, COLLISION_DAMPING, SPACING, PRESSURE_MULTIPLIER, TARGET_DENSITY, SMOOTHING_RADIUS, SPATIAL_HASH_SIZE, INTERACTION_RADIUS, INTERACTION_STRENGTH, VISCOSITY_STRENGTH, NEAR_DENSITY_MULTIPLIER);
 
     std::vector<glm::vec3> circleVertices;
     std::vector<GLuint> circleIndices;
@@ -245,7 +245,7 @@ int main() {
                 fluid.SetGravity(0.0f);
 
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-            fluid.SetGravity(GRAVITY);
+            fluid.SetGravity(GRAVITY_ACCELERATION);
 
 
         if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {

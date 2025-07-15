@@ -8,7 +8,7 @@
 class ComputeShader
 {
 public:
-		ComputeShader(const char* computePath);
+		ComputeShader(const char* computeFile);
 		
 		~ComputeShader();
 
@@ -17,6 +17,8 @@ public:
 		void dispatch(unsigned int groupsX, unsigned int groupsY = 1, unsigned int groupsZ = 1) const;
 
 		void setInt(const char* name, int value) const;
+
+		void setFloat(const char* name, float value) const;
 
 		void wait() const;
 

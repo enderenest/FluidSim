@@ -2,7 +2,11 @@
 
 #define FLUID_CLASS_H  
 
-#define GLM_ENABLE_EXPERIMENTAL  
+#define GLM_ENABLE_EXPERIMENTAL 
+
+#include "ComputeShader.h"
+#include "SSBO.h"
+
 #include <glm/glm.hpp>  
 #include <glm/gtx/string_cast.hpp>  
 #include <vector>  
@@ -40,14 +44,15 @@ static std::pair<int, int> cellOffsets[9] = {
 
 class Fluid {  
 	private :  
-		std::vector<glm::vec3> _positions;
-		std::vector<glm::vec3> _velocities; 
-		std::vector<float> _densities;  
-		std::vector<float> _nearDensities;
-		std::vector<glm::vec3> _predictedPositions;
-		std::vector<Entry> _spatialLookup;
-		std::vector<unsigned int> _startIndices;
+		SSBO <glm::vec3> _positions;
+		SSBO <glm::vec3> _velocities; 
+		SSBO <float> _densities;  
+		SSBO <float> _nearDensities;
+		SSBO <glm::vec3> _predictedPositions;
+		SSBO <Entry> _spatialLookup;
+		SSBO <unsigned int> _startIndices;
 
+		ComputeShader _updateShader;
 
 		unsigned int _particleCount;
 		unsigned int _hashSize; 
@@ -78,8 +83,13 @@ class Fluid {
 		float _interactionStrength;
 
 	public:  
-		Fluid(unsigned int particleCount, float particleRadius, const float mass, const float gravity, const float collisionDamping, const float spacing, const float pressureMultiplier, const float targetDensity, const float smoothingRadius, const unsigned int hashSize, const float interactionRadius, const float interactionStrength, float viscosityStrength, float nearDensityMultiplier);  
-		void Update(float dt);  
+		Fluid(unsigned int particleCount, float particleRadius, const float mass, const float gravity, const float collisionDamping, const float spacing, const float pressureMultiplier, const float targetDensity, const float smoothingRadius, const unsigned int hashSize, const float interactionRadius, const float interactionStrength, float viscosityStrength, float nearDensityMultiplier);
+
+		void Update(float dt);
+
+		void HandleBoundaryCollisions(float boundryX, float boundaryY, float boundaryZ);
+
+		// Setter/getter methods for keyboard controls
 		void GetParticlePositions(std::vector<glm::vec3>& outPositions);
 		void GetParticleVelocities(std::vector<glm::vec3>& outVelocities);
 		float GetPressureMultiplier();
@@ -94,8 +104,7 @@ class Fluid {
 		float GetNearDensityMultiplier();
 		void SetNearDensityMultiplier(float nearDensityMultiplier);
 
-		void HandleBoundaryCollisions(float boundryX, float boundaryY, float boundaryZ);  
-		float SmoothingKernel(float radius, float distance);  
+		/*float SmoothingKernel(float radius, float distance);  
 		float SmoothingKernelDerivative(float radius, float distance);  
 		std::pair<float, float> CalculateDensity(const int i);
 		float DensityToPressure(float density); 
@@ -112,7 +121,7 @@ class Fluid {
 		float ViscosityKernel(float radius, float distance);
 		glm::vec3 CalculateViscosityForce(int particleIndex);
 		float NearSmoothingKernel(float radius, float distance);
-		float NearSmoothingKernelDerivative(float radius, float distance);
+		float NearSmoothingKernelDerivative(float radius, float distance);*/
 };  
 
 #endif // FLUID_CLASS_H

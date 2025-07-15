@@ -3,9 +3,9 @@
 #include <sstream>
 #include <iostream>
 
-ComputeShader::ComputeShader(const char* computePath) 
+ComputeShader::ComputeShader(const char* computeFile) 
 {
-	std::string code = loadShaderSource(computePath);
+	std::string code = loadShaderSource(computeFile);
 	const char* src = code.c_str();
 
 	GLuint shader = glCreateShader(GL_COMPUTE_SHADER);
@@ -40,6 +40,11 @@ void ComputeShader::dispatch(unsigned int groupsX, unsigned int groupsY, unsigne
 void ComputeShader::setInt(const char* name, int value) const 
 {
 	glUniform1i(glGetUniformLocation(_id, name), value);
+}
+
+void ComputeShader::setFloat(const char* name, float value) const
+{
+	glUniform1f(glGetUniformLocation(_id, name), value);
 }
 
 void ComputeShader::wait() const 

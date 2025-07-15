@@ -1,14 +1,99 @@
 #version 430 core
 
-layout(local_size_x = 32) in;
+layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 
-layout(std430, binding = 0) buffer Particles {
-    vec4 positions[];
-};
+// Buffer declarations for particle data
+layout(std430, binding = 0) buffer Positions { vec3 positions[]; };
+layout(std430, binding = 1) buffer PredictedPositions { vec3 predictedPositions[]; };
+layout(std430, binding = 2) buffer Velocities { vec3 velocities[]; };
+layout(std430, binding = 3) buffer Densities { float densities[]; };
+layout(std430, binding = 4) buffer NearDensities { float nearDensities[]; };
+layout(std430, binding = 5) buffer SpatialLookup { float spatialLookup[]; };
+layout(std430, binding = 6) buffer StartIndices { float startIndices[]; };
 
+// Uniforms variables that are change dynamically during simulation
 uniform float dt;
+uniform float gravity;
+uniform float mass;
+uniform float collisionDamping;
+uniform float smoothingRadius;
+uniform float targetDensity;
+uniform float pressureMultiplier;
+uniform float viscosityStrength;
+uniform float nearDensityMultiplier;
+
+// Constant values
+const uint MAX_INT = 0xffffffffu;
+const float PI = 3.14159265359f;
+const float EPSILON = 1e-6f;
+
+const unsigned int particleCount = 10000;
+const unsigned int hashSize = 32768;
+const float spacing = 0.01;
+const float particleRadius = 0.05;
+const float boundaryX = 0.9f;
+const float boundaryY = 0.9f;
+const float boundaryZ = 0.9f;
+
 
 void main() {
-    uint idx = gl_GlobalInvocationID.x;
-    // update particles[idx] …
+    uint index = gl_GlobalInvocationID.x;
+    if (index >= positions.length()) return;
+
+}
+
+void HandleBoundaryCollisions(uint index) {
+    vec2 halfBounds = vec2(boundaryX  - particleRadius, boundaryY  - particleRadius);
+
+    if (abs(positions[index].x) > halfBounds.x) {
+        positions[index].x = halfBounds.x * sign(positions[index].x);
+        velocities[index].x *= - collisionDamping;
+    }
+
+    if (abs(positions[index].y) > halfBounds.y) {
+        positions[index].y = halfBounds.y * sign(positions[index].y);
+        velocities[index].y *= - collisionDamping;
+    }
+
+    positions[index].z = 0.0f;
+}
+
+float SpikyPow2Kernel(float radius, float distance) {  
+	if (distance > radius) return 0.0f;
+
+	float v = radius - distance;
+    float factor = 15 / (2 * PI * pow(radius, 5));
+    return v * v * factor;
+}
+
+float SpikyPow2KernelDerivative(float radius, float distance) {
+    if (distance > radius) return 0.0f;
+
+    float v = radius - distance;
+    float factor = 15 / (PI * pow(radius, 5));
+    return -v * factor;
+}
+
+float SpikyPow3Kernel(float radius, float distance) {  
+	if (distance > radius) return 0.0f;
+
+	float v = radius - distance;
+    float factor = 15 / (PI * pow(radius, 6));
+    return v * v * v * factor;
+}
+
+float SpikyPow3KernelDerivative(float radius, float distance) {  
+	if (distance > radius) return 0.0f;
+
+	float v = radius - distance;
+    float factor = 45 / (PI * pow(radius, 6));
+    return -v * v * factor;
+}
+
+float Poly6Kernel(float radius, float distance) {  
+	if (distance > radius) return 0.0f;
+
+    float v = max(0.0f, radius * radius - distance * distance);
+    float factor = 315 / (64 * PI * pow(abs(radius), 9));
+	return v * v * v * factor;
 }
