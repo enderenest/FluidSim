@@ -85,7 +85,7 @@
     <None Include="line.frag">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="fluid_update.comp">
+    <None Include="compute_shader.comp">
       <Filter>Resource Files\Shaders</Filter>
     </None>
   </ItemGroup>

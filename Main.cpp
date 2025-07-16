@@ -129,7 +129,7 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
     glBindVertexArray(0);
 
-    Fluid fluid(PARTICLE_COUNT, PARTICLE_RADIUS, MASS, GRAVITY_ACCELERATION, COLLISION_DAMPING, SPACING, PRESSURE_MULTIPLIER, TARGET_DENSITY, SMOOTHING_RADIUS, SPATIAL_HASH_SIZE, INTERACTION_RADIUS, INTERACTION_STRENGTH, VISCOSITY_STRENGTH, NEAR_DENSITY_MULTIPLIER);
+    Fluid fluid(PARTICLE_COUNT, PARTICLE_RADIUS, MASS, GRAVITY_ACCELERATION, COLLISION_DAMPING, SPACING, PRESSURE_MULTIPLIER, TARGET_DENSITY, SMOOTHING_RADIUS, SPATIAL_HASH_SIZE, INTERACTION_RADIUS, INTERACTION_STRENGTH, VISCOSITY_STRENGTH, NEAR_DENSITY_MULTIPLIER, BOUNDARY_X, BOUNDARY_Y, BOUNDARY_Z);
 
     std::vector<glm::vec3> circleVertices;
     std::vector<GLuint> circleIndices;
@@ -144,24 +144,9 @@ int main() {
 
     EBO ebo1(circleIndices.data(), circleIndices.size() * sizeof(GLuint));
 
-    // Instance data: positions
-    std::vector<glm::vec3> instancePositions(PARTICLE_COUNT);
-    VBO instancePosVBO(instancePositions.data(), instancePositions.size() * sizeof(glm::vec3));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
-    glVertexAttribDivisor(1, 1);
-
-    // Instance data: velocities
-    std::vector<glm::vec3> instanceVelocities(PARTICLE_COUNT);
-    VBO instanceVelVBO(instanceVelocities.data(), instanceVelocities.size() * sizeof(glm::vec3));
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
-    glVertexAttribDivisor(2, 1);
 
     vao1.Unbind();
     vboCircle.Unbind();
-    instancePosVBO.Unbind();
-    instanceVelVBO.Unbind();
     ebo1.Unbind();
 
     while (!glfwWindowShouldClose(window)) {
@@ -169,6 +154,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT);
 
         // ------------------ MOUSE INTERACTION -----------------------
+        fluid.SetIsInteracting(false);
         double mouseX, mouseY;
         glfwGetCursorPos(window, &mouseX, &mouseY);
 
@@ -179,12 +165,16 @@ int main() {
 
         // Apply force on left-click
         if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-            fluid.ApplyInteractionForce(worldMousePos, INTERACTION_RADIUS, INTERACTION_STRENGTH);
+            fluid.SetIsInteracting(true);
+            fluid.SetInteractionPosition(glm::vec3(worldMousePos, 0.0f));
+            fluid.SetInteractionStrength(INTERACTION_STRENGTH);
         }
 
         // Apply force on right-click
         if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
-            fluid.ApplyInteractionForce(worldMousePos, INTERACTION_RADIUS, -INTERACTION_STRENGTH);
+            fluid.SetIsInteracting(true);
+            fluid.SetInteractionPosition(glm::vec3(worldMousePos, 0.0f));
+            fluid.SetInteractionStrength(-INTERACTION_STRENGTH);
         }
         // ------------------------------------------------------------
 
@@ -263,15 +253,7 @@ int main() {
 
 
         fluid.Update(DELTA_TIME);
-        fluid.HandleBoundaryCollisions(BOUNDARY_X, BOUNDARY_Y, 0.0f);
-        fluid.GetParticlePositions(instancePositions);
-        fluid.GetParticleVelocities(instanceVelocities);
 
-        glBindBuffer(GL_ARRAY_BUFFER, instancePosVBO.ID);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, instancePositions.size() * sizeof(glm::vec3), instancePositions.data());
-
-        glBindBuffer(GL_ARRAY_BUFFER, instanceVelVBO.ID);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, instanceVelocities.size() * sizeof(glm::vec3), instanceVelocities.data());
 
         shaderProgram.Activate();
         vao1.Bind();
@@ -289,8 +271,6 @@ int main() {
 
     vao1.Delete();
     vboCircle.Delete();
-    instancePosVBO.Delete();
-    instanceVelVBO.Delete();
     ebo1.Delete();
     shaderProgram.Delete();
     glDeleteVertexArrays(1, &boundaryVAO);
