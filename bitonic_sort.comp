@@ -20,6 +20,7 @@ void main() {
     uint first = (pair / groupWidth) * groupWidth + (pair % (groupWidth / 2));
     uint second = first + groupWidth / 2;
 
+    if (first >= spatialLookup.length()) return;
     if (second >= spatialLookup.length()) return;
 
     uint keyFirst = spatialLookup[first].key;

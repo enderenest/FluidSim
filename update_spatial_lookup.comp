@@ -7,7 +7,7 @@ struct Entry {
 
 layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 
-layout(std430, binding = 2) buffer PredictedPositions { vec3 predictedPositions[]; };
+layout(std430, binding = 2) buffer PredictedPositions { vec4 predictedPositions[]; };
 layout(std430, binding = 6) buffer SpatialLookup { Entry spatialLookup[]; };
 layout(std430, binding = 8) buffer SimulationParameters { 
     float dt; float gravityAcceleration; float mass; float collisionDamping;
@@ -38,14 +38,16 @@ uint GetKeyFromHash(uint hash) {
     return hash % hashSize;
 }
 
-uint GetKey(vec3 point) {
-    ivec3 cell = PositionToCellCoord(point, smoothingRadius);
+uint GetKey(vec4 point) {
+    vec3 p = point.xyz;
+    ivec3 cell = PositionToCellCoord(p, smoothingRadius);
     return GetKeyFromHash(HashCell(cell.x, cell.y));
 }
 
 void main() {
     uint i = gl_GlobalInvocationID.x;
     if (i >= particleCount) return;
+
     spatialLookup[i].index = int(i);
     spatialLookup[i].key = GetKey(predictedPositions[i]);
 }

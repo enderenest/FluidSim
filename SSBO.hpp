@@ -31,14 +31,16 @@ public:
 
     // Upload a full vector of data to the GPU buffer
     void upload(const std::vector<T>& data) {
-        assert(data.size() == _count);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _id);
-        glBufferSubData(
-            GL_SHADER_STORAGE_BUFFER,
-            0,
-            _count * sizeof(T),
-            data.data()
-        );
+        if (data.size() != _count) {
+            _count = data.size();
+            glBindBuffer(GL_SHADER_STORAGE_BUFFER, _id);
+            glBufferData(GL_SHADER_STORAGE_BUFFER, _count * sizeof(T), data.data(), GL_DYNAMIC_DRAW);
+        }
+        else {
+            glBindBuffer(GL_SHADER_STORAGE_BUFFER, _id);
+            glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, _count * sizeof(T), data.data());
+        }
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     }
 
     // Bind this SSBO to the given binding point in GLSL

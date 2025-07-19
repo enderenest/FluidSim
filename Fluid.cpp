@@ -12,13 +12,14 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
       _startIndices(hashSize, GL_DYNAMIC_DRAW),
       _simParams(1, GL_STATIC_DRAW),
 
+      _predictedPosShader("predicted_positions.comp"),
 	  _densityStep("density_step.comp"),
 	  _forceStep("force_step.comp"),
       _fluidStep("fluid_step.comp"),
 	  _bitonicSortShader("bitonic_sort.comp"),
 	  _updateSpatialLookup("update_spatial_lookup.comp"),
-	  _buildStartIndices("build_start_indices.comp"),
-	  _predictedPosShader("predicted_positions.comp")
+	  _buildStartIndices("build_start_indices.comp")
+	  
 {
 	//Initialize simulation parameters
     _params.dt = 0.016f;
@@ -49,7 +50,7 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
     _simParams.upload(std::vector<SimulationParameters>{_params});
 
     // Initialize positions in a grid
-    std::vector<glm::vec3> initialPositions(particleCount, glm::vec3(0.0f));
+    std::vector<glm::vec4> initialPositions(_params.particleCount, glm::vec4(0.0f));
 
     int particlesPerRow = static_cast<int>(std::sqrt(particleCount));
     int particlesPerCol = (particleCount - 1) / particlesPerRow + 1;
@@ -61,12 +62,12 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
         float x = (col - particlesPerRow / 2.0f + 0.5f) * spacing;
         float y = (row - particlesPerCol / 2.0f + 0.5f) * spacing;
 
-		initialPositions[i] = glm::vec3(x, y, 0.0f);
+		initialPositions[i] = glm::vec4(x, y, 0.0f, 0.0f);
     }
 
     _positions.upload(initialPositions);
     _predictedPositions.upload(initialPositions);
-    _velocities.upload(std::vector<glm::vec3>(particleCount, glm::vec3(0.0f)));
+    _velocities.upload(std::vector<glm::vec4>(particleCount, glm::vec4(0.0f)));
     _densities.upload(std::vector<float>(particleCount, 0.0f));
     _nearDensities.upload(std::vector<float>(particleCount, 0.0f));
 	_spatialLookup.upload(std::vector<Entry>(particleCount, Entry{ 0, 0 }));
@@ -114,6 +115,8 @@ void Fluid::Update(float dt) {
 	_buildStartIndices.wait();
 
 	// Step 5: Calculate densities
+    _densities.upload(std::vector<float>(_params.particleCount, 0.0f));
+    _nearDensities.upload(std::vector<float>(_params.particleCount, 0.0f));
 	_densityStep.use();
 	_predictedPositions.bindTo(2);
 	_densities.bindTo(4);
@@ -147,23 +150,22 @@ void Fluid::Update(float dt) {
 
 
 void Fluid::SortSpatialLookup() {
-    const int groupSize = 32; // Nvidia recommends 32 for optimal performance. Please adjust based on your GPU model
-    int numGroups = (_positions.count() + groupSize - 1) / groupSize;
+    int N = _params.particleCount;
+    int logN = (int)std::log2(N);
 
-    int logN = (int)std::log2(_params.particleCount);
     for (int stage = 1; stage <= logN; ++stage) {
         int groupHeight = 1 << stage;
         for (int step = stage; step > 0; --step) {
             int groupWidth = 1 << step;
-            bool ascending = true; // You can toggle depending on your sort needs
+            int numGroups = (N + (groupWidth / 2) - 1) / (groupWidth / 2);
 
             _bitonicSortShader.use();
             _bitonicSortShader.setInt("groupWidth", groupWidth);
             _bitonicSortShader.setInt("groupHeight", groupHeight);
-            _bitonicSortShader.setInt("ascending", ascending ? 1 : 0);
-			_spatialLookup.bindTo(6);
+            _bitonicSortShader.setInt("ascending", 1);
+            _spatialLookup.bindTo(6);
             _bitonicSortShader.dispatch(numGroups);
-			_bitonicSortShader.wait();
+            _bitonicSortShader.wait();
         }
     }
 }

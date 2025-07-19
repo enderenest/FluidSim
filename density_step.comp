@@ -7,7 +7,7 @@ struct Entry {
 
 layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 
-layout(std430, binding = 2) buffer PredictedPositions { vec3 predictedPositions[]; };
+layout(std430, binding = 2) buffer PredictedPositions { vec4 predictedPositions[]; };
 layout(std430, binding = 4) buffer Densities { float densities[]; };
 layout(std430, binding = 5) buffer NearDensities { float nearDensities[]; };
 layout(std430, binding = 6) buffer SpatialLookup { Entry spatialLookup[]; };
@@ -47,7 +47,7 @@ const float EPSILON = 1e-6f;
 
 
 
-const ivec2 cellOffsets[9] = ivec2[](
+const ivec2 cellOffsets[9] = ivec2[9](
     ivec2(0, 0), ivec2(1, 0), ivec2(0, 1),
     ivec2(-1, 0), ivec2(0, -1), ivec2(1, 1),
     ivec2(-1, -1), ivec2(1, -1), ivec2(-1, 1)
@@ -88,7 +88,7 @@ uint GetKeyFromHash(uint hash) {
 }
 
 vec2 CalculateDensity(uint i) {
-    ivec3 cellCoord = PositionsToCellCoord(predictedPositions[i], smoothingRadius);
+    ivec3 cellCoord = PositionsToCellCoord(predictedPositions[i].xyz, smoothingRadius);
     float density = 0.0;
     float nearDensity = 0.0;
 
@@ -110,7 +110,7 @@ vec2 CalculateDensity(uint i) {
             uint particleIndex = uint(spatialLookup[j].index);
             if (particleIndex == i) continue;
 
-            vec3 offset = predictedPositions[particleIndex] - predictedPositions[i];
+            vec3 offset = predictedPositions[particleIndex].xyz - predictedPositions[i].xyz;
             float sqrDistance = dot(offset, offset);
 
             if (sqrDistance < sqrRadius) {

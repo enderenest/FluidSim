@@ -8,8 +8,8 @@ struct Entry {
 layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 
 // Buffer declarations for particle data
-layout(std430, binding = 1) buffer Positions { vec3 positions[]; };
-layout(std430, binding = 3) buffer Velocities { vec3 velocities[]; };
+layout(std430, binding = 1) buffer Positions { vec4 positions[]; };
+layout(std430, binding = 3) buffer Velocities { vec4 velocities[]; };
 layout(std430, binding = 8) buffer SimulationParameters {
     float dt;
     float gravityAcceleration;
@@ -58,11 +58,12 @@ void HandleBoundaryCollisions(uint index) {
     }
 
     positions[index].z = 0.0f;
+    positions[index].w = 0.0f;
 }
 
 void main() {
     uint index = gl_GlobalInvocationID.x;
-    if (index >= positions.length()) return;
+    if (index >= particleCount) return;
 
     positions[index] += velocities[index] * dt;
     HandleBoundaryCollisions(index);

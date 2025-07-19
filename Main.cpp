@@ -14,7 +14,7 @@
 #include <vector>
 #include <cmath>
 
-// influence = SmmothingKernel(smmothingRadius, distance)
+// influence = SmoothingKernel(smoothingRadius, distance)
 // density += influence * mass;
 // slope = SmoothingKernelDerivative(smoothingRadius, distance)
 // float densityError = density - _targetDensity;
@@ -24,27 +24,27 @@
 // velocity += pressureAcceleration * dt;
 
 
-const unsigned int WIDTH = 800, HEIGHT = 800;
-const unsigned int PARTICLE_COUNT = 2048;
+const unsigned int WIDTH = 900, HEIGHT = 900;
+const unsigned int PARTICLE_COUNT = 1024;
 const unsigned int CIRCLE_SEGMENTS = 8;
-const unsigned int SPATIAL_HASH_SIZE = 4960;
-const float PARTICLE_RADIUS = 0.005f;
-const float MASS = 0.05f;
-const float GRAVITY_ACCELERATION = 3.0f;
-const float COLLISION_DAMPING = 0.95f;
+const unsigned int SPATIAL_HASH_SIZE = 4096;
+const float PARTICLE_RADIUS = 0.08f;
+const float MASS = 0.008f;
+const float GRAVITY_ACCELERATION = 0.0f;
+const float COLLISION_DAMPING = 0.3f;
 const float BOUNDARY_X = 0.9f;
 const float BOUNDARY_Y = 0.9f;
 const float BOUNDARY_Z = 0.9f;
 const float SPACING = 0.02f;
-const float SMOOTHING_RADIUS = 0.5f;
-const float PRESSURE_MULTIPLIER = 2.0f;
-const float TARGET_DENSITY = 700.0f;
-const float VISCOSITY_STRENGTH = 0.5f;
-const float NEAR_DENSITY_MULTIPLIER = 0.2f;
+const float SMOOTHING_RADIUS = 0.1f;
+const float PRESSURE_MULTIPLIER = 0.00001f;
+const float TARGET_DENSITY = 80.0f;
+const float VISCOSITY_STRENGTH = 0.35f;
+const float NEAR_DENSITY_MULTIPLIER = 0.0f;
 const float DELTA_TIME = 0.016f;
 
-const float INTERACTION_RADIUS = 0.25f;
-const float INTERACTION_STRENGTH = 0.6f;
+const float INTERACTION_RADIUS = 0.0f;
+const float INTERACTION_STRENGTH = 0.0f;
 
 bool upLastFrame = false;
 bool downLastFrame = false;
@@ -111,6 +111,7 @@ int main() {
 
 	float line_boundary_x = BOUNDARY_X - PARTICLE_RADIUS;
 	float line_boundary_y = BOUNDARY_Y - PARTICLE_RADIUS;
+
 	std::vector<glm::vec3> boundaryLines = {
 		{-line_boundary_x, -line_boundary_y, 0.0f}, { line_boundary_x, -line_boundary_y, 0.0f},
 		{ line_boundary_x, -line_boundary_y, 0.0f}, { line_boundary_x,  line_boundary_y, 0.0f},
@@ -133,7 +134,7 @@ int main() {
 
 	std::vector<glm::vec3> circleVertices;
 	std::vector<GLuint> circleIndices;
-	CreateUnitCircle(circleVertices, circleIndices, CIRCLE_SEGMENTS, 1.0f);
+	CreateUnitCircle(circleVertices, circleIndices, CIRCLE_SEGMENTS, PARTICLE_RADIUS);
 
 	VAO vao1;
 	vao1.Bind();
@@ -154,7 +155,7 @@ int main() {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		/*// ------------------ MOUSE INTERACTION -----------------------
+		// ------------------ MOUSE INTERACTION -----------------------
 		fluid.SetIsInteracting(false);
 		double mouseX, mouseY;
 		glfwGetCursorPos(window, &mouseX, &mouseY);
@@ -250,9 +251,9 @@ int main() {
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 			glfwSetWindowShouldClose(window, true);
 		}
-		// ------------------------------------------------------------*/
+		// ------------------------------------------------------------
 
-		//fluid.Update(DELTA_TIME);
+		fluid.Update(DELTA_TIME);
 
 		shaderProgram.Activate();
 

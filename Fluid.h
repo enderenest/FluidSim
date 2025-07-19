@@ -52,9 +52,9 @@ struct Entry {
 
 class Fluid {  
 	private :  
-		SSBO <glm::vec3> _positions;
-		SSBO <glm::vec3> _predictedPositions;
-		SSBO <glm::vec3> _velocities; 
+		SSBO <glm::vec4> _positions;
+		SSBO <glm::vec4> _predictedPositions;
+		SSBO <glm::vec4> _velocities; 
 		SSBO <float> _densities;  
 		SSBO <float> _nearDensities;
 		SSBO <Entry> _spatialLookup;

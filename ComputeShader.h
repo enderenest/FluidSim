@@ -28,7 +28,7 @@ private:
 
 		std::string loadShaderSource(const char* filePath) const;
 
-		void checkCompileErrors(GLuint object, const std::string& type) const;
+		void checkCompileErrors(GLuint object, const std::string& type, const char* filename) const;
 };
 
 #endif

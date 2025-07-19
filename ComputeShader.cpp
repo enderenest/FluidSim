@@ -11,12 +11,12 @@ ComputeShader::ComputeShader(const char* computeFile)
 	GLuint shader = glCreateShader(GL_COMPUTE_SHADER);
 	glShaderSource(shader, 1, &src, nullptr);
 	glCompileShader(shader);
-	checkCompileErrors(shader, "COMPUTE");
+	checkCompileErrors(shader, "COMPUTE", computeFile);
 
 	_id = glCreateProgram();
 	glAttachShader(_id, shader);
 	glLinkProgram(_id);
-	checkCompileErrors(_id, "PROGRAM");
+	checkCompileErrors(_id, "PROGRAM", computeFile);
 
 	glDeleteShader(shader);
 }
@@ -63,28 +63,22 @@ std::string ComputeShader::loadShaderSource(const char* filePath) const {
 	return ss.str();
 }
 
-void ComputeShader::checkCompileErrors(GLuint object, const std::string& type) const 
+void ComputeShader::checkCompileErrors(GLuint object, const std::string& type, const char* filename = nullptr) const
 {
 	GLint success;
-	GLchar infoLog[1024];
+	glGetShaderiv(object,
+		type[0] == 'P' ? GL_LINK_STATUS : GL_COMPILE_STATUS,
+		&success);
+	if (!success) {
+		char infoLog[1024];
+		if (type[0] == 'P') glGetProgramInfoLog(object, 1024, NULL, infoLog);
+		else              glGetShaderInfoLog(object, 1024, NULL, infoLog);
 
-	if (type == "COMPUTE") {
-		glGetShaderiv(object, GL_COMPILE_STATUS, &success);
-		if (!success) {
-			glGetShaderInfoLog(object, 1024, nullptr, infoLog);
-			std::cerr << "ERROR::SHADER_COMPILATION_ERROR of type: "
-				<< type << "\n"
-				<< infoLog << "\n";
-		}
-	}
-	else {  // PROGRAM
-		glGetProgramiv(object, GL_LINK_STATUS, &success);
-		if (!success) {
-			glGetProgramInfoLog(object, 1024, nullptr, infoLog);
-			std::cerr << "ERROR::PROGRAM_LINKING_ERROR of type: "
-				<< type << "\n"
-				<< infoLog << "\n";
-		}
+		std::cerr
+			<< "ERROR::" << type
+			<< (filename ? std::string(" [") + filename + "]" : std::string())
+			<< "\n" << infoLog
+			<< "\n -- --------------------------------------------------- --\n";
 	}
 }
 
