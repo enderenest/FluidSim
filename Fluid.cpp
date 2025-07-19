@@ -4,13 +4,21 @@
 
 Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const float mass, const float gravityAcceleration, const float collisionDamping, const float spacing, const float pressureMultiplier, const float targetDensity, const float smoothingRadius, const unsigned int hashSize, const float interactionRadius, const float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ)
     : _positions(particleCount, GL_DYNAMIC_DRAW),
-    _velocities(particleCount, GL_DYNAMIC_DRAW),
-    _densities(particleCount, GL_DYNAMIC_DRAW),
-    _nearDensities(particleCount, GL_DYNAMIC_DRAW),
-    _predictedPositions(particleCount, GL_DYNAMIC_DRAW),
-    _startIndices(hashSize, GL_DYNAMIC_DRAW),
-    _simParams(1, GL_DYNAMIC_DRAW),
-    _updateShader("compute_shader.comp")
+      _predictedPositions(particleCount, GL_DYNAMIC_DRAW),
+      _velocities(particleCount, GL_DYNAMIC_DRAW),
+      _densities(particleCount, GL_DYNAMIC_DRAW),
+      _nearDensities(particleCount, GL_DYNAMIC_DRAW),
+	  _spatialLookup(particleCount, GL_DYNAMIC_DRAW),
+      _startIndices(hashSize, GL_DYNAMIC_DRAW),
+      _simParams(1, GL_STATIC_DRAW),
+
+	  _densityStep("density_step.comp"),
+	  _forceStep("force_step.comp"),
+      _fluidStep("fluid_step.comp"),
+	  _bitonicSortShader("bitonic_sort.comp"),
+	  _updateSpatialLookup("update_spatial_lookup.comp"),
+	  _buildStartIndices("build_start_indices.comp"),
+	  _predictedPosShader("predicted_positions.comp")
 {
 	//Initialize simulation parameters
     _params.dt = 0.016f;
@@ -24,7 +32,9 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
     _params.nearDensityMultiplier = nearDensityMultiplier;
     _params.isInteracting = 0;
     _params.isPaused = 0;
-    _params.inputPosition = glm::vec3(0.0f);
+    _params.inputPositionX = 0.0f;
+    _params.inputPositionY = 0.0f;
+    _params.inputPositionZ = 0.0f;
     _params.interactionRadius = interactionRadius;
     _params.interactionStrength = interactionStrength;
 
@@ -40,48 +50,136 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
 
     // Initialize positions in a grid
     std::vector<glm::vec3> initialPositions(particleCount, glm::vec3(0.0f));
+
     int particlesPerRow = static_cast<int>(std::sqrt(particleCount));
     int particlesPerCol = (particleCount - 1) / particlesPerRow + 1;
 
     for (unsigned int i = 0; i < particleCount; ++i) {
         int row = i / particlesPerRow;
         int col = i % particlesPerRow;
+
         float x = (col - particlesPerRow / 2.0f + 0.5f) * spacing;
         float y = (row - particlesPerCol / 2.0f + 0.5f) * spacing;
-        initialPositions[i] = glm::vec3(x, y, 0.0f);
+
+		initialPositions[i] = glm::vec3(x, y, 0.0f);
     }
 
     _positions.upload(initialPositions);
+    _predictedPositions.upload(initialPositions);
     _velocities.upload(std::vector<glm::vec3>(particleCount, glm::vec3(0.0f)));
     _densities.upload(std::vector<float>(particleCount, 0.0f));
     _nearDensities.upload(std::vector<float>(particleCount, 0.0f));
-    _predictedPositions.upload(initialPositions);
+	_spatialLookup.upload(std::vector<Entry>(particleCount, Entry{ 0, 0 }));
     _startIndices.upload(std::vector<unsigned int>(hashSize, MAX_INT));
-
 }
 
 void Fluid::Update(float dt) {
-    _updateShader.use();
+	if (_params.isPaused) return; // Skip update if paused
 
     _simParams.upload(std::vector<SimulationParameters>{_params});
+    
 
-    _positions.bindTo(0);
-    _predictedPositions.bindTo(1);
-    _velocities.bindTo(2);
-    _densities.bindTo(3);
-    _nearDensities.bindTo(4);
-    _startIndices.bindTo(6);
-    _simParams.bindTo(7);
-
-	const int groupSize = 32; // Nvidia recommends 32 for optimal performance. Please adjust based on your GPU model
+    const int groupSize = 32; // Nvidia recommends 32 for optimal performance. Please adjust based on your GPU model
     int numGroups = (_positions.count() + groupSize - 1) / groupSize;
-    _updateShader.dispatch(numGroups);
+
+	// Step 0: Predict positions based on velocities
+	_predictedPosShader.use();
+	_positions.bindTo(1);
+	_predictedPositions.bindTo(2);
+	_velocities.bindTo(3);
+	_simParams.bindTo(8);
+    _predictedPosShader.dispatch(numGroups);
+	_predictedPosShader.wait();
+
+    // Step 1: Update spatial lookup keys
+    _updateSpatialLookup.use();
+	_predictedPositions.bindTo(2);
+    _spatialLookup.bindTo(6);
+    _simParams.bindTo(8);
+    _updateSpatialLookup.dispatch(numGroups);
+	_updateSpatialLookup.wait();
+
+    // Step 2: Sort spatial lookup
+    SortSpatialLookup();
+
+	// Step 3: Clear start indices
+    _startIndices.upload(std::vector<unsigned int>(_params.hashSize, MAX_INT));
+ 
+	// Step 4: Update start indices
+    _buildStartIndices.use();
+    _spatialLookup.bindTo(6);
+    _startIndices.bindTo(7);
+    _simParams.bindTo(8);
+    _buildStartIndices.dispatch(numGroups);
+	_buildStartIndices.wait();
+
+	// Step 5: Calculate densities
+	_densityStep.use();
+	_predictedPositions.bindTo(2);
+	_densities.bindTo(4);
+	_nearDensities.bindTo(5);
+	_spatialLookup.bindTo(6);
+	_startIndices.bindTo(7);
+	_simParams.bindTo(8);
+	_densityStep.dispatch(numGroups);
+	_densityStep.wait();
+
+	// Step 6: Calculate forces
+	_forceStep.use();
+	_predictedPositions.bindTo(2);
+	_velocities.bindTo(3);
+	_densities.bindTo(4);
+	_nearDensities.bindTo(5);
+	_spatialLookup.bindTo(6);
+	_startIndices.bindTo(7);
+	_simParams.bindTo(8);
+	_forceStep.dispatch(numGroups);
+	_forceStep.wait();
+
+	// Step 7: Update positions and velocities
+	_fluidStep.use();
+    _positions.bindTo(1);
+    _velocities.bindTo(3);
+    _simParams.bindTo(8);
+    _fluidStep.dispatch(numGroups);
+    _fluidStep.wait();
 }
 
 
+void Fluid::SortSpatialLookup() {
+    const int groupSize = 32; // Nvidia recommends 32 for optimal performance. Please adjust based on your GPU model
+    int numGroups = (_positions.count() + groupSize - 1) / groupSize;
+
+    int logN = (int)std::log2(_params.particleCount);
+    for (int stage = 1; stage <= logN; ++stage) {
+        int groupHeight = 1 << stage;
+        for (int step = stage; step > 0; --step) {
+            int groupWidth = 1 << step;
+            bool ascending = true; // You can toggle depending on your sort needs
+
+            _bitonicSortShader.use();
+            _bitonicSortShader.setInt("groupWidth", groupWidth);
+            _bitonicSortShader.setInt("groupHeight", groupHeight);
+            _bitonicSortShader.setInt("ascending", ascending ? 1 : 0);
+			_spatialLookup.bindTo(6);
+            _bitonicSortShader.dispatch(numGroups);
+			_bitonicSortShader.wait();
+        }
+    }
+}
+
+
+void Fluid::BindRenderBuffers() {
+    _positions.bindTo(1);
+    _velocities.bindTo(3);
+}
 
 void Fluid::SetIsInteracting(bool state) { _params.isInteracting = state; }
-void Fluid::SetInteractionPosition(glm::vec3 pos) { _params.inputPosition = pos; }
+void Fluid::SetInteractionPosition(glm::vec3 pos) { 
+    _params.inputPositionX = pos.x;
+	_params.inputPositionY = pos.y;
+	_params.inputPositionZ = pos.z;
+}
 void Fluid::SetInteractionStrength(float strength) { _params.interactionStrength = strength; }
 
 float Fluid::GetPressureMultiplier() { return _params.pressureMultiplier; }

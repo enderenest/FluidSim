@@ -137,12 +137,10 @@
   <ItemGroup>
     <ClCompile Include="ComputeShader.cpp" />
     <ClCompile Include="EBO.cpp" />
-    <ClCompile Include="Fluid_refoctored.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Fluid.cpp" />
     <ClCompile Include="shaderClass.cpp" />
-    <ClCompile Include="SSBO.cpp" />
     <ClCompile Include="VAO.cpp" />
     <ClCompile Include="VBO.cpp" />
   </ItemGroup>
@@ -151,16 +149,22 @@
     <ClInclude Include="Fluid.h" />
     <ClInclude Include="ComputeShader.h" />
     <ClInclude Include="shaderClass.h" />
-    <ClInclude Include="SSBO.h" />
+    <ClInclude Include="SSBO.hpp" />
     <ClInclude Include="VAO.h" />
     <ClInclude Include="VBO.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="bitonic_sort.comp" />
+    <None Include="build_start_indices.comp" />
     <None Include="default.frag" />
     <None Include="default.vert" />
-    <None Include="compute_shader.comp" />
+    <None Include="density_step.comp" />
+    <None Include="fluid_step.comp" />
+    <None Include="force_step.comp" />
     <None Include="line.frag" />
     <None Include="line.vert" />
+    <None Include="predicted_positions.comp" />
+    <None Include="update_spatial_lookup.comp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -34,7 +34,6 @@ void ComputeShader::use() const
 void ComputeShader::dispatch(unsigned int groupsX, unsigned int groupsY, unsigned int groupsZ) const 
 {
 	glDispatchCompute(groupsX, groupsY, groupsZ);
-	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
 void ComputeShader::setInt(const char* name, int value) const 
@@ -49,7 +48,7 @@ void ComputeShader::setFloat(const char* name, float value) const
 
 void ComputeShader::wait() const 
 {
-	glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
 std::string ComputeShader::loadShaderSource(const char* filePath) const {
