@@ -80,7 +80,7 @@ void Fluid::Update(float dt) {
     _simParams.upload(std::vector<SimulationParameters>{_params});
     
 
-    const int groupSize = 32; // Nvidia recommends 32 for optimal performance. Please adjust based on your GPU model
+    const int groupSize = 1024; // Nvidia recommends 32 for optimal performance. Please adjust based on your GPU model
     int numGroups = (_positions.count() + groupSize - 1) / groupSize;
 
 	// Step 0: Predict positions based on velocities
@@ -92,7 +92,10 @@ void Fluid::Update(float dt) {
     _predictedPosShader.dispatch(numGroups);
 	_predictedPosShader.wait();
 
-    // Step 1: Update spatial lookup keys
+    // Step 1: Update spatial lookup keys,
+	_spatialLookup.upload(std::vector<Entry>(_params.particleCount, Entry{ 0, 0 }));
+	glad_glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
     _updateSpatialLookup.use();
 	_predictedPositions.bindTo(2);
     _spatialLookup.bindTo(6);
@@ -105,6 +108,7 @@ void Fluid::Update(float dt) {
 
 	// Step 3: Clear start indices
     _startIndices.upload(std::vector<unsigned int>(_params.hashSize, MAX_INT));
+	glad_glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
  
 	// Step 4: Update start indices
     _buildStartIndices.use();
@@ -115,8 +119,10 @@ void Fluid::Update(float dt) {
 	_buildStartIndices.wait();
 
 	// Step 5: Calculate densities
-    //_densities.upload(std::vector<float>(_params.particleCount, 0.0f));
-    //_nearDensities.upload(std::vector<float>(_params.particleCount, 0.0f));
+    _densities.upload(std::vector<float>(_params.particleCount, 0.0f));
+    _nearDensities.upload(std::vector<float>(_params.particleCount, 0.0f));
+	glad_glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
 	_densityStep.use();
 	_predictedPositions.bindTo(2);
 	_densities.bindTo(4);
@@ -152,7 +158,7 @@ void Fluid::Update(float dt) {
 
 void Fluid::SortSpatialLookup() {
     GLuint N = _params.particleCount;
-    GLuint localSize = 32;
+    GLuint localSize = 1024;
     const GLuint groups = N / localSize;       
 
     _bitonicSortShader.use();

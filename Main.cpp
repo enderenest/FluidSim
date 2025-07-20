@@ -31,20 +31,20 @@ const unsigned int SPATIAL_HASH_SIZE = 4096 * 16;
 const float PARTICLE_RADIUS = 0.002f;
 const float MASS = 0.04f;
 const float GRAVITY_ACCELERATION = 1.5f;
-const float COLLISION_DAMPING = 0.5f;
+const float COLLISION_DAMPING = 0.3f;
 const float BOUNDARY_X = 0.9f;
 const float BOUNDARY_Y = 0.9f;
 const float BOUNDARY_Z = 0.9f;
 const float SPACING = 0.01f;
 const float SMOOTHING_RADIUS = 0.08f;
-const float PRESSURE_MULTIPLIER = 4.0f;
-const float TARGET_DENSITY = 4000.0f;
-const float VISCOSITY_STRENGTH = 0.3f;
-const float NEAR_DENSITY_MULTIPLIER = 0.2f;
+const float PRESSURE_MULTIPLIER = 3.0f;
+const float TARGET_DENSITY = 3000.0f;
+const float VISCOSITY_STRENGTH = 0.2f;
+const float NEAR_DENSITY_MULTIPLIER = 0.25f;
 const float DELTA_TIME = 0.016f;
 
 const float INTERACTION_RADIUS = 0.25f;
-const float INTERACTION_STRENGTH = 10.f;
+const float INTERACTION_STRENGTH = 8.f;
 
 bool upLastFrame = false;
 bool downLastFrame = false;
