@@ -82,6 +82,7 @@ class Fluid {
 
 		// Setter/getter methods for keyboard controls
 		void SetIsInteracting(bool state);
+		void SetInteractionRadius(float radius);
 		void SetInteractionPosition(glm::vec3 pos);
 		void SetInteractionStrength(float strength);
 		float GetPressureMultiplier();

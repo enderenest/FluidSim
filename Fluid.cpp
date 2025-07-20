@@ -1,4 +1,4 @@
-#include "Fluid.h"
+﻿#include "Fluid.h"
 #include <iostream>
 
 
@@ -115,8 +115,8 @@ void Fluid::Update(float dt) {
 	_buildStartIndices.wait();
 
 	// Step 5: Calculate densities
-    _densities.upload(std::vector<float>(_params.particleCount, 0.0f));
-    _nearDensities.upload(std::vector<float>(_params.particleCount, 0.0f));
+    //_densities.upload(std::vector<float>(_params.particleCount, 0.0f));
+    //_nearDensities.upload(std::vector<float>(_params.particleCount, 0.0f));
 	_densityStep.use();
 	_predictedPositions.bindTo(2);
 	_densities.bindTo(4);
@@ -129,6 +129,7 @@ void Fluid::Update(float dt) {
 
 	// Step 6: Calculate forces
 	_forceStep.use();
+	_positions.bindTo(1);
 	_predictedPositions.bindTo(2);
 	_velocities.bindTo(3);
 	_densities.bindTo(4);
@@ -150,21 +151,22 @@ void Fluid::Update(float dt) {
 
 
 void Fluid::SortSpatialLookup() {
-    int N = _params.particleCount;
-    int logN = (int)std::log2(N);
+    GLuint N = _params.particleCount;
+    GLuint localSize = 32;
+    const GLuint groups = N / localSize;       
 
-    for (int stage = 1; stage <= logN; ++stage) {
-        int groupHeight = 1 << stage;
-        for (int step = stage; step > 0; --step) {
-            int groupWidth = 1 << step;
-            int numGroups = (N + (groupWidth / 2) - 1) / (groupWidth / 2);
+    _bitonicSortShader.use();
+    _spatialLookup.bindTo(6);
 
-            _bitonicSortShader.use();
-            _bitonicSortShader.setInt("groupWidth", groupWidth);
-            _bitonicSortShader.setInt("groupHeight", groupHeight);
-            _bitonicSortShader.setInt("ascending", 1);
-            _spatialLookup.bindTo(6);
-            _bitonicSortShader.dispatch(numGroups);
+    _bitonicSortShader.setUint("u_N", N);
+
+    for (GLuint size = 2; size <= N; size <<= 1) {
+        for (GLuint stride = size >> 1; stride > 0; stride >>= 1) {
+            _bitonicSortShader.setUint("u_size", size);
+            _bitonicSortShader.setUint("u_stride", stride);
+
+            // ← dispatch here, not after the loops
+            _bitonicSortShader.dispatch(groups, 1, 1);
             _bitonicSortShader.wait();
         }
     }
@@ -183,6 +185,7 @@ void Fluid::SetInteractionPosition(glm::vec3 pos) {
 	_params.inputPositionZ = pos.z;
 }
 void Fluid::SetInteractionStrength(float strength) { _params.interactionStrength = strength; }
+void Fluid::SetInteractionRadius(float radius) { _params.interactionRadius = radius; }
 
 float Fluid::GetPressureMultiplier() { return _params.pressureMultiplier; }
 void Fluid::SetPressureMultiplier(float pressureMultiplier) { _params.pressureMultiplier = pressureMultiplier; }

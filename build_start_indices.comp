@@ -38,6 +38,7 @@ void main() {
     if (idx >= particleCount) return;
 
     uint key = spatialLookup[idx].key;
+    if (key == MAX_INT) return;
     uint keyPrev = (idx > 0) ? spatialLookup[idx - 1].key : MAX_INT;
     if (key != keyPrev) {
         startIndices[key] = idx;

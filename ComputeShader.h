@@ -20,7 +20,11 @@ public:
 
 		void setFloat(const char* name, float value) const;
 
+		void setUint(const char* name, const unsigned int value) const;
+
 		void wait() const;
+
+		unsigned int getID();
 
 
 private:

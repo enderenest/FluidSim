@@ -46,6 +46,13 @@ void ComputeShader::setFloat(const char* name, float value) const
 	glUniform1f(glGetUniformLocation(_id, name), value);
 }
 
+void ComputeShader::setUint(const char* name, const unsigned int value) const 
+{
+	glUniform1ui(glGetUniformLocation(_id, name), value);
+}
+
+unsigned int ComputeShader::getID() { return _id; }
+
 void ComputeShader::wait() const 
 {
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);

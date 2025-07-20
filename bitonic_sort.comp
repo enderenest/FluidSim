@@ -1,41 +1,28 @@
 #version 430 core
+layout(local_size_x = 32) in;
 
-struct Entry {
-	int index;
-	uint key;
+struct Entry { int index; uint key; };
+
+layout(std430, binding = 6) buffer SpatialLookup {
+    Entry spatialLookup[];
 };
 
-layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
-
-layout(std430, binding = 6) buffer SpatialLookup { Entry spatialLookup[]; };
-
-uniform int groupWidth;
-uniform int groupHeight;
-uniform int ascending; // 1 for ascending sort, 0 for descending
+uniform uint u_N;       // real element count (1024)
+uniform uint u_size;    // subarray length: 2,4,8,…,1024
+uniform uint u_stride;  // merge stride: size/2, size/4, …, 1
 
 void main() {
-    uint idx = gl_GlobalInvocationID.x;
-    uint pair = idx;
+    uint idx     = gl_GlobalInvocationID.x;
+    uint partner = idx ^ u_stride;
 
-    uint first = (pair / groupWidth) * groupWidth + (pair % (groupWidth / 2));
-    uint second = first + groupWidth / 2;
-
-    if (first >= spatialLookup.length()) return;
-    if (second >= spatialLookup.length()) return;
-
-    uint keyFirst = spatialLookup[first].key;
-    uint keySecond = spatialLookup[second].key;
-
-    bool swap = (ascending == 1 && keyFirst > keySecond) ||
-                (ascending == 0 && keyFirst < keySecond);
-
-    if (swap) {
-        uint tmpKey = spatialLookup[first].key;
-        spatialLookup[first].key = spatialLookup[second].key;
-        spatialLookup[second].key = tmpKey;
-
-        int tmpIndex = spatialLookup[first].index;
-        spatialLookup[first].index = spatialLookup[second].index;
-        spatialLookup[second].index = tmpIndex;
+   // bitonic_sort.comp
+    if (idx < u_N && partner < u_N && idx < partner) {
+        bool ascending = ((idx & u_size) == 0u);
+        Entry a = spatialLookup[idx];
+        Entry b = spatialLookup[partner];
+        if ((a.key > b.key) == ascending) {
+            spatialLookup[idx]     = b;
+            spatialLookup[partner] = a;
+        }
     }
 }

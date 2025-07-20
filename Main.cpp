@@ -24,27 +24,27 @@
 // velocity += pressureAcceleration * dt;
 
 
-const unsigned int WIDTH = 900, HEIGHT = 900;
-const unsigned int PARTICLE_COUNT = 1024;
+const unsigned int WIDTH = 1000, HEIGHT = 1000;
+const unsigned int PARTICLE_COUNT = 1024 * 16;
 const unsigned int CIRCLE_SEGMENTS = 8;
-const unsigned int SPATIAL_HASH_SIZE = 4096;
-const float PARTICLE_RADIUS = 0.08f;
-const float MASS = 0.008f;
-const float GRAVITY_ACCELERATION = 0.0f;
-const float COLLISION_DAMPING = 0.3f;
+const unsigned int SPATIAL_HASH_SIZE = 4096 * 16;
+const float PARTICLE_RADIUS = 0.04f;
+const float MASS = 0.04f;
+const float GRAVITY_ACCELERATION = 1.5f;
+const float COLLISION_DAMPING = 0.5f;
 const float BOUNDARY_X = 0.9f;
 const float BOUNDARY_Y = 0.9f;
 const float BOUNDARY_Z = 0.9f;
-const float SPACING = 0.02f;
-const float SMOOTHING_RADIUS = 0.1f;
-const float PRESSURE_MULTIPLIER = 0.00001f;
-const float TARGET_DENSITY = 80.0f;
-const float VISCOSITY_STRENGTH = 0.35f;
-const float NEAR_DENSITY_MULTIPLIER = 0.0f;
+const float SPACING = 0.01f;
+const float SMOOTHING_RADIUS = 0.075f;
+const float PRESSURE_MULTIPLIER = 5.0f;
+const float TARGET_DENSITY = 5000.0f;
+const float VISCOSITY_STRENGTH = 0.3f;
+const float NEAR_DENSITY_MULTIPLIER = 0.2f;
 const float DELTA_TIME = 0.016f;
 
-const float INTERACTION_RADIUS = 0.0f;
-const float INTERACTION_STRENGTH = 0.0f;
+const float INTERACTION_RADIUS = 0.1f;
+const float INTERACTION_STRENGTH = 0.1f;
 
 bool upLastFrame = false;
 bool downLastFrame = false;
@@ -170,6 +170,7 @@ int main() {
 			fluid.SetIsInteracting(true);
 			fluid.SetInteractionPosition(glm::vec3(worldMousePos, 0.0f));
 			fluid.SetInteractionStrength(INTERACTION_STRENGTH);
+			fluid.SetInteractionRadius(INTERACTION_RADIUS);
 		}
 
 		// Apply force on right-click
@@ -177,6 +178,7 @@ int main() {
 			fluid.SetIsInteracting(true);
 			fluid.SetInteractionPosition(glm::vec3(worldMousePos, 0.0f));
 			fluid.SetInteractionStrength(-INTERACTION_STRENGTH);
+			fluid.SetInteractionRadius(INTERACTION_RADIUS);
 		}
 		// ------------------------------------------------------------
 
@@ -184,39 +186,39 @@ int main() {
 		// ------------------ KEYBOARD CONTROLS -----------------------
 		int upState = glfwGetKey(window, GLFW_KEY_UP);
 		if (upState == GLFW_PRESS && !upLastFrame) {
-			fluid.SetPressureMultiplier(fluid.GetPressureMultiplier() + 1.0f);
+			fluid.SetPressureMultiplier(fluid.GetPressureMultiplier() + 0.5f);
 		}
 		upLastFrame = (upState == GLFW_PRESS);
 
 		int downState = glfwGetKey(window, GLFW_KEY_DOWN);
 		if (downState == GLFW_PRESS && !downLastFrame) {
-			fluid.SetPressureMultiplier(fluid.GetPressureMultiplier() - 1.0f);
+			fluid.SetPressureMultiplier(fluid.GetPressureMultiplier() - 0.5f);
 		}
 		downLastFrame = (downState == GLFW_PRESS);
 
 		int oneState = glfwGetKey(window, GLFW_KEY_1);
 		if (oneState == GLFW_PRESS && !oneLastFrame) {
-			fluid.SetTargetDensity(fluid.GetTargetDensity() + 10.0f);
+			fluid.SetTargetDensity(fluid.GetTargetDensity() + 100.0f);
 		}
 		oneLastFrame = (oneState == GLFW_PRESS);
 
 		int twoState = glfwGetKey(window, GLFW_KEY_2);
 		if (twoState == GLFW_PRESS && !twoLastFrame) {
 			if (fluid.GetTargetDensity() > 3.0f)
-				fluid.SetTargetDensity(fluid.GetTargetDensity() - 10.0f);
+				fluid.SetTargetDensity(fluid.GetTargetDensity() - 100.0f);
 		}
 		twoLastFrame = (twoState == GLFW_PRESS);
 
 		int vState = glfwGetKey(window, GLFW_KEY_V);
 		if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
-			fluid.SetViscosityStrength(fluid.GetViscosityStrength() + 0.2f);
+			fluid.SetViscosityStrength(fluid.GetViscosityStrength() + 0.1f);
 		}
 		vLastFrame = (vState == GLFW_PRESS);
 
 		int bState = glfwGetKey(window, GLFW_KEY_B);
 		if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
 			if (fluid.GetViscosityStrength() > 0.2f)
-				fluid.SetViscosityStrength(fluid.GetViscosityStrength() - 0.2f);
+				fluid.SetViscosityStrength(fluid.GetViscosityStrength() - 0.1f);
 		}
 		bLastFrame = (bState == GLFW_PRESS);
 
