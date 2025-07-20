@@ -1,34 +1,57 @@
 #version 430 core
 
-in vec2 texCoord;
 in vec3 velocity;
 
 out vec4 FragColor;
 
 vec3 velocityToColor(float t)
 {
-    if (t < 0.25)
-        return mix(vec3(0.0, 0.0, 1.0), vec3(0.0, 1.0, 1.0), smoothstep(0.0, 0.25, t));        
-    else if (t < 0.5)
-        return mix(vec3(0.0, 1.0, 1.0), vec3(0.0, 1.0, 0.0), smoothstep(0.25, 0.5, t)); 
-    else if (t < 0.75)
-        return mix(vec3(0.0, 1.0, 0.0), vec3(1.0, 1.0, 0.0), smoothstep(0.5, 0.75, t));  
-    else
-        return mix(vec3(1.0, 1.0, 0.0), vec3(1.0, 0.0, 0.0), smoothstep(0.75, 1.0, t)); 
+    const float s = 0.125;          
+    if (t < s)    
+        return mix(vec3(0,0,1),
+                   vec3(0,1,1),    
+                   smoothstep(0.0, s, t));
+    else if (t < 2*s) // 0.125–0.25
+        return mix(vec3(0,1,1),
+                   vec3(0,1,0),
+                   smoothstep(s, 2*s, t));
+    else if (t < 3*s)
+        return mix(vec3(0,1,0),
+                   vec3(1,1,0),
+                   smoothstep(2*s, 3*s, t));
+    else if (t < 4*s)
+        return mix(vec3(1,1,0),
+                   vec3(1,0,0),
+                   smoothstep(3*s, 4*s, t));
+    else if (t < 5*s)
+        return mix(vec3(1,0,0),
+                   vec3(1,0,1),
+                   smoothstep(4*s, 5*s, t));
+    else if (t < 6*s)
+        return mix(vec3(1,0,1),
+                   vec3(0,0,1),
+                   smoothstep(5*s, 6*s, t));
+    else if (t < 7*s)
+        return mix(vec3(0,0,1),
+                   vec3(0,1,0),
+                   smoothstep(6*s, 7*s, t));
+    else               // 7*s – 1.0
+        return mix(vec3(0,1,0),
+                   vec3(1,1,0),
+                   smoothstep(7*s, 1.0, t));
 }
 
 void main()
 {
-    // Calculate soft circle mask
-    vec2 centreOffset = (texCoord - vec2(0.5)) * 2.0;
-    float distSquared = dot(centreOffset, centreOffset);
-    float delta = fwidth(sqrt(distSquared));
-    float circleAlpha = 1.0 - smoothstep(1.0 - delta, 1.0 + delta, distSquared);
+    vec2 centred = (gl_PointCoord - vec2(0.5)) * 2.0;
+    float d2     = dot(centred, centred);
+    float delta  = fwidth(sqrt(d2));
+    float alpha  = 1.0 - smoothstep(1.0 - delta, 1.0 + delta, d2);
 
-    // Map velocity to speed-based color
+
     float speed = length(velocity);
-    float t = clamp(speed / 3.0, 0.0, 1.0);  // Adjust divisor (3.0) based on your expected max speed
-    vec3 color = velocityToColor(t);
+    float t     = clamp(speed / 4.0, 0.0, 1.0);
+    vec3  col   = velocityToColor(t);
 
-    FragColor = vec4(color, circleAlpha);
+    FragColor = vec4(col, alpha);
 }

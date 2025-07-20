@@ -21,6 +21,8 @@ public:
 
 	void Delete();
 
+	void setFloat(const std::string& name, float value);
+
 private:
 	void compileErrors(unsigned int shader, const char* type);
 };
