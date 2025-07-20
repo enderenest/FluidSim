@@ -203,41 +203,30 @@ vec3 CalculateViscosityForce(uint i) {
 	return viscosityForce * viscosityStrength;
 }
 
-void ApplyInteractionForce(vec2 inputPos, float radius, float strength) {
-    vec3 totalForce = vec3(0.0); 
-    vec3 inputPos3D = vec3(inputPos, 0.0);
-    vec3 cellCoord = PositionsToCellCoord(inputPos3D, smoothingRadius);
-    int centerX = int(cellCoord.x);
-    int centerY = int(cellCoord.y);
-
-    float sqrRadius = radius * radius;
-
-    for (int k = 0; k < 9; ++k) {
-        int offsetX = cellOffsets[k].x;
-        int offsetY = cellOffsets[k].y;
-
-        uint key = GetKeyFromHash(HashCell(centerX + offsetX, centerY + offsetY));
-        uint cellStartIndex = startIndices[key];
-        if (cellStartIndex == MAX_INT) continue;
-
-        for (uint j = cellStartIndex; j < spatialLookup.length(); ++j) {
-            if (spatialLookup[j].key != key) break;
-
-            int particleIndex = spatialLookup[j].index;
-            vec2 offset = inputPos - positions[particleIndex].xy;  // 2D offset
-            float sqrDist = dot(offset, offset);
-            if (sqrDist < sqrRadius) {
-                float dist = sqrt(sqrDist);
-                vec2 direction = (dist <= EPSILON) ? vec2(0.0f) : offset / dist;
-                float influence = 1.0f - dist / radius;
-                vec2 force2D = direction * strength - velocities[particleIndex].xy * influence;
-
-                totalForce += vec3(force2D, 0.0f);
-
-                velocities[particleIndex].xy += force2D * dt; // Apply force to velocity
-            }
-        }
+vec2 ComputeInteractionAccel(vec2 pos, vec2 vel) {
+    float sqrR   = interactionRadius * interactionRadius;
+    vec2  offset = vec2(inputPositionX, inputPositionY) - pos;
+    float sqrD   = dot(offset, offset);
+    if (sqrD >= sqrR) {
+        return vec2(0.0);
     }
+
+    float dist    = sqrt(sqrD);
+    float edgeT   = dist / interactionRadius; 
+    float centreT = 1.0 - edgeT;             
+
+    vec2 dir = (dist > EPSILON) ? (offset / dist) : vec2(0.0);
+
+    return dir * (centreT * interactionStrength)
+         - vel * centreT;
+}
+
+void ApplyInteractionForce(uint i) {
+    vec2 pos = positions[i].xy;
+    vec2 vel = velocities[i].xy;
+
+    vec2 accel = ComputeInteractionAccel(pos, vel);
+    velocities[i].xy += accel * dt;
 }
 
 void main() {
@@ -247,8 +236,7 @@ void main() {
     vec3 pressureAcceleration = densities[index] < EPSILON ? vec3(0.0) : CalculatePressureForce(index) / densities[index];
     vec3 viscosityAcceleration = densities[index] < EPSILON ? vec3(0.0) : CalculateViscosityForce(index) / densities[index];
     if (isInteracting != 0u && isPaused == 0u) {
-        vec2 inputPos = vec2(inputPositionX, inputPositionY);
-        ApplyInteractionForce(inputPos, interactionRadius, interactionStrength);
+        ApplyInteractionForce(index);
     }
     vec3 totalAcceleration = pressureAcceleration + viscosityAcceleration;
 

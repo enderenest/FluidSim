@@ -28,7 +28,7 @@ const unsigned int WIDTH = 1000, HEIGHT = 1000;
 const unsigned int PARTICLE_COUNT = 1024 * 16;
 const unsigned int CIRCLE_SEGMENTS = 8;
 const unsigned int SPATIAL_HASH_SIZE = 4096 * 16;
-const float PARTICLE_RADIUS = 0.04f;
+const float PARTICLE_RADIUS = 0.002f;
 const float MASS = 0.04f;
 const float GRAVITY_ACCELERATION = 1.5f;
 const float COLLISION_DAMPING = 0.5f;
@@ -36,15 +36,15 @@ const float BOUNDARY_X = 0.9f;
 const float BOUNDARY_Y = 0.9f;
 const float BOUNDARY_Z = 0.9f;
 const float SPACING = 0.01f;
-const float SMOOTHING_RADIUS = 0.075f;
-const float PRESSURE_MULTIPLIER = 5.0f;
-const float TARGET_DENSITY = 5000.0f;
+const float SMOOTHING_RADIUS = 0.08f;
+const float PRESSURE_MULTIPLIER = 4.0f;
+const float TARGET_DENSITY = 4000.0f;
 const float VISCOSITY_STRENGTH = 0.3f;
 const float NEAR_DENSITY_MULTIPLIER = 0.2f;
 const float DELTA_TIME = 0.016f;
 
-const float INTERACTION_RADIUS = 0.1f;
-const float INTERACTION_STRENGTH = 0.1f;
+const float INTERACTION_RADIUS = 0.25f;
+const float INTERACTION_STRENGTH = 10.f;
 
 bool upLastFrame = false;
 bool downLastFrame = false;
@@ -97,7 +97,7 @@ int main() {
 
 	glfwMakeContextCurrent(window);
 
-	if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cerr << "Failed to initialize GLAD\n";
 		return -1;
 	}
@@ -134,7 +134,7 @@ int main() {
 
 	std::vector<glm::vec3> circleVertices;
 	std::vector<GLuint> circleIndices;
-	CreateUnitCircle(circleVertices, circleIndices, CIRCLE_SEGMENTS, PARTICLE_RADIUS);
+	CreateUnitCircle(circleVertices, circleIndices, CIRCLE_SEGMENTS, 1.0f);
 
 	VAO vao1;
 	vao1.Bind();
@@ -235,8 +235,8 @@ int main() {
 		}
 		mLastFrame = (mState == GLFW_PRESS);
 
-		if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) 
-				fluid.SetGravity(0.0f);
+		if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
+			fluid.SetGravity(0.0f);
 
 		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
 			fluid.SetGravity(GRAVITY_ACCELERATION);
@@ -284,4 +284,3 @@ int main() {
 	glfwTerminate();
 	return 0;
 }
-
