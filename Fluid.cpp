@@ -94,7 +94,6 @@ void Fluid::Update(float dt) {
 
     // Step 1: Update spatial lookup keys,
 	_spatialLookup.upload(std::vector<Entry>(_params.particleCount, Entry{ 0, 0 }));
-	glad_glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
     _updateSpatialLookup.use();
 	_predictedPositions.bindTo(2);
@@ -108,7 +107,6 @@ void Fluid::Update(float dt) {
 
 	// Step 3: Clear start indices
     _startIndices.upload(std::vector<unsigned int>(_params.hashSize, MAX_INT));
-	glad_glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
  
 	// Step 4: Update start indices
     _buildStartIndices.use();
@@ -121,7 +119,6 @@ void Fluid::Update(float dt) {
 	// Step 5: Calculate densities
     _densities.upload(std::vector<float>(_params.particleCount, 0.0f));
     _nearDensities.upload(std::vector<float>(_params.particleCount, 0.0f));
-	glad_glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 	_densityStep.use();
 	_predictedPositions.bindTo(2);
