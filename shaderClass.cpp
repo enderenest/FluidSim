@@ -45,6 +45,10 @@ Shader::Shader(const char* vertexFile, const char* fragmentFile) {
 	glDeleteShader(fragmentShader);
 }
 
+void Shader::setFloat(const std::string& name, float value) {
+	glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
+}
+
 void Shader::Activate() { glUseProgram(ID); }
 
 void Shader::Delete() { glDeleteProgram(ID); }

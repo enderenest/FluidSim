@@ -3,48 +3,59 @@
 #include <sstream>
 #include <iostream>
 
-ComputeShader::ComputeShader(const char* computePath) 
+ComputeShader::ComputeShader(const char* computeFile) 
 {
-	std::string code = loadShaderSource(computePath);
+	std::string code = loadShaderSource(computeFile);
 	const char* src = code.c_str();
 
 	GLuint shader = glCreateShader(GL_COMPUTE_SHADER);
 	glShaderSource(shader, 1, &src, nullptr);
 	glCompileShader(shader);
-	checkCompileErrors(shader, "COMPUTE");
+	checkCompileErrors(shader, "COMPUTE", computeFile);
 
-	ID = glCreateProgram();
-	glAttachShader(ID, shader);
-	glLinkProgram(ID);
-	checkCompileErrors(ID, "PROGRAM");
+	_id = glCreateProgram();
+	glAttachShader(_id, shader);
+	glLinkProgram(_id);
+	checkCompileErrors(_id, "PROGRAM", computeFile);
 
 	glDeleteShader(shader);
 }
 
 ComputeShader::~ComputeShader() 
 {
-	glDeleteProgram(ID);
+	glDeleteProgram(_id);
 }
 
 void ComputeShader::use() const 
 {
-	glUseProgram(ID);
+	glUseProgram(_id);
 }
 
 void ComputeShader::dispatch(unsigned int groupsX, unsigned int groupsY, unsigned int groupsZ) const 
 {
 	glDispatchCompute(groupsX, groupsY, groupsZ);
-	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
 void ComputeShader::setInt(const char* name, int value) const 
 {
-	glUniform1i(glGetUniformLocation(ID, name), value);
+	glUniform1i(glGetUniformLocation(_id, name), value);
 }
+
+void ComputeShader::setFloat(const char* name, float value) const
+{
+	glUniform1f(glGetUniformLocation(_id, name), value);
+}
+
+void ComputeShader::setUint(const char* name, const unsigned int value) const 
+{
+	glUniform1ui(glGetUniformLocation(_id, name), value);
+}
+
+unsigned int ComputeShader::getID() { return _id; }
 
 void ComputeShader::wait() const 
 {
-	glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
 std::string ComputeShader::loadShaderSource(const char* filePath) const {
@@ -59,28 +70,22 @@ std::string ComputeShader::loadShaderSource(const char* filePath) const {
 	return ss.str();
 }
 
-void ComputeShader::checkCompileErrors(GLuint object, const std::string& type) const 
+void ComputeShader::checkCompileErrors(GLuint object, const std::string& type, const char* filename = nullptr) const
 {
 	GLint success;
-	GLchar infoLog[1024];
+	glGetShaderiv(object,
+		type[0] == 'P' ? GL_LINK_STATUS : GL_COMPILE_STATUS,
+		&success);
+	if (!success) {
+		char infoLog[1024];
+		if (type[0] == 'P') glGetProgramInfoLog(object, 1024, NULL, infoLog);
+		else              glGetShaderInfoLog(object, 1024, NULL, infoLog);
 
-	if (type == "COMPUTE") {
-		glGetShaderiv(object, GL_COMPILE_STATUS, &success);
-		if (!success) {
-			glGetShaderInfoLog(object, 1024, nullptr, infoLog);
-			std::cerr << "ERROR::SHADER_COMPILATION_ERROR of type: "
-				<< type << "\n"
-				<< infoLog << "\n";
-		}
-	}
-	else {  // PROGRAM
-		glGetProgramiv(object, GL_LINK_STATUS, &success);
-		if (!success) {
-			glGetProgramInfoLog(object, 1024, nullptr, infoLog);
-			std::cerr << "ERROR::PROGRAM_LINKING_ERROR of type: "
-				<< type << "\n"
-				<< infoLog << "\n";
-		}
+		std::cerr
+			<< "ERROR::" << type
+			<< (filename ? std::string(" [") + filename + "]" : std::string())
+			<< "\n" << infoLog
+			<< "\n -- --------------------------------------------------- --\n";
 	}
 }
 

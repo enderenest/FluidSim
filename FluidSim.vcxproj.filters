@@ -42,9 +42,6 @@
     <ClCompile Include="glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SSBO.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EBO.h">
@@ -65,7 +62,7 @@
     <ClInclude Include="ComputeShader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SSBO.h">
+    <ClInclude Include="SSBO.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -82,7 +79,25 @@
     <None Include="line.frag">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="fluid_update.comp">
+    <None Include="fluid_step.comp">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="update_spatial_lookup.comp">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="bitonic_sort.comp">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="build_start_indices.comp">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="predicted_positions.comp">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="density_step.comp">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="force_step.comp">
       <Filter>Resource Files\Shaders</Filter>
     </None>
   </ItemGroup>

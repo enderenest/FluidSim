@@ -17,13 +17,13 @@ public:
 
 	Shader(const char* vertexFile, const char* fragmentFile);
 
-	Shader(const char* shaderFile, GLenum shaderType);
-
 	void Activate();
 
 	void Delete();
-private:
 
+	void setFloat(const std::string& name, float value);
+
+private:
 	void compileErrors(unsigned int shader, const char* type);
 };
 

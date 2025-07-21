@@ -1,11 +1,10 @@
-#version 330 core
+#version 430 core
 
-// Vertex input (quad vertex)
-layout (location = 0) in vec3 aPos;
-// Instance input: center position
-layout (location = 1) in vec3 instancePos;
-// Instance input: velocity
-layout (location = 2) in vec3 instanceVel;
+layout (location = 0) in vec3 aPos;  // Static unit circle geometry
+
+layout(std430, binding = 1) buffer Positions { vec4 positions[]; };
+
+layout(std430, binding = 3) buffer Velocities { vec4 velocities[]; };
 
 uniform float scale;
 
@@ -14,13 +13,13 @@ out vec3 velocity;
 
 void main()
 {
-    // Calculate scaled world position of vertex
+    vec3 instancePos = positions[gl_InstanceID].xyz;
+    vec3 instanceVel = velocities[gl_InstanceID].xyz;
+    
     vec3 worldPos = instancePos + aPos * scale;
 
-    // Set position to clip space
     gl_Position = vec4(worldPos, 1.0);
 
-    // Pass UV and velocity
     texCoord = aPos.xy * 0.5 + 0.5;
     velocity = instanceVel;
 }

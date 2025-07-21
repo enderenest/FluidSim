@@ -8,7 +8,7 @@
 class ComputeShader
 {
 public:
-		ComputeShader(const char* computePath);
+		ComputeShader(const char* computeFile);
 		
 		~ComputeShader();
 
@@ -18,15 +18,21 @@ public:
 
 		void setInt(const char* name, int value) const;
 
+		void setFloat(const char* name, float value) const;
+
+		void setUint(const char* name, const unsigned int value) const;
+
 		void wait() const;
+
+		unsigned int getID();
 
 
 private:
-		unsigned int ID;
+		unsigned int _id;
 
 		std::string loadShaderSource(const char* filePath) const;
 
-		void checkCompileErrors(GLuint object, const std::string& type) const;
+		void checkCompileErrors(GLuint object, const std::string& type, const char* filename) const;
 };
 
 #endif
