@@ -24,21 +24,21 @@
 // velocity += pressureAcceleration * dt;
 
 
-const unsigned int WIDTH = 1080, HEIGHT = 1080;
+const unsigned int WIDTH = 1000, HEIGHT = 1000;
 const unsigned int PARTICLE_COUNT = 1024 * 16;
 const unsigned int CIRCLE_SEGMENTS = 16;
 const unsigned int SPATIAL_HASH_SIZE = PARTICLE_COUNT * 4;
 const float PARTICLE_RADIUS = 0.04f;
 const float MASS = 0.04f;
-const float GRAVITY_ACCELERATION = 1.0f;
+const float GRAVITY_ACCELERATION = 1.5f;
 const float COLLISION_DAMPING = 0.3f;
 const float BOUNDARY_X = 0.9f;
 const float BOUNDARY_Y = 0.9f;
 const float BOUNDARY_Z = 0.9f;
-const float SPACING = 0.004f;
-const float SMOOTHING_RADIUS = 0.075f;
+const float SPACING = 0.005f;
+const float SMOOTHING_RADIUS = 0.08f;
 const float PRESSURE_MULTIPLIER = 3.0f;
-const float TARGET_DENSITY = 6500.0f;
+const float TARGET_DENSITY = 5200.0f;
 const float VISCOSITY_STRENGTH = 0.3f;
 const float NEAR_DENSITY_MULTIPLIER = 0.2f;
 const float DELTA_TIME = 0.016f;

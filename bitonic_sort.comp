@@ -15,7 +15,6 @@ void main() {
     uint idx     = gl_GlobalInvocationID.x;
     uint partner = idx ^ u_stride;
 
-   // bitonic_sort.comp
     if (idx < u_N && partner < u_N && idx < partner) {
         bool ascending = ((idx & u_size) == 0u);
         Entry a = spatialLookup[idx];

@@ -222,6 +222,8 @@ vec2 ComputeInteractionAccel(vec2 pos, vec2 vel) {
 }
 
 void ApplyInteractionForce(uint i) {
+    if (isInteracting == 0u || isPaused != 0u) return;
+
     vec2 pos = positions[i].xy;
     vec2 vel = velocities[i].xy;
 

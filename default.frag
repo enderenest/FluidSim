@@ -50,7 +50,7 @@ void main()
 
 
     float speed = length(velocity);
-    float t     = clamp(speed / 4.0, 0.0, 1.0);
+    float t     = clamp(speed / 3.5, 0.0, 1.0);
     vec3  col   = velocityToColor(t);
 
     FragColor = vec4(col, alpha);
