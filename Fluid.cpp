@@ -80,7 +80,7 @@ void Fluid::Update(float dt) {
     _simParams.upload(std::vector<SimulationParameters>{_params});
     
 
-    const int groupSize = 1024; // Nvidia recommends 32 for optimal performance. Please adjust based on your GPU model
+    const int groupSize = 128;
     int numGroups = (_positions.count() + groupSize - 1) / groupSize;
 
 	// Step 0: Predict positions based on velocities
@@ -158,7 +158,7 @@ void Fluid::Update(float dt) {
 
 void Fluid::SortSpatialLookup() {
     GLuint N = _params.particleCount;
-    GLuint localSize = 1024;
+    GLuint localSize = 128;
     const GLuint groups = N / localSize;       
 
     _bitonicSortShader.use();
