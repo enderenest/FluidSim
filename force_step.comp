@@ -49,17 +49,23 @@ const float EPSILON = 1e-6f;
 
 
 
-const ivec2 cellOffsets[9] = ivec2[](
-    ivec2(0, 0), ivec2(1, 0), ivec2(0, 1),
-    ivec2(-1, 0), ivec2(0, -1), ivec2(1, 1),
-    ivec2(-1, -1), ivec2(1, -1), ivec2(-1, 1)
+const ivec3 cellOffsets[27] = ivec3[](
+    ivec3(0, 0, 0),   ivec3(1, 0, 0),   ivec3(-1, 0, 0), 
+    ivec3(0, 1, 0),   ivec3(0, -1, 0),  ivec3(0, 0, 1), 
+    ivec3(0, 0, -1),  ivec3(1, 1, 0),   ivec3(-1, -1, 0), 
+    ivec3(1, -1, 0),  ivec3(-1, 1, 0),  ivec3(1, 0, 1), 
+    ivec3(-1, 0, 1),  ivec3(1, 0, -1),  ivec3(-1, 0, -1),
+    ivec3(0, 1, 1),   ivec3(0, -1, 1),  ivec3(0, 1, -1), 
+    ivec3(0, -1, -1), ivec3(1, 1, 1),   ivec3(-1, -1, -1), 
+    ivec3(1, 1, -1),  ivec3(-1, -1, 1), ivec3(1, -1, 1), 
+    ivec3(-1, 1, -1), ivec3(1, -1, -1), ivec3(-1, 1, 1)
 );
 
 float SpikyPow2KernelDerivative(float radius, float distance) {
     if (distance > radius) return 0.0f;
 
     float v = radius - distance;
-    float factor = 12 / (pow(smoothingRadius, 4) * PI);
+    float factor = 15 / (PI * pow(radius, 5));
     return -v * factor;
 }
 
@@ -67,7 +73,7 @@ float SpikyPow3KernelDerivative(float radius, float distance) {
 	if (distance > radius) return 0.0f;
 
 	float v = radius - distance;
-    float factor = 30 / (pow(smoothingRadius, 5) * PI);
+    float factor = 45 / (PI * pow(radius, 6));
     return -v * v * factor;
 }
 
@@ -75,7 +81,7 @@ float Poly6Kernel(float radius, float distance) {
 	if (distance > radius) return 0.0f;
 
     float v = max(0.0f, radius * radius - distance * distance);
-    float factor = 4 / (PI * pow(smoothingRadius, 8));
+    float factor = 315 / (64 * PI * pow(abs(radius), 9));
 	return v * v * v * factor;
 }
 
@@ -86,7 +92,7 @@ float RandomFloat(uint seed) {
 vec3 GetRandomDirection3D(uint idx) {
     float x = RandomFloat(idx * 928371u) * 2.0 - 1.0; // [-1, 1]
     float y = RandomFloat(idx * 128931u) * 2.0 - 1.0; // [-1, 1]
-    float z = 0.0f;
+    float z = RandomFloat(idx * 743281u) * 2.0 - 1.0; // [-1, 1]
     return normalize(vec3(x, y, z));
 }
 
@@ -94,14 +100,15 @@ ivec3 PositionsToCellCoord(vec3 point, float radius) {
     return ivec3(
         int(floor(point.x / radius)),
         int(floor(point.y / radius)),
-        0
+        int(floor(point.z / radius))
     );
 }
 
-uint HashCell(int x, int y) {
+uint HashCell(int x, int y, int z) {
     const uint p1 = 73856093u;
     const uint p2 = 19349663u;
-    return uint(x) * p1 ^ uint(y) * p2;
+    const uint p3 = 83492791u;
+    return uint(x) * p1 ^ uint(y) * p2 ^ uint(z) * p3;
 }
 
 uint GetKeyFromHash(uint hash) {
@@ -136,13 +143,15 @@ vec3 CalculatePressureForce(uint i) {
 	ivec3 cellCoord = PositionsToCellCoord(predictedPositions[i].xyz, smoothingRadius);
     int centerX = cellCoord.x;
 	int centerY = cellCoord.y;
+    int centerZ = cellCoord.z;
 	float sqrRadius = smoothingRadius * smoothingRadius;
 
-    for (int k = 0; k < 9; ++k) {
+    for (int k = 0; k < 27; ++k) {
         int offsetX = cellOffsets[k].x;
         int offsetY = cellOffsets[k].y;
+        int offsetZ = cellOffsets[k].z;
 
-		uint key = GetKeyFromHash(HashCell(centerX + offsetX, centerY + offsetY));
+		uint key = GetKeyFromHash(HashCell(centerX + offsetX, centerY + offsetY, centerZ + offsetZ));
 		uint cellStartIndex = startIndices[key];
 		if (cellStartIndex == MAX_INT) continue;
 
@@ -178,11 +187,13 @@ vec3 CalculateViscosityForce(uint i) {
     ivec3 cellCoord = PositionsToCellCoord(predictedPositions[i].xyz, smoothingRadius);
     int centerX = cellCoord.x;
     int centerY = cellCoord.y;
+    int centerZ = cellCoord.z;
     float sqrRadius = smoothingRadius * smoothingRadius;
-    for (int k = 0; k < 9; ++k) {
+    for (int k = 0; k < 27; ++k) {
         int offsetX = cellOffsets[k].x;
         int offsetY = cellOffsets[k].y;
-        uint key = GetKeyFromHash(HashCell(centerX + offsetX, centerY + offsetY));
+        int offsetZ = cellOffsets[k].z;
+        uint key = GetKeyFromHash(HashCell(centerX + offsetX, centerY + offsetY, centerZ + offsetZ));
         uint cellStartIndex = startIndices[key];
         if (cellStartIndex == MAX_INT) continue;
         for (uint j = cellStartIndex; j < spatialLookup.length(); ++j) {
@@ -203,7 +214,8 @@ vec3 CalculateViscosityForce(uint i) {
 	return viscosityForce * viscosityStrength;
 }
 
-vec2 ComputeInteractionAccel(vec2 pos, vec2 vel) {
+// Interaction force computation is commented out for now
+/*vec2 ComputeInteractionAccel(vec2 pos, vec2 vel) {
     float sqrR   = interactionRadius * interactionRadius;
     vec2  offset = vec2(inputPositionX, inputPositionY) - pos;
     float sqrD   = dot(offset, offset);
@@ -229,7 +241,7 @@ void ApplyInteractionForce(uint i) {
 
     vec2 accel = ComputeInteractionAccel(pos, vel);
     velocities[i].xy += accel * dt;
-}
+}*/
 
 void main() {
     uint index = gl_GlobalInvocationID.x;
@@ -237,9 +249,12 @@ void main() {
 
     vec3 pressureAcceleration = densities[index] < EPSILON ? vec3(0.0) : CalculatePressureForce(index) / densities[index];
     vec3 viscosityAcceleration = densities[index] < EPSILON ? vec3(0.0) : CalculateViscosityForce(index) / densities[index];
-    if (isInteracting != 0u && isPaused == 0u) {
+
+    // mouse interaction force is currently disabled
+    /*if (isInteracting != 0u && isPaused == 0u) {
         ApplyInteractionForce(index);
-    }
+    }*/
+
     vec3 totalAcceleration = pressureAcceleration + viscosityAcceleration;
 
     velocities[index] += vec4(totalAcceleration, 0.0) * dt;

@@ -24,14 +24,15 @@ ivec3 PositionToCellCoord(vec3 point, float radius) {
     return ivec3(
         int(floor(point.x / radius)),
         int(floor(point.y / radius)),
-        0
+        int(floor(point.z / radius))
     );
 }
 
-uint HashCell(int x, int y) {
+uint HashCell(int x, int y, int z) {
     const uint p1 = 73856093u;
     const uint p2 = 19349663u;
-    return uint(x) * p1 ^ uint(y) * p2;
+    const uint p3 = 83492791u;
+    return uint(x) * p1 ^ uint(y) * p2 ^ uint(z) * p3;
 }
 
 uint GetKeyFromHash(uint hash) {
@@ -41,7 +42,7 @@ uint GetKeyFromHash(uint hash) {
 uint GetKey(vec4 point) {
     vec3 p = point.xyz;
     ivec3 cell = PositionToCellCoord(p, smoothingRadius);
-    return GetKeyFromHash(HashCell(cell.x, cell.y));
+    return GetKeyFromHash(HashCell(cell.x, cell.y, cell.z));
 }
 
 void main() {
