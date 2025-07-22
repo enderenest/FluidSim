@@ -5,7 +5,7 @@ struct Entry {
 	uint key;
 };
 
-layout(local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
 layout(std430, binding = 1) buffer Positions { vec4 positions[]; };
 layout(std430, binding = 2) buffer PredictedPositions { vec4 predictedPositions[]; };
@@ -59,7 +59,7 @@ float SpikyPow2KernelDerivative(float radius, float distance) {
     if (distance > radius) return 0.0f;
 
     float v = radius - distance;
-    float factor = 15 / (PI * pow(radius, 5));
+    float factor = 12 / (pow(smoothingRadius, 4) * PI);
     return -v * factor;
 }
 
@@ -67,7 +67,7 @@ float SpikyPow3KernelDerivative(float radius, float distance) {
 	if (distance > radius) return 0.0f;
 
 	float v = radius - distance;
-    float factor = 45 / (PI * pow(radius, 6));
+    float factor = 30 / (pow(smoothingRadius, 5) * PI);
     return -v * v * factor;
 }
 
@@ -75,7 +75,7 @@ float Poly6Kernel(float radius, float distance) {
 	if (distance > radius) return 0.0f;
 
     float v = max(0.0f, radius * radius - distance * distance);
-    float factor = 315 / (64 * PI * pow(abs(radius), 9));
+    float factor = 4 / (PI * pow(smoothingRadius, 8));
 	return v * v * v * factor;
 }
 

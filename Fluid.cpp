@@ -80,7 +80,7 @@ void Fluid::Update(float dt) {
     _simParams.upload(std::vector<SimulationParameters>{_params});
     
 
-    const int groupSize = 128;
+    const int groupSize = 256;
     int numGroups = (_positions.count() + groupSize - 1) / groupSize;
 
 	// Step 0: Predict positions based on velocities
@@ -155,7 +155,7 @@ void Fluid::Update(float dt) {
 
 void Fluid::SortSpatialLookup() {
     GLuint N = _params.particleCount;
-    GLuint localSize = 128;
+    GLuint localSize = 256;
     const GLuint groups = (N + localSize - 1) / localSize;       
 
     _bitonicSortShader.use();

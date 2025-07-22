@@ -5,7 +5,7 @@ struct Entry {
 	uint key;
 };
 
-layout(local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
 layout(std430, binding = 2) buffer PredictedPositions { vec4 predictedPositions[]; };
 layout(std430, binding = 4) buffer Densities { float densities[]; };
@@ -57,7 +57,7 @@ float SpikyPow2Kernel(float radius, float distance) {
 	if (distance > radius) return 0.0f;
 
 	float v = radius - distance;
-    float factor = 15 / (2 * PI * pow(radius, 5));
+    float factor = 6 / (PI * pow(smoothingRadius, 4));
     return v * v * factor;
 }
 
@@ -65,7 +65,7 @@ float SpikyPow3Kernel(float radius, float distance) {
 	if (distance > radius) return 0.0f;
 
 	float v = radius - distance;
-    float factor = 15 / (PI * pow(radius, 6));
+    float factor = 10 / (PI * pow(smoothingRadius, 5));
     return v * v * v * factor;
 }
 
