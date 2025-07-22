@@ -150,6 +150,7 @@
     <ClInclude Include="ComputeShader.h" />
     <ClInclude Include="shaderClass.h" />
     <ClInclude Include="SSBO.hpp" />
+    <ClInclude Include="tiny_obj_loader.h" />
     <ClInclude Include="VAO.h" />
     <ClInclude Include="VBO.h" />
   </ItemGroup>
@@ -165,6 +166,9 @@
     <None Include="line.vert" />
     <None Include="predicted_positions.comp" />
     <None Include="update_spatial_lookup.comp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="sphere.obj" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
