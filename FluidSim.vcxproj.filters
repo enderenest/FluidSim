@@ -107,9 +107,4 @@
       <Filter>Resource Files\Shaders</Filter>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <Object Include="sphere.obj">
-      <Filter>Resource Files\Models</Filter>
-    </Object>
-  </ItemGroup>
 </Project>

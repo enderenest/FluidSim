@@ -10,6 +10,7 @@
 #include"VAO.h"
 #include"VBO.h"
 #include"EBO.h"
+#include "tiny_obj_loader.h"
 
 #include <vector>
 #include <cmath>
@@ -24,23 +25,22 @@
 // velocity += pressureAcceleration * dt;
 
 
-const unsigned int WIDTH = 1000, HEIGHT = 1000;
+const unsigned int WIDTH = 600, HEIGHT = 600;
 const unsigned int PARTICLE_COUNT = 1024 * 16;
-const unsigned int CIRCLE_SEGMENTS = 16;
 const unsigned int SPATIAL_HASH_SIZE = PARTICLE_COUNT * 4;
-const float PARTICLE_RADIUS = 0.04f;
+const float PARTICLE_RADIUS = 0.015f;
 const float MASS = 0.04f;
-const float GRAVITY_ACCELERATION = 1.5f;
+const float GRAVITY_ACCELERATION = 1.3f;
 const float COLLISION_DAMPING = 0.3f;
-const float BOUNDARY_X = 0.9f;
-const float BOUNDARY_Y = 0.9f;
-const float BOUNDARY_Z = 0.9f;
-const float SPACING = 0.005f;
+const float BOUNDARY_X = 0.8f;
+const float BOUNDARY_Y = 0.8f;
+const float BOUNDARY_Z = 0.8f;
+const float SPACING = 0.02f;
 const float SMOOTHING_RADIUS = 0.08f;
-const float PRESSURE_MULTIPLIER = 3.0f;
-const float TARGET_DENSITY = 5200.0f;
+const float PRESSURE_MULTIPLIER = 1.5f;
+const float TARGET_DENSITY = 300.0f;
 const float VISCOSITY_STRENGTH = 0.3f;
-const float NEAR_DENSITY_MULTIPLIER = 0.2f;
+const float NEAR_DENSITY_MULTIPLIER = 0.3f;
 const float DELTA_TIME = 0.016f;
 
 const float INTERACTION_RADIUS = 0.25f;
@@ -56,28 +56,50 @@ bool nLastFrame = false;
 bool mLastFrame = false;
 
 
-void static CreateUnitCircle(std::vector<glm::vec3>& vertices, std::vector<GLuint>& indices, int segments = 16, float radius = 0.1f) {
-	vertices.clear();
-	indices.clear();
+static void CreateUVSphere(std::vector<glm::vec3>& verts,
+	std::vector<GLuint>& inds,
+	int latSegs = 16,
+	int longSegs = 16,
+	float radius = 0.1f)
+{
+	verts.clear();
+	inds.clear();
 
-	float angle = 360.0f / segments;
-	int triangleCount = segments - 2;
+	// make vertices
+	for (int y = 0; y <= latSegs; ++y) {
+		float v = float(y) / latSegs;             
+		float theta = v * glm::pi<float>();       
+		float sinT = std::sin(theta), cosT = std::cos(theta);
 
-	for (int i = 0; i < segments; i++)
-	{
-		float currentAngle = angle * i;
-		float x = radius * cos(glm::radians(currentAngle));
-		float y = radius * sin(glm::radians(currentAngle));
-		float z = 0.0f; // Assuming a 2D circle in the XY plane
+		for (int x = 0; x <= longSegs; ++x) {
+			float u = float(x) / longSegs;       
+			float phi = u * glm::two_pi<float>();    
+			float sinP = std::sin(phi), cosP = std::cos(phi);
 
-		vertices.push_back(glm::vec3(x, y, z));
+			glm::vec3 p;
+			p.x = radius * sinT * cosP;
+			p.y = radius * cosT;
+			p.z = radius * sinT * sinP;
+			verts.push_back(p);
+		}
 	}
 
-	for (int i = 0; i < triangleCount; i++)
-	{
-		indices.push_back(0);
-		indices.push_back(i + 1);
-		indices.push_back(i + 2);
+	for (int y = 0; y < latSegs; ++y) {
+		for (int x = 0; x < longSegs; ++x) {
+			int i0 = y * (longSegs + 1) + x;
+			int i1 = (y + 1) * (longSegs + 1) + x;
+			int i2 = y * (longSegs + 1) + (x + 1);
+			int i3 = (y + 1) * (longSegs + 1) + (x + 1);
+
+			
+			inds.push_back(i0);
+			inds.push_back(i1);
+			inds.push_back(i2);
+			
+			inds.push_back(i2);
+			inds.push_back(i1);
+			inds.push_back(i3);
+		}
 	}
 }
 
@@ -111,12 +133,26 @@ int main() {
 
 	float line_boundary_x = BOUNDARY_X - PARTICLE_RADIUS;
 	float line_boundary_y = BOUNDARY_Y - PARTICLE_RADIUS;
+	float line_boundary_z = BOUNDARY_Z - PARTICLE_RADIUS;
 
 	std::vector<glm::vec3> boundaryLines = {
-		{-line_boundary_x, -line_boundary_y, 0.0f}, { line_boundary_x, -line_boundary_y, 0.0f},
-		{ line_boundary_x, -line_boundary_y, 0.0f}, { line_boundary_x,  line_boundary_y, 0.0f},
-		{ line_boundary_x,  line_boundary_y, 0.0f}, {-line_boundary_x,  line_boundary_y, 0.0f},
-		{-line_boundary_x,  line_boundary_y, 0.0f}, {-line_boundary_x, -line_boundary_y, 0.0f}
+		// bottom rectangle
+		{-line_boundary_x, -line_boundary_y, -line_boundary_z}, { line_boundary_x, -line_boundary_y, -line_boundary_z},
+		{ line_boundary_x, -line_boundary_y, -line_boundary_z}, { line_boundary_x,  line_boundary_y, -line_boundary_z},
+		{ line_boundary_x,  line_boundary_y, -line_boundary_z}, {-line_boundary_x,  line_boundary_y, -line_boundary_z},
+		{-line_boundary_x,  line_boundary_y, -line_boundary_z}, {-line_boundary_x, -line_boundary_y, -line_boundary_z},
+
+		// top rectangle
+		{-line_boundary_x, -line_boundary_y,  line_boundary_z}, { line_boundary_x, -line_boundary_y,  line_boundary_z},
+		{ line_boundary_x, -line_boundary_y,  line_boundary_z}, { line_boundary_x,  line_boundary_y,  line_boundary_z},
+		{ line_boundary_x,  line_boundary_y,  line_boundary_z}, {-line_boundary_x,  line_boundary_y,  line_boundary_z},
+		{-line_boundary_x,  line_boundary_y,  line_boundary_z}, {-line_boundary_x, -line_boundary_y,  line_boundary_z},
+
+		// vertical edges
+		{-line_boundary_x, -line_boundary_y, -line_boundary_z}, {-line_boundary_x, -line_boundary_y,  line_boundary_z},
+		{ line_boundary_x, -line_boundary_y, -line_boundary_z}, { line_boundary_x, -line_boundary_y,  line_boundary_z},
+		{ line_boundary_x,  line_boundary_y, -line_boundary_z}, { line_boundary_x,  line_boundary_y,  line_boundary_z},
+		{-line_boundary_x,  line_boundary_y, -line_boundary_z}, {-line_boundary_x,  line_boundary_y,  line_boundary_z},
 	};
 
 	GLuint boundaryVAO, boundaryVBO;
@@ -132,24 +168,24 @@ int main() {
 
 	Fluid fluid(PARTICLE_COUNT, PARTICLE_RADIUS, MASS, GRAVITY_ACCELERATION, COLLISION_DAMPING, SPACING, PRESSURE_MULTIPLIER, TARGET_DENSITY, SMOOTHING_RADIUS, SPATIAL_HASH_SIZE, INTERACTION_RADIUS, INTERACTION_STRENGTH, VISCOSITY_STRENGTH, NEAR_DENSITY_MULTIPLIER, BOUNDARY_X, BOUNDARY_Y, BOUNDARY_Z);
 
-	std::vector<glm::vec3> circleVertices;
-	std::vector<GLuint> circleIndices;
-	CreateUnitCircle(circleVertices, circleIndices, CIRCLE_SEGMENTS, PARTICLE_RADIUS);
+	std::vector<glm::vec3> sphereVertices;
+	std::vector<GLuint> sphereIndices;
+	CreateUVSphere(sphereVertices, sphereIndices, 16, 16, 1.0f); // I am not sure about using 1.0f scale or PARTICLE_RADIUS
 
 	VAO vao1;
 	vao1.Bind();
 
 	fluid.BindRenderBuffers();
 	// Static circle mesh VBO
-	VBO vboCircle(circleVertices.data(), circleVertices.size() * sizeof(glm::vec3));
-	vao1.LinkVBO(vboCircle, 0); // layout(location = 0)
+	VBO vboSphere(sphereVertices.data(), sphereVertices.size() * sizeof(glm::vec3));
+	vao1.LinkVBO(vboSphere, 0); // layout(location = 0)
 
-	EBO ebo1(circleIndices.data(), circleIndices.size() * sizeof(GLuint));
+	EBO eboSphere(sphereIndices.data(), sphereIndices.size() * sizeof(GLuint));
 
-	ebo1.Bind();
+	eboSphere.Bind();
 	vao1.Unbind();
-	vboCircle.Unbind();
-	ebo1.Unbind();
+	vboSphere.Unbind();
+	eboSphere.Unbind();
 
 	while (!glfwWindowShouldClose(window)) {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -157,7 +193,7 @@ int main() {
 
 		// ------------------ MOUSE INTERACTION -----------------------
 		fluid.SetIsInteracting(false);
-		double mouseX, mouseY;
+		/*double mouseX, mouseY;
 		glfwGetCursorPos(window, &mouseX, &mouseY);
 
 		// Convert to Normalized Device Coordinates [-1, 1]
@@ -180,7 +216,7 @@ int main() {
 			fluid.SetInteractionStrength(-INTERACTION_STRENGTH);
 			fluid.SetInteractionRadius(INTERACTION_RADIUS);
 		}
-		// ------------------------------------------------------------
+		// ------------------------------------------------------------*/
 
 
 		// ------------------ KEYBOARD CONTROLS -----------------------
@@ -198,14 +234,14 @@ int main() {
 
 		int oneState = glfwGetKey(window, GLFW_KEY_1);
 		if (oneState == GLFW_PRESS && !oneLastFrame) {
-			fluid.SetTargetDensity(fluid.GetTargetDensity() + 100.0f);
+			fluid.SetTargetDensity(fluid.GetTargetDensity() + 50.0f);
 		}
 		oneLastFrame = (oneState == GLFW_PRESS);
 
 		int twoState = glfwGetKey(window, GLFW_KEY_2);
 		if (twoState == GLFW_PRESS && !twoLastFrame) {
 			if (fluid.GetTargetDensity() > 3.0f)
-				fluid.SetTargetDensity(fluid.GetTargetDensity() - 100.0f);
+				fluid.SetTargetDensity(fluid.GetTargetDensity() - 50.0f);
 		}
 		twoLastFrame = (twoState == GLFW_PRESS);
 
@@ -262,7 +298,7 @@ int main() {
 		fluid.BindRenderBuffers();
 		vao1.Bind();
 		glUniform1f(glGetUniformLocation(shaderProgram.ID, "scale"), PARTICLE_RADIUS);
-		glDrawElementsInstanced(GL_TRIANGLES, circleIndices.size(), GL_UNSIGNED_INT, 0, PARTICLE_COUNT);
+		glDrawElementsInstanced(GL_TRIANGLES, GLsizei(sphereIndices.size()), GL_UNSIGNED_INT, 0, PARTICLE_COUNT);
 
 		lineShader.Activate();
 		glBindVertexArray(boundaryVAO);
@@ -274,8 +310,8 @@ int main() {
 	}
 
 	vao1.Delete();
-	vboCircle.Delete();
-	ebo1.Delete();
+	vboSphere.Delete();
+	eboSphere.Delete();
 	shaderProgram.Delete();
 	glDeleteVertexArrays(1, &boundaryVAO);
 	glDeleteBuffers(1, &boundaryVBO);

@@ -167,9 +167,6 @@
     <None Include="predicted_positions.comp" />
     <None Include="update_spatial_lookup.comp" />
   </ItemGroup>
-  <ItemGroup>
-    <Object Include="sphere.obj" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

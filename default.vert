@@ -6,7 +6,7 @@ layout(std430, binding = 1) buffer Positions { vec4 positions[]; };
 
 layout(std430, binding = 3) buffer Velocities { vec4 velocities[]; };
 
-uniform float scale;
+uniform float scale; // Added for future adaptive sampling implementation
 
 out vec2 texCoord;
 out vec3 velocity;
