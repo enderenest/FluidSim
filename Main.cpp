@@ -30,9 +30,9 @@ const unsigned int PARTICLE_COUNT = 1024 * 32;
 const unsigned int SPATIAL_HASH_SIZE = PARTICLE_COUNT * 4;
 const float PARTICLE_RADIUS = 0.006f;
 const float MASS = 0.06f;
-const float GRAVITY_ACCELERATION = 1.5f;
+const float GRAVITY_ACCELERATION = 1.2f;
 const float COLLISION_DAMPING = 0.3f;
-const float BOUNDARY_X = 0.9f;
+const float BOUNDARY_X = 0.8f;
 const float BOUNDARY_Y = 0.6f;
 const float BOUNDARY_Z = 0.6f;
 const float SPACING = 0.02f;
@@ -55,7 +55,8 @@ bool bLastFrame = false;
 bool nLastFrame = false;
 bool mLastFrame = false;
 
-glm::vec3 cameraPosition(0.0f, 1.5f, 5.0f);
+const float FOV = 45.0f;
+glm::vec3 cameraPosition(0.0f, 1.0f, 2.5f);
 glm::vec3 cameraTarget(0.0f, 0.0f, 0.0f);
 glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
 
@@ -312,7 +313,7 @@ int main() {
 		fluid.Update(DELTA_TIME);
 
 		glm::mat4 view = camera.GetViewMatrix();
-		glm::mat4 projection = glm::perspective(glm::radians(25.0f), float(WIDTH) / HEIGHT, 0.01f, 100.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(FOV), float(WIDTH) / HEIGHT, 0.01f, 100.0f);
 		glm::mat4 model = glm::mat4(1.0f);
 
 		shaderProgram.Activate();
