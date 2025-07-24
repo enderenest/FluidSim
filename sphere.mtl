@@ -1,0 +1,11 @@
+# sphere.mtl - Minimal valid MTL file for fluid particles
+
+newmtl FluidParticleMaterial
+
+Ka 0.0 0.0 0.0       # No ambient light
+Kd 0.3 0.6 1.0       # Light blue diffuse color (water-like)
+Ks 0.2 0.2 0.2       # Low specular reflection
+Ns 32.0              # Moderate shininess
+d 1.0                # Fully opaque
+illum 2              # Use diffuse and specular lighting
+map_Kd blue.jpg      # Optional texture map for diffuse color

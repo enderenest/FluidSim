@@ -11,6 +11,7 @@
 #include"VBO.h"
 #include"EBO.h"
 #include "tiny_obj_loader.h"
+#include "Camera.h"
 
 #include <vector>
 #include <cmath>
@@ -24,23 +25,22 @@
 // pressureAcceleration = pressureForce / density;
 // velocity += pressureAcceleration * dt;
 
-
-const unsigned int WIDTH = 600, HEIGHT = 600;
+const unsigned int WIDTH = 900, HEIGHT = 900;
 const unsigned int PARTICLE_COUNT = 1024 * 16;
 const unsigned int SPATIAL_HASH_SIZE = PARTICLE_COUNT * 4;
-const float PARTICLE_RADIUS = 0.015f;
-const float MASS = 0.04f;
-const float GRAVITY_ACCELERATION = 1.3f;
+const float PARTICLE_RADIUS = 0.005f;
+const float MASS = 0.06f;
+const float GRAVITY_ACCELERATION = 1.5f;
 const float COLLISION_DAMPING = 0.3f;
-const float BOUNDARY_X = 0.8f;
-const float BOUNDARY_Y = 0.8f;
-const float BOUNDARY_Z = 0.8f;
-const float SPACING = 0.02f;
-const float SMOOTHING_RADIUS = 0.08f;
-const float PRESSURE_MULTIPLIER = 1.5f;
-const float TARGET_DENSITY = 300.0f;
+const float BOUNDARY_X = 0.9f;
+const float BOUNDARY_Y = 0.6f;
+const float BOUNDARY_Z = 0.6f;
+const float SPACING = 0.015f;
+const float SMOOTHING_RADIUS = 0.088f;
+const float PRESSURE_MULTIPLIER = 2.0f;
+const float TARGET_DENSITY = 600.0f;
 const float VISCOSITY_STRENGTH = 0.3f;
-const float NEAR_DENSITY_MULTIPLIER = 0.3f;
+const float NEAR_DENSITY_MULTIPLIER = 0.2f;
 const float DELTA_TIME = 0.016f;
 
 const float INTERACTION_RADIUS = 0.25f;
@@ -55,6 +55,11 @@ bool bLastFrame = false;
 bool nLastFrame = false;
 bool mLastFrame = false;
 
+glm::vec3 cameraPosition(0.0f, 1.5f, 5.0f);
+glm::vec3 cameraTarget(0.0f, 0.0f, 0.0f);
+glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
+
+Camera camera(cameraPosition, cameraTarget, cameraUp);
 
 static void CreateUVSphere(std::vector<glm::vec3>& verts,
 	std::vector<GLuint>& inds,
@@ -125,7 +130,7 @@ int main() {
 	}
 
 	glViewport(0, 0, WIDTH, HEIGHT);
-
+	glEnable(GL_DEPTH_TEST);
 
 	Shader shaderProgram("default.vert", "default.frag");
 
@@ -189,7 +194,7 @@ int main() {
 
 	while (!glfwWindowShouldClose(window)) {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// ------------------ MOUSE INTERACTION -----------------------
 		fluid.SetIsInteracting(false);
@@ -293,7 +298,15 @@ int main() {
 
 		fluid.Update(DELTA_TIME);
 
+		glm::mat4 view = camera.GetViewMatrix();
+		glm::mat4 projection = glm::perspective(glm::radians(25.0f), float(WIDTH) / HEIGHT, 0.01f, 100.0f);
+		glm::mat4 model = glm::mat4(1.0f);
+
 		shaderProgram.Activate();
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
 
 		fluid.BindRenderBuffers();
 		vao1.Bind();
@@ -301,6 +314,10 @@ int main() {
 		glDrawElementsInstanced(GL_TRIANGLES, GLsizei(sphereIndices.size()), GL_UNSIGNED_INT, 0, PARTICLE_COUNT);
 
 		lineShader.Activate();
+		glUniformMatrix4fv(glGetUniformLocation(lineShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(lineShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(glGetUniformLocation(lineShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
 		glBindVertexArray(boundaryVAO);
 		glDrawArrays(GL_LINES, 0, boundaryLines.size());
 		glBindVertexArray(0);
