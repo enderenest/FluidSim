@@ -94,7 +94,6 @@ void Fluid::Update(float dt) {
 	_predictedPosShader.wait();
 
     // Step 1: Update spatial lookup keys,
-	_spatialLookup.upload(std::vector<Entry>(_params.particleCount, Entry{ 0, 0 }));
 
     _updateSpatialLookup.use();
 	_predictedPositions.bindTo(2);
@@ -118,9 +117,6 @@ void Fluid::Update(float dt) {
 	_buildStartIndices.wait();
 
 	// Step 5: Calculate densities
-    _densities.upload(std::vector<float>(_params.particleCount, 0.0f));
-    _nearDensities.upload(std::vector<float>(_params.particleCount, 0.0f));
-
 	_densityStep.use();
 	_predictedPositions.bindTo(2);
 	_densities.bindTo(4);

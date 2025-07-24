@@ -27,7 +27,7 @@
 
 const unsigned int WIDTH = 1500, HEIGHT = 900;
 const unsigned int PARTICLE_COUNT = 1024 * 32;
-const unsigned int SPATIAL_HASH_SIZE = PARTICLE_COUNT * 4;
+const unsigned int SPATIAL_HASH_SIZE = PARTICLE_COUNT * 8;
 const float PARTICLE_RADIUS = 0.006f;
 const float MASS = 0.06f;
 const float GRAVITY_ACCELERATION = 1.2f;
@@ -36,7 +36,7 @@ const float BOUNDARY_X = 1.2f;
 const float BOUNDARY_Y = 0.6f;
 const float BOUNDARY_Z = 0.6f;
 const float SPACING = 0.02f;
-const float SMOOTHING_RADIUS = 0.09f;
+const float SMOOTHING_RADIUS = 0.08f;
 const float PRESSURE_MULTIPLIER = 2.0f;
 const float TARGET_DENSITY = 1200.0f;
 const float VISCOSITY_STRENGTH = 0.3f;
