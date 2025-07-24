@@ -26,7 +26,7 @@
 // velocity += pressureAcceleration * dt;
 
 const unsigned int WIDTH = 900, HEIGHT = 900;
-const unsigned int PARTICLE_COUNT = 1024 * 16;
+const unsigned int PARTICLE_COUNT = 1024 * 32;
 const unsigned int SPATIAL_HASH_SIZE = PARTICLE_COUNT * 4;
 const float PARTICLE_RADIUS = 0.005f;
 const float MASS = 0.06f;
@@ -36,9 +36,9 @@ const float BOUNDARY_X = 0.9f;
 const float BOUNDARY_Y = 0.6f;
 const float BOUNDARY_Z = 0.6f;
 const float SPACING = 0.015f;
-const float SMOOTHING_RADIUS = 0.088f;
+const float SMOOTHING_RADIUS = 0.08f;
 const float PRESSURE_MULTIPLIER = 2.0f;
-const float TARGET_DENSITY = 600.0f;
+const float TARGET_DENSITY = 1500.0f;
 const float VISCOSITY_STRENGTH = 0.3f;
 const float NEAR_DENSITY_MULTIPLIER = 0.2f;
 const float DELTA_TIME = 0.016f;
@@ -175,7 +175,7 @@ int main() {
 
 	std::vector<glm::vec3> sphereVertices;
 	std::vector<GLuint> sphereIndices;
-	CreateUVSphere(sphereVertices, sphereIndices, 16, 16, 1.0f); // I am not sure about using 1.0f scale or PARTICLE_RADIUS
+	CreateUVSphere(sphereVertices, sphereIndices, 2, 2, 1.0f); // I am not sure about using 1.0f scale or PARTICLE_RADIUS
 
 	VAO vao1;
 	vao1.Bind();
