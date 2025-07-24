@@ -28,17 +28,17 @@
 const unsigned int WIDTH = 900, HEIGHT = 900;
 const unsigned int PARTICLE_COUNT = 1024 * 32;
 const unsigned int SPATIAL_HASH_SIZE = PARTICLE_COUNT * 4;
-const float PARTICLE_RADIUS = 0.005f;
+const float PARTICLE_RADIUS = 0.006f;
 const float MASS = 0.06f;
 const float GRAVITY_ACCELERATION = 1.5f;
 const float COLLISION_DAMPING = 0.3f;
 const float BOUNDARY_X = 0.9f;
 const float BOUNDARY_Y = 0.6f;
 const float BOUNDARY_Z = 0.6f;
-const float SPACING = 0.015f;
-const float SMOOTHING_RADIUS = 0.08f;
+const float SPACING = 0.02f;
+const float SMOOTHING_RADIUS = 0.09f;
 const float PRESSURE_MULTIPLIER = 2.0f;
-const float TARGET_DENSITY = 1500.0f;
+const float TARGET_DENSITY = 1200.0f;
 const float VISCOSITY_STRENGTH = 0.3f;
 const float NEAR_DENSITY_MULTIPLIER = 0.2f;
 const float DELTA_TIME = 0.016f;
@@ -175,7 +175,7 @@ int main() {
 
 	std::vector<glm::vec3> sphereVertices;
 	std::vector<GLuint> sphereIndices;
-	CreateUVSphere(sphereVertices, sphereIndices, 2, 2, 1.0f); // I am not sure about using 1.0f scale or PARTICLE_RADIUS
+	CreateUVSphere(sphereVertices, sphereIndices, 4, 4, 1.0f); // I am not sure about using 1.0f scale or PARTICLE_RADIUS
 
 	VAO vao1;
 	vao1.Bind();
@@ -192,7 +192,20 @@ int main() {
 	vboSphere.Unbind();
 	eboSphere.Unbind();
 
+	double lastTime = glfwGetTime();
+	int  nbFrames = 0;
+
 	while (!glfwWindowShouldClose(window)) {
+		double currentTime = glfwGetTime();
+		nbFrames++;
+		if (currentTime - lastTime >= 1.0) {
+			int fps = nbFrames;
+			std::string title = "Fluid Particles -> FPS: " + std::to_string(fps);
+			glfwSetWindowTitle(window, title.c_str());
+			nbFrames = 0;
+			lastTime += 1.0;
+		}
+
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
