@@ -25,26 +25,26 @@
 // pressureAcceleration = pressureForce / density;
 // velocity += pressureAcceleration * dt;
 
-const unsigned int WIDTH = 1500, HEIGHT = 900;
+const unsigned int WIDTH = 1920, HEIGHT = 1080;
 const unsigned int PARTICLE_COUNT = 1024 * 32;
 const unsigned int SPATIAL_HASH_SIZE = PARTICLE_COUNT * 4;
 const float PARTICLE_RADIUS = 0.0075f;
 const float MASS = 0.075f;
 const float GRAVITY_ACCELERATION = 1.2f;
-const float COLLISION_DAMPING = 0.7f;
+const float COLLISION_DAMPING = 0.6f;
 const float BOUNDARY_X = 1.2f;
 const float BOUNDARY_Y = 0.7f;
 const float BOUNDARY_Z = 0.7f;
 const float SPACING = 0.025f;
-const float SMOOTHING_RADIUS = 0.08f;
+const float SMOOTHING_RADIUS = 0.082f;
 const float PRESSURE_MULTIPLIER = 2.0f;
 const float TARGET_DENSITY = 1000.0f;
-const float VISCOSITY_STRENGTH = 0.3f;
+const float VISCOSITY_STRENGTH = 0.2f;
 const float NEAR_DENSITY_MULTIPLIER = 0.2f;
 const float DELTA_TIME = 0.016f;
 
-const float INTERACTION_RADIUS = 0.4f;
-const float INTERACTION_STRENGTH = 10.0f;
+const float INTERACTION_RADIUS = 0.3f;
+const float INTERACTION_STRENGTH = 15.0f;
 
 bool upLastFrame = false;
 bool downLastFrame = false;
@@ -297,7 +297,7 @@ int main() {
 		static bool firstMouse = true;
 		static double lastX = WIDTH * 0.5, lastY = HEIGHT * 0.5;
 
-		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
 			double mx, my;
 			glfwGetCursorPos(window, &mx, &my);
 
@@ -345,7 +345,7 @@ int main() {
 		float t = -rayOrig.z / rayDir.z;
 		glm::vec3 hitPos = rayOrig + t * rayDir;
 
-		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
 			fluid.SetIsInteracting(true);
 			fluid.SetInteractionPosition(hitPos);
 			fluid.SetInteractionStrength(-INTERACTION_STRENGTH);
