@@ -28,6 +28,10 @@ void Camera::updateOrientation() {
     targetVec = positionVec + front;
 }
 
+glm::vec3 Camera::GetPosition() const {
+    return positionVec;
+}
+
 glm::mat4 Camera::GetViewMatrix() {
     return glm::lookAt(positionVec, targetVec, upVec);
 }

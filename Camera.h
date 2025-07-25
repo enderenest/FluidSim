@@ -11,6 +11,7 @@ class Camera {
 public:
     Camera(glm::vec3 pos, glm::vec3 target, glm::vec3 up, float movSpeed, float mouseSens);
 
+    glm::vec3 GetPosition() const;
     glm::mat4 GetViewMatrix();
     glm::mat4 GetProjectionMatrix(float aspectRatio);
 

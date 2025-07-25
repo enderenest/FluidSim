@@ -27,24 +27,24 @@
 
 const unsigned int WIDTH = 1500, HEIGHT = 900;
 const unsigned int PARTICLE_COUNT = 1024 * 32;
-const unsigned int SPATIAL_HASH_SIZE = PARTICLE_COUNT * 8;
+const unsigned int SPATIAL_HASH_SIZE = PARTICLE_COUNT * 4;
 const float PARTICLE_RADIUS = 0.0075f;
 const float MASS = 0.075f;
 const float GRAVITY_ACCELERATION = 1.2f;
-const float COLLISION_DAMPING = 0.3f;
+const float COLLISION_DAMPING = 0.7f;
 const float BOUNDARY_X = 1.2f;
-const float BOUNDARY_Y = 0.6f;
-const float BOUNDARY_Z = 0.6f;
-const float SPACING = 0.02f;
+const float BOUNDARY_Y = 0.7f;
+const float BOUNDARY_Z = 0.7f;
+const float SPACING = 0.025f;
 const float SMOOTHING_RADIUS = 0.08f;
 const float PRESSURE_MULTIPLIER = 2.0f;
-const float TARGET_DENSITY = 1200.0f;
+const float TARGET_DENSITY = 1000.0f;
 const float VISCOSITY_STRENGTH = 0.3f;
 const float NEAR_DENSITY_MULTIPLIER = 0.2f;
 const float DELTA_TIME = 0.016f;
 
-const float INTERACTION_RADIUS = 0.25f;
-const float INTERACTION_STRENGTH = 7.0f;
+const float INTERACTION_RADIUS = 0.4f;
+const float INTERACTION_STRENGTH = 10.0f;
 
 bool upLastFrame = false;
 bool downLastFrame = false;
@@ -56,7 +56,7 @@ bool nLastFrame = false;
 bool mLastFrame = false;
 
 const float FOV = 60.0f;
-const float MOVEMENT_SPEED = 2.5f;
+const float MOVEMENT_SPEED = 2.0f;
 const float MOUSE_SENSITIVITY = 0.1f;
 glm::vec3 cameraPosition(0.0f, 1.0f, 2.0f);
 glm::vec3 cameraTarget(0.0f, 0.0f, 0.0f);
@@ -212,34 +212,6 @@ int main() {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// ------------------ MOUSE INTERACTION -----------------------
-		fluid.SetIsInteracting(false);
-		/*double mouseX, mouseY;
-		glfwGetCursorPos(window, &mouseX, &mouseY);
-
-		// Convert to Normalized Device Coordinates [-1, 1]
-		float x = 2.0f * static_cast<float>(mouseX) / WIDTH - 1.0f;
-		float y = 1.0f - 2.0f * static_cast<float>(mouseY) / HEIGHT;
-		glm::vec2 worldMousePos = glm::vec2(x, y);
-
-		// Apply force on left-click
-		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-			fluid.SetIsInteracting(true);
-			fluid.SetInteractionPosition(glm::vec3(worldMousePos, 0.0f));
-			fluid.SetInteractionStrength(INTERACTION_STRENGTH);
-			fluid.SetInteractionRadius(INTERACTION_RADIUS);
-		}
-
-		// Apply force on right-click
-		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
-			fluid.SetIsInteracting(true);
-			fluid.SetInteractionPosition(glm::vec3(worldMousePos, 0.0f));
-			fluid.SetInteractionStrength(-INTERACTION_STRENGTH);
-			fluid.SetInteractionRadius(INTERACTION_RADIUS);
-		}
-		// ------------------------------------------------------------*/
-
-
 		// ------------------ KEYBOARD CONTROLS -----------------------
 		int upState = glfwGetKey(window, GLFW_KEY_UP);
 		if (upState == GLFW_PRESS && !upLastFrame) {
@@ -346,14 +318,42 @@ int main() {
 		else {
 			firstMouse = true;
 		}
-
 		// ------------------------------------------------------------
-
-		fluid.Update(DELTA_TIME);
 
 		glm::mat4 view = camera.GetViewMatrix();
 		glm::mat4 projection = glm::perspective(glm::radians(FOV), float(WIDTH) / HEIGHT, 0.01f, 100.0f);
 		glm::mat4 model = glm::mat4(1.0f);
+
+		// ------------------ MOUSE INTERACTION -----------------------
+		fluid.SetIsInteracting(false);
+
+		double mx, my;
+		glfwGetCursorPos(window, &mx, &my);
+
+		float ndcX = 2.0f * float(mx) / WIDTH - 1.0f;
+		float ndcY = 1.0f - 2.0f * float(my) / HEIGHT;
+
+		glm::vec4 rayClip = glm::vec4(ndcX, ndcY, -1.0f, 1.0f);
+		glm::vec4 rayEye = glm::inverse(projection) * rayClip;
+		rayEye.z = -1.0f; rayEye.w = 0.0f;
+
+		glm::vec3 rayDir = glm::normalize(
+			glm::vec3(glm::inverse(view) * rayEye)
+		);
+		glm::vec3 rayOrig = camera.GetPosition();
+
+		float t = -rayOrig.z / rayDir.z;
+		glm::vec3 hitPos = rayOrig + t * rayDir;
+
+		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+			fluid.SetIsInteracting(true);
+			fluid.SetInteractionPosition(hitPos);
+			fluid.SetInteractionStrength(-INTERACTION_STRENGTH);
+			fluid.SetInteractionRadius(INTERACTION_RADIUS);
+		}
+		// ------------------------------------------------------------
+
+		fluid.Update(DELTA_TIME);
 
 		shaderProgram.Activate();
 		glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
