@@ -10,7 +10,7 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
       _nearDensities(particleCount, GL_DYNAMIC_DRAW),
 	  _spatialLookup(particleCount, GL_DYNAMIC_DRAW),
       _startIndices(hashSize, GL_DYNAMIC_DRAW),
-      _simParams(1, GL_STATIC_DRAW),
+      _simParams(1, GL_DYNAMIC_DRAW),
 
       _predictedPosShader("predicted_positions.comp"),
 	  _densityStep("density_step.comp"),
@@ -52,17 +52,18 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
     // Initialize positions in a grid
     std::vector<glm::vec4> initialPositions(_params.particleCount, glm::vec4(0.0f));
 
-    int particlesPerRow = static_cast<int>(std::sqrt(particleCount));
-    int particlesPerCol = (particleCount - 1) / particlesPerRow + 1;
+    unsigned int particlesPerAxis = static_cast<unsigned int>(std::ceil(std::cbrt(particleCount)));
 
     for (unsigned int i = 0; i < particleCount; ++i) {
-        int row = i / particlesPerRow;
-        int col = i % particlesPerRow;
+        unsigned int z = i / (particlesPerAxis * particlesPerAxis);
+        unsigned int y = (i / particlesPerAxis) % particlesPerAxis;
+        unsigned int x = i % particlesPerAxis;
 
-        float x = (col - particlesPerRow / 2.0f + 0.5f) * spacing;
-        float y = (row - particlesPerCol / 2.0f + 0.5f) * spacing;
+        float fx = (static_cast<float>(x) - particlesPerAxis / 2.0f + 0.5f) * spacing;
+        float fy = (static_cast<float>(y) - particlesPerAxis / 2.0f + 0.5f) * spacing;
+        float fz = (static_cast<float>(z) - particlesPerAxis / 2.0f + 0.5f) * spacing;
 
-		initialPositions[i] = glm::vec4(x, y, 0.0f, 0.0f);
+        initialPositions[i] = glm::vec4(fx, fy, fz, 0.0f);
     }
 
     _positions.upload(initialPositions);
@@ -80,7 +81,7 @@ void Fluid::Update(float dt) {
     _simParams.upload(std::vector<SimulationParameters>{_params});
     
 
-    const int groupSize = 128;
+    const int groupSize = 512;
     int numGroups = (_positions.count() + groupSize - 1) / groupSize;
 
 	// Step 0: Predict positions based on velocities
@@ -93,7 +94,6 @@ void Fluid::Update(float dt) {
 	_predictedPosShader.wait();
 
     // Step 1: Update spatial lookup keys,
-	_spatialLookup.upload(std::vector<Entry>(_params.particleCount, Entry{ 0, 0 }));
 
     _updateSpatialLookup.use();
 	_predictedPositions.bindTo(2);
@@ -117,9 +117,6 @@ void Fluid::Update(float dt) {
 	_buildStartIndices.wait();
 
 	// Step 5: Calculate densities
-    _densities.upload(std::vector<float>(_params.particleCount, 0.0f));
-    _nearDensities.upload(std::vector<float>(_params.particleCount, 0.0f));
-
 	_densityStep.use();
 	_predictedPositions.bindTo(2);
 	_densities.bindTo(4);
@@ -155,7 +152,7 @@ void Fluid::Update(float dt) {
 
 void Fluid::SortSpatialLookup() {
     GLuint N = _params.particleCount;
-    GLuint localSize = 128;
+    GLuint localSize = 256;
     const GLuint groups = (N + localSize - 1) / localSize;       
 
     _bitonicSortShader.use();

@@ -5,7 +5,7 @@ struct Entry {
 	uint key;
 };
 
-layout(local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = 512, local_size_y = 1, local_size_z = 1) in;
 
 layout(std430, binding = 1) buffer Positions { vec4 positions[]; };
 layout(std430, binding = 2) buffer PredictedPositions { vec4 predictedPositions[]; };
@@ -49,10 +49,16 @@ const float EPSILON = 1e-6f;
 
 
 
-const ivec2 cellOffsets[9] = ivec2[](
-    ivec2(0, 0), ivec2(1, 0), ivec2(0, 1),
-    ivec2(-1, 0), ivec2(0, -1), ivec2(1, 1),
-    ivec2(-1, -1), ivec2(1, -1), ivec2(-1, 1)
+const ivec3 cellOffsets[27] = ivec3[](
+    ivec3(0, 0, 0),   ivec3(1, 0, 0),   ivec3(-1, 0, 0), 
+    ivec3(0, 1, 0),   ivec3(0, -1, 0),  ivec3(0, 0, 1), 
+    ivec3(0, 0, -1),  ivec3(1, 1, 0),   ivec3(-1, -1, 0), 
+    ivec3(1, -1, 0),  ivec3(-1, 1, 0),  ivec3(1, 0, 1), 
+    ivec3(-1, 0, 1),  ivec3(1, 0, -1),  ivec3(-1, 0, -1),
+    ivec3(0, 1, 1),   ivec3(0, -1, 1),  ivec3(0, 1, -1), 
+    ivec3(0, -1, -1), ivec3(1, 1, 1),   ivec3(-1, -1, -1), 
+    ivec3(1, 1, -1),  ivec3(-1, -1, 1), ivec3(1, -1, 1), 
+    ivec3(-1, 1, -1), ivec3(1, -1, -1), ivec3(-1, 1, 1)
 );
 
 float SpikyPow2KernelDerivative(float radius, float distance) {
@@ -86,7 +92,7 @@ float RandomFloat(uint seed) {
 vec3 GetRandomDirection3D(uint idx) {
     float x = RandomFloat(idx * 928371u) * 2.0 - 1.0; // [-1, 1]
     float y = RandomFloat(idx * 128931u) * 2.0 - 1.0; // [-1, 1]
-    float z = 0.0f;
+    float z = RandomFloat(idx * 743281u) * 2.0 - 1.0; // [-1, 1]
     return normalize(vec3(x, y, z));
 }
 
@@ -94,14 +100,15 @@ ivec3 PositionsToCellCoord(vec3 point, float radius) {
     return ivec3(
         int(floor(point.x / radius)),
         int(floor(point.y / radius)),
-        0
+        int(floor(point.z / radius))
     );
 }
 
-uint HashCell(int x, int y) {
+uint HashCell(int x, int y, int z) {
     const uint p1 = 73856093u;
     const uint p2 = 19349663u;
-    return uint(x) * p1 ^ uint(y) * p2;
+    const uint p3 = 83492791u;
+    return uint(x) * p1 ^ uint(y) * p2 ^ uint(z) * p3;
 }
 
 uint GetKeyFromHash(uint hash) {
@@ -136,13 +143,15 @@ vec3 CalculatePressureForce(uint i) {
 	ivec3 cellCoord = PositionsToCellCoord(predictedPositions[i].xyz, smoothingRadius);
     int centerX = cellCoord.x;
 	int centerY = cellCoord.y;
+    int centerZ = cellCoord.z;
 	float sqrRadius = smoothingRadius * smoothingRadius;
 
-    for (int k = 0; k < 9; ++k) {
+    for (int k = 0; k < 27; ++k) {
         int offsetX = cellOffsets[k].x;
         int offsetY = cellOffsets[k].y;
+        int offsetZ = cellOffsets[k].z;
 
-		uint key = GetKeyFromHash(HashCell(centerX + offsetX, centerY + offsetY));
+		uint key = GetKeyFromHash(HashCell(centerX + offsetX, centerY + offsetY, centerZ + offsetZ));
 		uint cellStartIndex = startIndices[key];
 		if (cellStartIndex == MAX_INT) continue;
 
@@ -178,11 +187,13 @@ vec3 CalculateViscosityForce(uint i) {
     ivec3 cellCoord = PositionsToCellCoord(predictedPositions[i].xyz, smoothingRadius);
     int centerX = cellCoord.x;
     int centerY = cellCoord.y;
+    int centerZ = cellCoord.z;
     float sqrRadius = smoothingRadius * smoothingRadius;
-    for (int k = 0; k < 9; ++k) {
+    for (int k = 0; k < 27; ++k) {
         int offsetX = cellOffsets[k].x;
         int offsetY = cellOffsets[k].y;
-        uint key = GetKeyFromHash(HashCell(centerX + offsetX, centerY + offsetY));
+        int offsetZ = cellOffsets[k].z;
+        uint key = GetKeyFromHash(HashCell(centerX + offsetX, centerY + offsetY, centerZ + offsetZ));
         uint cellStartIndex = startIndices[key];
         if (cellStartIndex == MAX_INT) continue;
         for (uint j = cellStartIndex; j < spatialLookup.length(); ++j) {
@@ -203,19 +214,21 @@ vec3 CalculateViscosityForce(uint i) {
 	return viscosityForce * viscosityStrength;
 }
 
-vec2 ComputeInteractionAccel(vec2 pos, vec2 vel) {
+vec3 ComputeInteractionAccel(vec3 pos, vec3 vel) {
+    if (isInteracting == 0u || isPaused != 0u) return vec3(0.0);
+
     float sqrR   = interactionRadius * interactionRadius;
-    vec2  offset = vec2(inputPositionX, inputPositionY) - pos;
+    vec3  offset = vec3(inputPositionX, inputPositionY, inputPositionZ) - pos;
     float sqrD   = dot(offset, offset);
     if (sqrD >= sqrR) {
-        return vec2(0.0);
+        return vec3(0.0);
     }
 
     float dist    = sqrt(sqrD);
     float edgeT   = dist / interactionRadius; 
     float centreT = 1.0 - edgeT;             
 
-    vec2 dir = (dist > EPSILON) ? (offset / dist) : vec2(0.0);
+    vec3 dir = (dist > EPSILON) ? (offset / dist) : vec3(0.0);
 
     return dir * (centreT * interactionStrength)
          - vel * centreT;
@@ -224,11 +237,11 @@ vec2 ComputeInteractionAccel(vec2 pos, vec2 vel) {
 void ApplyInteractionForce(uint i) {
     if (isInteracting == 0u || isPaused != 0u) return;
 
-    vec2 pos = positions[i].xy;
-    vec2 vel = velocities[i].xy;
+    vec3 pos = positions[i].xyz;
+    vec3 vel = velocities[i].xyz;
 
-    vec2 accel = ComputeInteractionAccel(pos, vel);
-    velocities[i].xy += accel * dt;
+    vec3 accel = ComputeInteractionAccel(pos, vel);
+    velocities[i].xyz += accel * dt;
 }
 
 void main() {
@@ -237,9 +250,11 @@ void main() {
 
     vec3 pressureAcceleration = densities[index] < EPSILON ? vec3(0.0) : CalculatePressureForce(index) / densities[index];
     vec3 viscosityAcceleration = densities[index] < EPSILON ? vec3(0.0) : CalculateViscosityForce(index) / densities[index];
+
     if (isInteracting != 0u && isPaused == 0u) {
         ApplyInteractionForce(index);
     }
+
     vec3 totalAcceleration = pressureAcceleration + viscosityAcceleration;
 
     velocities[index] += vec4(totalAcceleration, 0.0) * dt;

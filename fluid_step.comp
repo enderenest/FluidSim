@@ -5,7 +5,7 @@ struct Entry {
     uint key;
 };
 
-layout(local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = 512, local_size_y = 1, local_size_z = 1) in;
 
 // Buffer declarations for particle data
 layout(std430, binding = 1) buffer Positions { vec4 positions[]; };
@@ -45,7 +45,9 @@ const float EPSILON = 1e-6f;
 
 
 void HandleBoundaryCollisions(uint index) {
-    vec2 halfBounds = vec2(boundaryX  - particleRadius, boundaryY  - particleRadius);
+    vec3 halfBounds = vec3(boundaryX  - particleRadius, 
+                           boundaryY  - particleRadius,
+                           boundaryZ  - particleRadius);
 
     if (abs(positions[index].x) > halfBounds.x) {
         positions[index].x = halfBounds.x * sign(positions[index].x);
@@ -57,7 +59,11 @@ void HandleBoundaryCollisions(uint index) {
         velocities[index].y *= - collisionDamping;
     }
 
-    positions[index].z = 0.0f;
+    if (abs(positions[index].z) > halfBounds.z) {
+        positions[index].z = halfBounds.z * sign(positions[index].z);
+        velocities[index].z *= - collisionDamping;
+    }
+
     positions[index].w = 0.0f;
 }
 

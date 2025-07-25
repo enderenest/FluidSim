@@ -5,7 +5,7 @@ struct Entry {
 	uint key;
 };
 
-layout(local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = 512, local_size_y = 1, local_size_z = 1) in;
 
 layout(std430, binding = 2) buffer PredictedPositions { vec4 predictedPositions[]; };
 layout(std430, binding = 4) buffer Densities { float densities[]; };
@@ -46,12 +46,18 @@ const float PI = 3.14159265359f;
 const float EPSILON = 1e-6f;
 
 
-
-const ivec2 cellOffsets[9] = ivec2[9](
-    ivec2(0, 0), ivec2(1, 0), ivec2(0, 1),
-    ivec2(-1, 0), ivec2(0, -1), ivec2(1, 1),
-    ivec2(-1, -1), ivec2(1, -1), ivec2(-1, 1)
+const ivec3 cellOffsets[27] = ivec3[](
+    ivec3(0, 0, 0),   ivec3(1, 0, 0),   ivec3(-1, 0, 0), 
+    ivec3(0, 1, 0),   ivec3(0, -1, 0),  ivec3(0, 0, 1), 
+    ivec3(0, 0, -1),  ivec3(1, 1, 0),   ivec3(-1, -1, 0), 
+    ivec3(1, -1, 0),  ivec3(-1, 1, 0),  ivec3(1, 0, 1), 
+    ivec3(-1, 0, 1),  ivec3(1, 0, -1),  ivec3(-1, 0, -1),
+    ivec3(0, 1, 1),   ivec3(0, -1, 1),  ivec3(0, 1, -1), 
+    ivec3(0, -1, -1), ivec3(1, 1, 1),   ivec3(-1, -1, -1), 
+    ivec3(1, 1, -1),  ivec3(-1, -1, 1), ivec3(1, -1, 1), 
+    ivec3(-1, 1, -1), ivec3(1, -1, -1), ivec3(-1, 1, 1)
 );
+
 
 float SpikyPow2Kernel(float radius, float distance) {  
 	if (distance > radius) return 0.0f;
@@ -73,14 +79,15 @@ ivec3 PositionsToCellCoord(vec3 point, float radius) {
     return ivec3(
         int(floor(point.x / radius)),
         int(floor(point.y / radius)),
-        0
+        int(floor(point.z / radius))
     );
 }
 
-uint HashCell(int x, int y) {
+uint HashCell(int x, int y, int z) {
     const uint p1 = 73856093u;
     const uint p2 = 19349663u;
-    return uint(x) * p1 ^ uint(y) * p2;
+    const uint p3 = 83492791u;
+    return uint(x) * p1 ^ uint(y) * p2 ^ uint(z) * p3;
 }
 
 uint GetKeyFromHash(uint hash) {
@@ -94,13 +101,15 @@ vec2 CalculateDensity(uint i) {
 
     int centerX = cellCoord.x;
     int centerY = cellCoord.y;
+    int centerZ = cellCoord.z;
     float sqrRadius = smoothingRadius * smoothingRadius;
 
-    for (int k = 0; k < 9; ++k) {
+    for (int k = 0; k < 27; ++k) {
         int offsetX = cellOffsets[k].x;
         int offsetY = cellOffsets[k].y;
+        int offsetZ = cellOffsets[k].z;
 
-        uint key = GetKeyFromHash(HashCell(centerX + offsetX, centerY + offsetY));
+        uint key = GetKeyFromHash(HashCell(centerX + offsetX, centerY + offsetY, centerZ + offsetZ));
         uint cellStartIndex = uint(startIndices[key]);
         if (cellStartIndex == MAX_INT) continue;
 
