@@ -11,7 +11,7 @@ vec3 velocityToColor(float t)
         return mix(vec3(0,0,1),
                    vec3(0,1,1),    
                    smoothstep(0.0, s, t));
-    else if (t < 2*s) // 0.125–0.25
+    else if (t < 2*s)
         return mix(vec3(0,1,1),
                    vec3(0,1,0),
                    smoothstep(s, 2*s, t));

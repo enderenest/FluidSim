@@ -10,7 +10,7 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
       _nearDensities(particleCount, GL_DYNAMIC_DRAW),
 	  _spatialLookup(particleCount, GL_DYNAMIC_DRAW),
       _startIndices(hashSize, GL_DYNAMIC_DRAW),
-      _simParams(1, GL_STATIC_DRAW),
+      _simParams(1, GL_DYNAMIC_DRAW),
 
       _predictedPosShader("predicted_positions.comp"),
 	  _densityStep("density_step.comp"),
