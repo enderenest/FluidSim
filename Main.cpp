@@ -28,8 +28,8 @@
 const unsigned int WIDTH = 1500, HEIGHT = 900;
 const unsigned int PARTICLE_COUNT = 1024 * 32;
 const unsigned int SPATIAL_HASH_SIZE = PARTICLE_COUNT * 8;
-const float PARTICLE_RADIUS = 0.006f;
-const float MASS = 0.06f;
+const float PARTICLE_RADIUS = 0.0075f;
+const float MASS = 0.075f;
 const float GRAVITY_ACCELERATION = 1.2f;
 const float COLLISION_DAMPING = 0.3f;
 const float BOUNDARY_X = 1.2f;
@@ -55,12 +55,14 @@ bool bLastFrame = false;
 bool nLastFrame = false;
 bool mLastFrame = false;
 
-const float FOV = 45.0f;
-glm::vec3 cameraPosition(0.0f, 1.0f, 2.5f);
+const float FOV = 60.0f;
+const float MOVEMENT_SPEED = 2.5f;
+const float MOUSE_SENSITIVITY = 0.1f;
+glm::vec3 cameraPosition(0.0f, 1.0f, 2.0f);
 glm::vec3 cameraTarget(0.0f, 0.0f, 0.0f);
 glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
 
-Camera camera(cameraPosition, cameraTarget, cameraUp);
+Camera camera(cameraPosition, cameraTarget, cameraUp, MOVEMENT_SPEED, MOUSE_SENSITIVITY);
 
 static void CreateUVSphere(std::vector<glm::vec3>& verts,
 	std::vector<GLuint>& inds,
@@ -308,6 +310,43 @@ int main() {
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 			glfwSetWindowShouldClose(window, true);
 		}
+		// ------------------------------------------------------------
+
+		// ------------------ CAMERA CONTROLS -------------------------
+		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+			camera.ProcessKeyboard(FORWARD, DELTA_TIME);
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+			camera.ProcessKeyboard(BACKWARD, DELTA_TIME);
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+			camera.ProcessKeyboard(LEFT, DELTA_TIME);
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+			camera.ProcessKeyboard(RIGHT, DELTA_TIME);
+
+		static bool firstMouse = true;
+		static double lastX = WIDTH * 0.5, lastY = HEIGHT * 0.5;
+
+		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+			double mx, my;
+			glfwGetCursorPos(window, &mx, &my);
+
+			if (firstMouse) {
+				lastX = mx;
+				lastY = my;
+				firstMouse = false;
+			}
+
+			float dx = float(mx - lastX);
+			float dy = float(lastY - my);
+
+			lastX = mx;
+			lastY = my;
+
+			camera.ProcessMouseMovement(dx, dy);
+		}
+		else {
+			firstMouse = true;
+		}
+
 		// ------------------------------------------------------------
 
 		fluid.Update(DELTA_TIME);
