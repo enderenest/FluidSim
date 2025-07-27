@@ -5,22 +5,50 @@ layout(local_size_x = 512, local_size_y = 1, local_size_z = 1) in;
 layout(std430, binding = 4) buffer Densities { float densities[]; };
 layout(std430, binding = 9) buffer Masses { float masses[]; };
 layout(std430, binding = 16) buffer Tags { uint tags[]; };
-layout(std430, binding = 8) buffer SimParams { SimulationParameters sim; };
+layout(std430, binding = 8) buffer SimulationParameters {
+    float dt;
+    float gravityAcceleration;
+    float mass;
+    float collisionDamping;
+    float smoothingRadius;
+    float targetDensity;
+    float pressureMultiplier;
+    float viscosityStrength;
+    float nearDensityMultiplier;
+    
+    uint isInteracting;
+    uint isPaused;
+    float inputPositionX;
+    float inputPositionY;
+    float inputPositionZ;
+    float interactionRadius;
+    float interactionStrength;
+
+    uint particleCount;
+    uint hashSize;
+    float spacing;
+    float particleRadius;
+    float boundaryX;
+    float boundaryY;
+    float boundaryZ;
+};
 
 const float SPLIT_THRESHOLD = 1.3;
 const float MERGE_THRESHOLD = 0.7;
 const float MIN_MASS_FACTOR = 0.25;
 
+// 0 = KEEP, 1 = SPLIT, 2 = MERGE
+
 void main() {
     uint i = gl_GlobalInvocationID.x;
-    if (i >= sim.particleCount) return;
+    if (i >= particleCount) return;
 
     float rho = densities[i];
     float mass = masses[i];
 
-    float rhoHigh = SPLIT_THRESHOLD * sim.targetDensity;
-    float rhoLow  = MERGE_THRESHOLD * sim.targetDensity;
-    float minMass = MIN_MASS_FACTOR * sim.mass;
+    float rhoHigh = SPLIT_THRESHOLD * targetDensity;
+    float rhoLow  = MERGE_THRESHOLD * targetDensity;
+    float minMass = MIN_MASS_FACTOR * mass;
 
     if (rho > rhoHigh && mass > minMass) {
         tags[i] = 1; // SPLIT
