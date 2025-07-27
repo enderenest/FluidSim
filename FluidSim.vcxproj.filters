@@ -115,6 +115,9 @@
     <None Include="sphere.mtl">
       <Filter>Resource Files\Models</Filter>
     </None>
+    <None Include="tag_particles.comp">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Object Include="sphere.obj">

@@ -52,25 +52,25 @@ struct Entry {
 
 class Fluid {  
 	private : 
-		SSBO <glm::vec4> _positions;
-		SSBO <glm::vec4> _predictedPositions;
-		SSBO <glm::vec4> _velocities;
-		SSBO <float> _masses;
-		SSBO <float> _densities;  
-		SSBO <float> _nearDensities;
-		SSBO <Entry> _spatialLookup;
-		SSBO <unsigned int> _startIndices;
-		SSBO <SimulationParameters> _simParams;
+		SSBO <glm::vec4> _positions; // bind to 1
+		SSBO <glm::vec4> _predictedPositions; // bind to 2
+		SSBO <glm::vec4> _velocities; // bind to 3
+		SSBO <float> _densities; // bind to 4
+		SSBO <float> _nearDensities; // bind to 5
+		SSBO <Entry> _spatialLookup; // bind to 6
+		SSBO <unsigned int> _startIndices; // bind to 7
+		SSBO <SimulationParameters> _simParams; // bind to 8
+		SSBO <float> _masses; // bind to 9
 
 		//Ping-pong buffers for simulation steps
-		SSBO <glm::vec4> _newPositions;
-		SSBO <glm::vec4> _newPredictedPositions;
-		SSBO <glm::vec4> _newVelocities;
-		SSBO <float> _newMasses;
-		SSBO <float> _newDensities;
-		SSBO <float> _newNearDensities;
-		SSBO <unsigned int> _tags;
-		SSBO<uint32_t> _mergedFlags;
+		SSBO <glm::vec4> _newPositions; //bind to 10
+		SSBO <glm::vec4> _newPredictedPositions; // bind to 11
+		SSBO <glm::vec4> _newVelocities; // bind to 12
+		SSBO <float> _newMasses; // bind to 13
+		SSBO <float> _newDensities; // bind to 14
+		SSBO <float> _newNearDensities; // bind to 15
+		SSBO <unsigned int> _tags; // bind to 16
+		SSBO<uint32_t> _mergedFlags; // bind to 17
 
 		ComputeShader _predictedPosShader;
 		ComputeShader _updateSpatialLookup;
