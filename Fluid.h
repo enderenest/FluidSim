@@ -51,15 +51,26 @@ struct Entry {
 };
 
 class Fluid {  
-	private :  
+	private : 
 		SSBO <glm::vec4> _positions;
 		SSBO <glm::vec4> _predictedPositions;
-		SSBO <glm::vec4> _velocities; 
+		SSBO <glm::vec4> _velocities;
+		SSBO <float> _masses;
 		SSBO <float> _densities;  
 		SSBO <float> _nearDensities;
 		SSBO <Entry> _spatialLookup;
 		SSBO <unsigned int> _startIndices;
 		SSBO <SimulationParameters> _simParams;
+
+		//Ping-pong buffers for simulation steps
+		SSBO <glm::vec4> _newPositions;
+		SSBO <glm::vec4> _newPredictedPositions;
+		SSBO <glm::vec4> _newVelocities;
+		SSBO <float> _newMasses;
+		SSBO <float> _newDensities;
+		SSBO <float> _newNearDensities;
+		SSBO <unsigned int> _tags;
+		SSBO<uint32_t> _mergedFlags;
 
 		ComputeShader _predictedPosShader;
 		ComputeShader _updateSpatialLookup;
@@ -68,6 +79,10 @@ class Fluid {
 		ComputeShader _fluidStep;
 		ComputeShader _bitonicSortShader;
 		ComputeShader _buildStartIndices;
+		ComputeShader _tagParticles;
+		ComputeShader _resampleParticles;
+
+		GLuint _newParticleCounterBuffer;
 
 		SimulationParameters _params;
 
