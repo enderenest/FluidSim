@@ -37,15 +37,13 @@ struct SimulationParameters {
 	float interactionStrength;
 
 	uint32_t particleCount;
+	uint32_t paddedParticleCount;
 	uint32_t hashSize;
 	float spacing;
 	float particleRadius;
 	float boundaryX;
 	float boundaryY;
 	float boundaryZ;
-
-	// Padding to ensure the struct is 16 bytes aligned
-	float padding;
 };
 
 struct Entry {
@@ -106,6 +104,8 @@ class Fluid {
 
 		void Update(float dt);
 
+		static GLuint nextPowerOfTwo(GLuint x);
+		void padSpatialLookup();
 		void SortSpatialLookup();
 
 		void BindRenderBuffers();

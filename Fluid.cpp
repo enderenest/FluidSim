@@ -7,7 +7,7 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
       _particleValues(particleCount, GL_DYNAMIC_DRAW),
       _newParticleVectors(particleCount * 2, GL_DYNAMIC_DRAW),
       _newParticleValues(particleCount * 2, GL_DYNAMIC_DRAW),
-	  _spatialLookup(particleCount, GL_DYNAMIC_DRAW),
+	  _spatialLookup(nextPowerOfTwo(particleCount), GL_DYNAMIC_DRAW),
       _startIndices(hashSize, GL_DYNAMIC_DRAW),
       _simParams(1, GL_DYNAMIC_DRAW),
 
@@ -40,13 +40,13 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
     _params.interactionStrength = interactionStrength;
 
 	_params.particleCount = particleCount;
+	_params.paddedParticleCount = nextPowerOfTwo(particleCount);
 	_params.hashSize = hashSize;
 	_params.spacing = spacing;
 	_params.particleRadius = particleRadius;
 	_params.boundaryX = boundaryX;
 	_params.boundaryY = boundaryY;
 	_params.boundaryZ = boundaryZ;
-	_params.padding = 0.0f; // Padding to ensure the struct is 16 bytes aligned
 
     _simParams.upload(std::vector<SimulationParameters>{_params});
 
@@ -96,7 +96,19 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
 	_newParticleVectors.upload(vectorData);
     _newParticleValues.upload(valueData);
     
-	_spatialLookup.upload(std::vector<Entry>(particleCount, Entry{ 0, 0 }));
+	int paddedCount = nextPowerOfTwo(particleCount);
+    std::vector<Entry> lookupData(paddedCount);
+
+    for (unsigned i = 0; i < particleCount; ++i) {
+        lookupData[i].index = 0u;
+        lookupData[i].key = 0u;          // placeholder
+    }
+    for (unsigned i = particleCount; i < paddedCount; ++i) {
+        lookupData[i].index = -1;
+        lookupData[i].key = 0xFFFFFFFFu; // always sorts to the back
+    }
+
+    _spatialLookup.upload(lookupData);
     _startIndices.upload(std::vector<unsigned int>(hashSize, MAX_INT));
 
     GLuint zero = 0;
@@ -173,29 +185,31 @@ void Fluid::Update(float dt) {
     _fluidStep.wait();
 }
 
+GLuint Fluid::nextPowerOfTwo(GLuint x) {
+    GLuint p = 1;
+    while (p < x) p <<= 1;
+    return p;
+}
 
 void Fluid::SortSpatialLookup() {
-    GLuint N = _params.particleCount;
-    GLuint localSize = 512;
-    const GLuint numGroups = (N + localSize - 1) / localSize;       
+    const GLuint actualN = _params.particleCount;
+    const GLuint paddedN = nextPowerOfTwo(actualN);
+    const GLuint localSize = 512;
+    const GLuint numGroups = (paddedN + localSize - 1) / localSize;
 
     _bitonicSortShader.use();
     _spatialLookup.bindTo(4);
 
-    _bitonicSortShader.setUint("u_N", N);
-
-    for (GLuint size = 2; size <= N; size <<= 1) {
+    _bitonicSortShader.setUint("u_N", paddedN);
+    for (GLuint size = 2; size <= paddedN; size <<= 1) {
         for (GLuint stride = size >> 1; stride > 0; stride >>= 1) {
             _bitonicSortShader.setUint("u_size", size);
             _bitonicSortShader.setUint("u_stride", stride);
-
-            // ← dispatch here, not after the loops
             _bitonicSortShader.dispatch(numGroups);
             _bitonicSortShader.wait();
         }
     }
 }
-
 
 void Fluid::BindRenderBuffers() {
 	_particleVectors.bindTo(0);

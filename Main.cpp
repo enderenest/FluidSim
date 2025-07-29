@@ -28,18 +28,18 @@
 const unsigned int WIDTH = 1920, HEIGHT = 1080;
 const unsigned int PARTICLE_COUNT = 1024 * 32;
 const unsigned int SPATIAL_HASH_SIZE = PARTICLE_COUNT * 4;
-const float PARTICLE_RADIUS = 0.0075f;
-const float MASS = 0.075f;
+const float PARTICLE_RADIUS = 0.008f;
+const float MASS = 0.08f;
 const float GRAVITY_ACCELERATION = 1.2f;
 const float COLLISION_DAMPING = 0.6f;
 const float BOUNDARY_X = 1.2f;
 const float BOUNDARY_Y = 0.7f;
 const float BOUNDARY_Z = 0.7f;
 const float SPACING = 0.025f;
-const float SMOOTHING_RADIUS = 0.082f;
+const float SMOOTHING_RADIUS = 0.08f;
 const float PRESSURE_MULTIPLIER = 2.0f;
 const float TARGET_DENSITY = 1000.0f;
-const float VISCOSITY_STRENGTH = 0.2f;
+const float VISCOSITY_STRENGTH = 0.35f;
 const float NEAR_DENSITY_MULTIPLIER = 0.2f;
 const float DELTA_TIME = 0.016f;
 
@@ -73,7 +73,6 @@ static void CreateUVSphere(std::vector<glm::vec3>& verts,
 	verts.clear();
 	inds.clear();
 
-	// make vertices
 	for (int y = 0; y <= latSegs; ++y) {
 		float v = float(y) / latSegs;             
 		float theta = v * glm::pi<float>();       

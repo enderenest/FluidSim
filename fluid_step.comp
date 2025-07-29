@@ -30,15 +30,13 @@ struct SimulationParameters {
 	float interactionStrength;
 
 	uint particleCount;
+	uint paddedParticleCount;
 	uint hashSize;
 	float spacing;
 	float particleRadius;
 	float boundaryX;
 	float boundaryY;
 	float boundaryZ;
-
-	// Padding to ensure the struct is 16 bytes aligned
-	float padding;
 };
 
 layout(local_size_x = 512, local_size_y = 1, local_size_z = 1) in;

@@ -29,6 +29,16 @@ public:
         glDeleteBuffers(1, &_id);
     }
 
+    void resize(size_t newCount) {
+        _count = newCount;
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _id);
+        glBufferData(GL_SHADER_STORAGE_BUFFER,
+            _count * sizeof(T),
+            nullptr,
+            GL_DYNAMIC_DRAW);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    }
+
     // Upload a full vector of data to the GPU buffer
     void upload(const std::vector<T>& data) {
         if (data.size() != _count) {

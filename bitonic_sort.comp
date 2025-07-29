@@ -13,7 +13,10 @@ uniform uint u_stride;
 
 void main() {
     uint idx = gl_GlobalInvocationID.x;
+    if (idx >= u_N) return;
+
     uint partner = idx ^ u_stride;
+    if (partner >= u_N) return;
 
     if (idx < u_N && partner < u_N && idx < partner) {
         bool ascending = ((idx & u_size) == 0u);
