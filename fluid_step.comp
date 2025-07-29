@@ -5,38 +5,46 @@ struct Entry {
     uint key;
 };
 
+struct ParticleVectors {
+	vec4 position;
+	vec4 predictedPosition;
+	vec4 velocity;
+};
+
+struct SimulationParameters {
+	float dt;
+	float gravityAcceleration;
+	float mass;
+	float collisionDamping;
+	float smoothingRadius;
+	float targetDensity;
+	float pressureMultiplier;
+	float viscosityStrength;
+	float nearDensityMultiplier;
+	uint isInteracting;
+	uint isPaused;
+	float inputPositionX;
+	float inputPositionY;
+	float inputPositionZ;
+	float interactionRadius;
+	float interactionStrength;
+
+	uint particleCount;
+	uint hashSize;
+	float spacing;
+	float particleRadius;
+	float boundaryX;
+	float boundaryY;
+	float boundaryZ;
+
+	// Padding to ensure the struct is 16 bytes aligned
+	float padding;
+};
+
 layout(local_size_x = 512, local_size_y = 1, local_size_z = 1) in;
 
-// Buffer declarations for particle data
-layout(std430, binding = 1) buffer Positions { vec4 positions[]; };
-layout(std430, binding = 3) buffer Velocities { vec4 velocities[]; };
-layout(std430, binding = 8) buffer SimulationParameters {
-    float dt;
-    float gravityAcceleration;
-    float mass;
-    float collisionDamping;
-    float smoothingRadius;
-    float targetDensity;
-    float pressureMultiplier;
-    float viscosityStrength;
-    float nearDensityMultiplier;
-    
-    uint isInteracting;
-    uint isPaused;
-    float inputPositionX;
-    float inputPositionY;
-    float inputPositionZ;
-    float interactionRadius;
-    float interactionStrength;
-
-    uint particleCount;
-    uint hashSize;
-    float spacing;
-    float particleRadius;
-    float boundaryX;
-    float boundaryY;
-    float boundaryZ;
-};
+layout(std430, binding = 0) buffer VectorData { ParticleVectors vecData[]; };
+layout(std430, binding = 8) buffer SimParamsBuffer { SimulationParameters sim; };
 
 // Math constants
 const uint MAX_INT = 0xffffffffu;
@@ -45,32 +53,32 @@ const float EPSILON = 1e-6f;
 
 
 void HandleBoundaryCollisions(uint index) {
-    vec3 halfBounds = vec3(boundaryX  - particleRadius, 
-                           boundaryY  - particleRadius,
-                           boundaryZ  - particleRadius);
+    vec3 halfBounds = vec3(sim.boundaryX  - sim.particleRadius, 
+                           sim.boundaryY  - sim.particleRadius,
+                           sim.boundaryZ  - sim.particleRadius);
 
-    if (abs(positions[index].x) > halfBounds.x) {
-        positions[index].x = halfBounds.x * sign(positions[index].x);
-        velocities[index].x *= - collisionDamping;
+    if (abs(vecData[index].position.x) > halfBounds.x) {
+        vecData[index].position.x = halfBounds.x * sign(vecData[index].position.x);
+        vecData[index].velocity.x *= - sim.collisionDamping;
     }
 
-    if (abs(positions[index].y) > halfBounds.y) {
-        positions[index].y = halfBounds.y * sign(positions[index].y);
-        velocities[index].y *= - collisionDamping;
+    if (abs(vecData[index].position.y) > halfBounds.y) {
+        vecData[index].position.y = halfBounds.y * sign(vecData[index].position.y);
+        vecData[index].velocity.y *= - sim.collisionDamping;
     }
 
-    if (abs(positions[index].z) > halfBounds.z) {
-        positions[index].z = halfBounds.z * sign(positions[index].z);
-        velocities[index].z *= - collisionDamping;
+    if (abs(vecData[index].position.z) > halfBounds.z) {
+        vecData[index].position.z = halfBounds.z * sign(vecData[index].position.z);
+        vecData[index].velocity.z *= - sim.collisionDamping;
     }
 
-    positions[index].w = 0.0f;
+    vecData[index].position.w = 0.0f;
 }
 
 void main() {
     uint index = gl_GlobalInvocationID.x;
-    if (index >= particleCount) return;
+    if (index >= sim.particleCount) return;
 
-    positions[index] += velocities[index] * dt;
+    vecData[index].position += vecData[index].velocity * sim.dt;
     HandleBoundaryCollisions(index);
 }

@@ -3,7 +3,7 @@ layout(local_size_x = 512) in;
 
 struct Entry { int index; uint key; };
 
-layout(std430, binding = 6) buffer SpatialLookup {
+layout(std430, binding = 4) buffer SpatialLookup {
     Entry spatialLookup[];
 };
 
@@ -12,7 +12,7 @@ uniform uint u_size;
 uniform uint u_stride; 
 
 void main() {
-    uint idx     = gl_GlobalInvocationID.x;
+    uint idx = gl_GlobalInvocationID.x;
     uint partner = idx ^ u_stride;
 
     if (idx < u_N && partner < u_N && idx < partner) {

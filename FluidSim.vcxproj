@@ -167,6 +167,7 @@
     <None Include="line.frag" />
     <None Include="line.vert" />
     <None Include="predicted_positions.comp" />
+    <None Include="resample_particles.comp" />
     <None Include="sphere.mtl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

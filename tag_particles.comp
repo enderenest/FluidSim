@@ -1,37 +1,52 @@
 #version 430 core
 
+struct ParticleValues {
+	float mass;
+	float density;
+	float nearDensity;
+	uint mergeFlag;
+	uint tag; // 0 = KEEP, 1 = SPLIT, 2 = MERGE
+
+	// Padding to ensure the struct is 16 bytes aligned
+	float padding1;     
+	float padding2;    
+	float padding3;  
+};
+
+struct SimulationParameters {
+	float dt;
+	float gravityAcceleration;
+	float mass;
+	float collisionDamping;
+	float smoothingRadius;
+	float targetDensity;
+	float pressureMultiplier;
+	float viscosityStrength;
+	float nearDensityMultiplier;
+	uint isInteracting;
+	uint isPaused;
+	float inputPositionX;
+	float inputPositionY;
+	float inputPositionZ;
+	float interactionRadius;
+	float interactionStrength;
+
+	uint particleCount;
+	uint hashSize;
+	float spacing;
+	float particleRadius;
+	float boundaryX;
+	float boundaryY;
+	float boundaryZ;
+
+	// Padding to ensure the struct is 16 bytes aligned
+	float padding;
+};
+
 layout(local_size_x = 512, local_size_y = 1, local_size_z = 1) in;
 
-layout(std430, binding = 4) buffer Densities { float densities[]; };
-layout(std430, binding = 9) buffer Masses { float masses[]; };
-layout(std430, binding = 16) buffer Tags { uint tags[]; };
-layout(std430, binding = 8) buffer SimulationParameters {
-    float dt;
-    float gravityAcceleration;
-    float mass;
-    float collisionDamping;
-    float smoothingRadius;
-    float targetDensity;
-    float pressureMultiplier;
-    float viscosityStrength;
-    float nearDensityMultiplier;
-    
-    uint isInteracting;
-    uint isPaused;
-    float inputPositionX;
-    float inputPositionY;
-    float inputPositionZ;
-    float interactionRadius;
-    float interactionStrength;
-
-    uint particleCount;
-    uint hashSize;
-    float spacing;
-    float particleRadius;
-    float boundaryX;
-    float boundaryY;
-    float boundaryZ;
-};
+layout(std430, binding = 1) buffer ValueData { ParticleValues valData[]; };
+layout(std430, binding = 6) buffer SimParamsBuffer { SimulationParameters sim; };
 
 const float SPLIT_THRESHOLD = 1.3;
 const float MERGE_THRESHOLD = 0.7;
@@ -41,22 +56,22 @@ const float MIN_MASS_FACTOR = 0.25;
 
 void main() {
     uint i = gl_GlobalInvocationID.x;
-    if (i >= particleCount) return;
+    if (i >= sim.particleCount) return;
 
-    float rho = densities[i];
-    float mass = masses[i];
+    float rho = valData[i].density;
+    float mass = valData[i].mass;
 
-    float rhoHigh = SPLIT_THRESHOLD * targetDensity;
-    float rhoLow  = MERGE_THRESHOLD * targetDensity;
+    float rhoHigh = SPLIT_THRESHOLD * sim.targetDensity;
+    float rhoLow  = MERGE_THRESHOLD * sim.targetDensity;
     float minMass = MIN_MASS_FACTOR * mass;
 
     if (rho > rhoHigh && mass > minMass) {
-        tags[i] = 1; // SPLIT
+        valData[i].tag = 1; // SPLIT
     }
     else if (rho < rhoLow) {
-        tags[i] = 2; // MERGE
+        valData[i].tag = 2; // MERGE
     }
     else {
-        tags[i] = 0; // KEEP
+        valData[i].tag = 0; // KEEP
     }
 }

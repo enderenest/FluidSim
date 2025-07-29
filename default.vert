@@ -1,10 +1,14 @@
 #version 430 core
 
+struct ParticleVectors {
+	vec4 position;
+	vec4 predictedPosition;
+	vec4 velocity;
+};
+
 layout (location = 0) in vec3 aPos;  // Static unit circle geometry
 
-layout(std430, binding = 1) buffer Positions { vec4 positions[]; };
-
-layout(std430, binding = 3) buffer Velocities { vec4 velocities[]; };
+layout(std430, binding = 0) buffer VectorData { ParticleVectors vecData[]; };
 
 uniform float scale; // Added for future adaptive sampling implementation
 uniform mat4 view;
@@ -16,8 +20,8 @@ out vec3 velocity;
 
 void main()
 {
-    vec3 instancePos = positions[gl_InstanceID].xyz;
-    vec3 instanceVel = velocities[gl_InstanceID].xyz;
+    vec3 instancePos = vecData[gl_InstanceID].position.xyz;
+    vec3 instanceVel = vecData[gl_InstanceID].velocity.xyz;
     
     vec3 worldPos = instancePos + aPos * scale;
 

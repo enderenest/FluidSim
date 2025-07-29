@@ -43,6 +43,9 @@ struct SimulationParameters {
 	float boundaryX;
 	float boundaryY;
 	float boundaryZ;
+
+	// Padding to ensure the struct is 16 bytes aligned
+	float padding;
 };
 
 struct Entry {
@@ -50,27 +53,41 @@ struct Entry {
 	unsigned int key;
 };
 
+// Alligned to 16 bytes because of glm::vec4
+struct ParticleVectors {
+	glm::vec4 position;
+	glm::vec4 predictedPosition;
+	glm::vec4 velocity;
+};
+
+// Alligned to 4 bytes because of float
+struct ParticleValues {
+	float mass;
+	float density;
+	float nearDensity;
+	uint32_t mergeFlag;
+	uint32_t tag; // 0 = KEEP, 1 = SPLIT, 2 = MERGE
+
+	// Padding to ensure the struct is 16 bytes aligned
+	float padding1;     
+	float padding2;    
+	float padding3;  
+};
+
 class Fluid {  
 	private : 
-		SSBO <glm::vec4> _positions; // bind to 1
-		SSBO <glm::vec4> _predictedPositions; // bind to 2
-		SSBO <glm::vec4> _velocities; // bind to 3
-		SSBO <float> _densities; // bind to 4
-		SSBO <float> _nearDensities; // bind to 5
-		SSBO <Entry> _spatialLookup; // bind to 6
-		SSBO <unsigned int> _startIndices; // bind to 7
-		SSBO <SimulationParameters> _simParams; // bind to 8
-		SSBO <float> _masses; // bind to 9
+		SSBO <ParticleVectors> _particleVectors; // bind to 0
+		SSBO <ParticleValues> _particleValues; // bind to 1
 
 		//Ping-pong buffers for simulation steps
-		SSBO <glm::vec4> _newPositions; //bind to 10
-		SSBO <glm::vec4> _newPredictedPositions; // bind to 11
-		SSBO <glm::vec4> _newVelocities; // bind to 12
-		SSBO <float> _newMasses; // bind to 13
-		SSBO <float> _newDensities; // bind to 14
-		SSBO <float> _newNearDensities; // bind to 15
-		SSBO <unsigned int> _tags; // bind to 16
-		SSBO<uint32_t> _mergedFlags; // bind to 17
+		SSBO <ParticleVectors> _newParticleVectors; // bind to 2
+		SSBO <ParticleValues> _newParticleValues; // bind to 3
+
+		SSBO <Entry> _spatialLookup; // bind to 4
+		SSBO <unsigned int> _startIndices; // bind to 5
+		SSBO <SimulationParameters> _simParams; // bind to 6
+
+		GLuint _newParticleCounterBuffer; // bind to 7
 
 		ComputeShader _predictedPosShader;
 		ComputeShader _updateSpatialLookup;
@@ -82,10 +99,8 @@ class Fluid {
 		ComputeShader _tagParticles;
 		ComputeShader _resampleParticles;
 
-		GLuint _newParticleCounterBuffer;
-
 		SimulationParameters _params;
-
+		
 	public:  
 		Fluid(unsigned int particleCount, float particleRadius, const float mass, const float gravity, const float collisionDamping, const float spacing, const float pressureMultiplier, const float targetDensity, const float smoothingRadius, const unsigned int hashSize, const float interactionRadius, const float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ);
 
@@ -95,7 +110,7 @@ class Fluid {
 
 		void BindRenderBuffers();
 
-		// Setter/getter methods for keyboard controls
+		// Get/set methods for mouse/keyboard controls
 		void SetIsInteracting(bool state);
 		void SetInteractionRadius(float radius);
 		void SetInteractionPosition(glm::vec3 pos);

@@ -5,42 +5,62 @@ struct Entry {
 	uint key;
 };
 
+struct ParticleVectors {
+	vec4 position;
+	vec4 predictedPosition;
+	vec4 velocity;
+};
+
+struct ParticleValues {
+	float mass;
+	float density;
+	float nearDensity;
+	uint mergeFlag;
+	uint tag; // 0 = KEEP, 1 = SPLIT, 2 = MERGE
+
+	// Padding to ensure the struct is 16 bytes aligned
+	float padding1;     
+	float padding2;    
+	float padding3;  
+};
+
+struct SimulationParameters {
+	float dt;
+	float gravityAcceleration;
+	float mass;
+	float collisionDamping;
+	float smoothingRadius;
+	float targetDensity;
+	float pressureMultiplier;
+	float viscosityStrength;
+	float nearDensityMultiplier;
+	uint isInteracting;
+	uint isPaused;
+	float inputPositionX;
+	float inputPositionY;
+	float inputPositionZ;
+	float interactionRadius;
+	float interactionStrength;
+
+	uint particleCount;
+	uint hashSize;
+	float spacing;
+	float particleRadius;
+	float boundaryX;
+	float boundaryY;
+	float boundaryZ;
+
+	// Padding to ensure the struct is 16 bytes aligned
+	float padding;
+};
+
 layout(local_size_x = 512, local_size_y = 1, local_size_z = 1) in;
 
-layout(std430, binding = 1) buffer Positions { vec4 positions[]; };
-layout(std430, binding = 2) buffer PredictedPositions { vec4 predictedPositions[]; };
-layout(std430, binding = 3) buffer Velocities { vec4 velocities[]; };
-layout(std430, binding = 4) buffer Densities { float densities[]; };
-layout(std430, binding = 5) buffer NearDensities { float nearDensities[]; };
-layout(std430, binding = 6) buffer SpatialLookup { Entry spatialLookup[]; };
-layout(std430, binding = 7) buffer StartIndices { uint startIndices[]; };
-layout(std430, binding = 8) buffer SimulationParameters {
-    float dt;
-    float gravityAcceleration;
-    float mass;
-    float collisionDamping;
-    float smoothingRadius;
-    float targetDensity;
-    float pressureMultiplier;
-    float viscosityStrength;
-    float nearDensityMultiplier;
-    
-    uint isInteracting;
-    uint isPaused;
-    float inputPositionX;
-    float inputPositionY;
-    float inputPositionZ;
-    float interactionRadius;
-    float interactionStrength;
-
-    uint particleCount;
-    uint hashSize;
-    float spacing;
-    float particleRadius;
-    float boundaryX;
-    float boundaryY;
-    float boundaryZ;
-};
+layout(std430, binding = 0) buffer VectorData { ParticleVectors vecData[]; };
+layout(std430, binding = 1) buffer ValueData { ParticleValues valData[]; };
+layout(std430, binding = 4) buffer SpatialLookup { Entry spatialLookup[]; };
+layout(std430, binding = 5) buffer StartIndices { uint startIndices[]; };
+layout(std430, binding = 6) buffer SimParamsBuffer { SimulationParameters sim; };
 
 // Math constants
 const uint MAX_INT = 0xffffffffu;
@@ -112,18 +132,18 @@ uint HashCell(int x, int y, int z) {
 }
 
 uint GetKeyFromHash(uint hash) {
-    return hash % hashSize;
+    return hash % sim.hashSize;
 }
 
 float DensityToPressure(float density) {
-	float densityError = density - targetDensity;
-	float pressure = pressureMultiplier * densityError;
+	float densityError = density - sim.targetDensity;
+	float pressure = sim.pressureMultiplier * densityError;
     return pressure;
 }
 
 float NearDensityToPressure(float nearDensity)
 {
-    return nearDensityMultiplier * nearDensity;
+    return sim.nearDensityMultiplier * nearDensity;
 }
 
 float CalculateSharedPressure(float densityA, float densityB) {
@@ -140,11 +160,11 @@ float CalculateNearSharedPressure(float densityA, float densityB) {
 
 vec3 CalculatePressureForce(uint i) {
 	vec3 pressureForce = vec3(0.0f);
-	ivec3 cellCoord = PositionsToCellCoord(predictedPositions[i].xyz, smoothingRadius);
+	ivec3 cellCoord = PositionsToCellCoord(vecData[i].predictedPosition.xyz, sim.smoothingRadius);
     int centerX = cellCoord.x;
 	int centerY = cellCoord.y;
     int centerZ = cellCoord.z;
-	float sqrRadius = smoothingRadius * smoothingRadius;
+	float sqrRadius = sim.smoothingRadius * sim.smoothingRadius;
 
     for (int k = 0; k < 27; ++k) {
         int offsetX = cellOffsets[k].x;
@@ -161,20 +181,20 @@ vec3 CalculatePressureForce(uint i) {
 			int particleIndex = spatialLookup[j].index;
             if (particleIndex == i) continue;
 
-			vec3 offset = predictedPositions[particleIndex].xyz - predictedPositions[i].xyz;
+			vec3 offset = vecData[particleIndex].predictedPosition.xyz - vecData[i].predictedPosition.xyz;
 			float sqrDistance = dot(offset, offset);
 
             if (sqrDistance < sqrRadius) {
 				float distance = sqrt(sqrDistance);
                 vec3 direction = (distance == 0) ? GetRandomDirection3D(particleIndex) : offset / distance;
-                float slope = SpikyPow2KernelDerivative(smoothingRadius, distance);
-				float nearSlope = SpikyPow3KernelDerivative(smoothingRadius, distance);
-                float density = densities[particleIndex];
-				float nearDensity = nearDensities[particleIndex];
-				float sharedPressure = CalculateSharedPressure(densities[i], density); 
-				float sharedNearPressure = CalculateNearSharedPressure(nearDensities[i], nearDensity);
-                pressureForce += sharedPressure * slope * direction * mass / density;
-                pressureForce += sharedNearPressure * nearSlope * direction * mass / nearDensity;
+                float slope = SpikyPow2KernelDerivative(sim.smoothingRadius, distance);
+				float nearSlope = SpikyPow3KernelDerivative(sim.smoothingRadius, distance);
+                float density = valData[particleIndex].density;
+				float nearDensity = valData[particleIndex].nearDensity;
+				float sharedPressure = CalculateSharedPressure(valData[i].density, density); 
+				float sharedNearPressure = CalculateNearSharedPressure(valData[i].nearDensity, nearDensity);
+                pressureForce += sharedPressure * slope * direction * sim.mass / density;
+                pressureForce += sharedNearPressure * nearSlope * direction * sim.mass / nearDensity;
 			}
 		}
     }
@@ -184,11 +204,11 @@ vec3 CalculatePressureForce(uint i) {
 
 vec3 CalculateViscosityForce(uint i) {
     vec3 viscosityForce = vec3(0.0);
-    ivec3 cellCoord = PositionsToCellCoord(predictedPositions[i].xyz, smoothingRadius);
+    ivec3 cellCoord = PositionsToCellCoord(vecData[i].predictedPosition.xyz, sim.smoothingRadius);
     int centerX = cellCoord.x;
     int centerY = cellCoord.y;
     int centerZ = cellCoord.z;
-    float sqrRadius = smoothingRadius * smoothingRadius;
+    float sqrRadius = sim.smoothingRadius * sim.smoothingRadius;
     for (int k = 0; k < 27; ++k) {
         int offsetX = cellOffsets[k].x;
         int offsetY = cellOffsets[k].y;
@@ -201,63 +221,63 @@ vec3 CalculateViscosityForce(uint i) {
             int particleIndex = spatialLookup[j].index;
             if (particleIndex == i) continue;
 
-            vec3 offset = predictedPositions[particleIndex].xyz - predictedPositions[i].xyz;
+            vec3 offset = vecData[particleIndex].predictedPosition.xyz - vecData[i].predictedPosition.xyz;
             float sqrDistance = dot(offset, offset);
             if (sqrDistance < sqrRadius) {
                 float distance = sqrt(sqrDistance);
-				float influence = Poly6Kernel(smoothingRadius, distance);
-                viscosityForce += (velocities[particleIndex].xyz - velocities[i].xyz) * influence;
+				float influence = Poly6Kernel(sim.smoothingRadius, distance);
+                viscosityForce += (vecData[particleIndex].velocity.xyz - vecData[i].velocity.xyz) * influence;
             }
         }
     }
 
-	return viscosityForce * viscosityStrength;
+	return viscosityForce * sim.viscosityStrength;
 }
 
 vec3 ComputeInteractionAccel(vec3 pos, vec3 vel) {
-    if (isInteracting == 0u || isPaused != 0u) return vec3(0.0);
+    if (sim.isInteracting == 0u || sim.isPaused != 0u) return vec3(0.0);
 
-    float sqrR   = interactionRadius * interactionRadius;
-    vec3  offset = vec3(inputPositionX, inputPositionY, inputPositionZ) - pos;
+    float sqrR   = sim.interactionRadius * sim.interactionRadius;
+    vec3  offset = vec3(sim.inputPositionX, sim.inputPositionY, sim.inputPositionZ) - pos;
     float sqrD   = dot(offset, offset);
     if (sqrD >= sqrR) {
         return vec3(0.0);
     }
 
     float dist    = sqrt(sqrD);
-    float edgeT   = dist / interactionRadius; 
+    float edgeT   = dist / sim.interactionRadius; 
     float centreT = 1.0 - edgeT;             
 
     vec3 dir = (dist > EPSILON) ? (offset / dist) : vec3(0.0);
 
-    return dir * (centreT * interactionStrength)
+    return dir * (centreT * sim.interactionStrength)
          - vel * centreT;
 }
 
 void ApplyInteractionForce(uint i) {
-    if (isInteracting == 0u || isPaused != 0u) return;
+    if (sim.isInteracting == 0u || sim.isPaused != 0u) return;
 
-    vec3 pos = positions[i].xyz;
-    vec3 vel = velocities[i].xyz;
+    vec3 pos = vecData[i].position.xyz;
+    vec3 vel = vecData[i].velocity.xyz;
 
     vec3 accel = ComputeInteractionAccel(pos, vel);
-    velocities[i].xyz += accel * dt;
+    vecData[i].velocity.xyz += accel * sim.dt;
 }
 
 void main() {
     uint index = gl_GlobalInvocationID.x;
-    if (index >= particleCount) return;
+    if (index >= sim.particleCount) return;
 
-    vec3 pressureAcceleration = densities[index] < EPSILON ? vec3(0.0) : CalculatePressureForce(index) / densities[index];
-    vec3 viscosityAcceleration = densities[index] < EPSILON ? vec3(0.0) : CalculateViscosityForce(index) / densities[index];
+    vec3 pressureAcceleration = valData[index].density < EPSILON ? vec3(0.0) : CalculatePressureForce(index) / valData[index].density;
+    vec3 viscosityAcceleration = valData[index].density < EPSILON ? vec3(0.0) : CalculateViscosityForce(index) / valData[index].density;
 
-    if (isInteracting != 0u && isPaused == 0u) {
+    if (sim.isInteracting != 0u && sim.isPaused == 0u) {
         ApplyInteractionForce(index);
     }
 
     vec3 totalAcceleration = pressureAcceleration + viscosityAcceleration;
 
-    velocities[index] += vec4(totalAcceleration, 0.0) * dt;
+    vecData[index].velocity += vec4(totalAcceleration, 0.0) * sim.dt;
 }
 
 

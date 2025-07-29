@@ -3,11 +3,10 @@
 
 
 Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const float mass, const float gravityAcceleration, const float collisionDamping, const float spacing, const float pressureMultiplier, const float targetDensity, const float smoothingRadius, const unsigned int hashSize, const float interactionRadius, const float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ)
-    : _positions(particleCount, GL_DYNAMIC_DRAW),
-      _predictedPositions(particleCount, GL_DYNAMIC_DRAW),
-      _velocities(particleCount, GL_DYNAMIC_DRAW),
-      _densities(particleCount, GL_DYNAMIC_DRAW),
-      _nearDensities(particleCount, GL_DYNAMIC_DRAW),
+    : _particleVectors(particleCount, GL_DYNAMIC_DRAW),
+      _particleValues(particleCount, GL_DYNAMIC_DRAW),
+      _newParticleVectors(particleCount * 2, GL_DYNAMIC_DRAW),
+      _newParticleValues(particleCount * 2, GL_DYNAMIC_DRAW),
 	  _spatialLookup(particleCount, GL_DYNAMIC_DRAW),
       _startIndices(hashSize, GL_DYNAMIC_DRAW),
       _simParams(1, GL_DYNAMIC_DRAW),
@@ -18,10 +17,11 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
       _fluidStep("fluid_step.comp"),
 	  _bitonicSortShader("bitonic_sort.comp"),
 	  _updateSpatialLookup("update_spatial_lookup.comp"),
-	  _buildStartIndices("build_start_indices.comp")
-	  
+	  _buildStartIndices("build_start_indices.comp"),
+	  _tagParticles("tag_particles.comp"),
+      _resampleParticles("resample_particles.comp")
 {
-	//Initialize simulation parameters
+	// Initialize simulation parameters
     _params.dt = 0.016f;
     _params.gravityAcceleration = gravityAcceleration;
     _params.mass = mass;
@@ -46,11 +46,12 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
 	_params.boundaryX = boundaryX;
 	_params.boundaryY = boundaryY;
 	_params.boundaryZ = boundaryZ;
+	_params.padding = 0.0f; // Padding to ensure the struct is 16 bytes aligned
 
     _simParams.upload(std::vector<SimulationParameters>{_params});
 
-    // Initialize positions in a grid
-    std::vector<glm::vec4> initialPositions(_params.particleCount, glm::vec4(0.0f));
+	std::vector<ParticleVectors> vectorData(particleCount);
+	std::vector<ParticleValues> valueData(particleCount);
 
     unsigned int particlesPerAxis = static_cast<unsigned int>(std::ceil(std::cbrt(particleCount)));
 
@@ -63,16 +64,47 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
         float fy = (static_cast<float>(y) - particlesPerAxis / 2.0f + 0.5f) * spacing;
         float fz = (static_cast<float>(z) - particlesPerAxis / 2.0f + 0.5f) * spacing;
 
-        initialPositions[i] = glm::vec4(fx, fy, fz, 0.0f);
+		vectorData[i].position = glm::vec4(fx, fy, fz, 1.0f);
+		vectorData[i].predictedPosition = glm::vec4(fx, fy, fz, 1.0f);
+        vectorData[i].velocity = glm::vec4(0.0f);
+        valueData[i].mass = mass;
+        valueData[i].density = 0.0f;
+        valueData[i].nearDensity = 0.0f;
+        valueData[i].mergeFlag = 0;
+		valueData[i].tag = 0;
+        valueData[i].padding1 = valueData[i].padding2 = valueData[i].padding3 = 0.0f;
     }
 
-    _positions.upload(initialPositions);
-    _predictedPositions.upload(initialPositions);
-    _velocities.upload(std::vector<glm::vec4>(particleCount, glm::vec4(0.0f)));
-    _densities.upload(std::vector<float>(particleCount, 0.0f));
-    _nearDensities.upload(std::vector<float>(particleCount, 0.0f));
+	_particleVectors.upload(vectorData);
+	_particleValues.upload(valueData);
+
+    vectorData.resize(particleCount * 2, ParticleVectors{
+        glm::vec4(0.0f), glm::vec4(0.0f), glm::vec4(0.0f)
+    });
+
+    valueData.resize(particleCount * 2, ParticleValues{
+        0.0f, // mass
+        0.0f, // density
+        0.0f, // nearDensity
+        0u,   // mergeFlag
+        0u,   // tag
+        0.0f, // padding1
+        0.0f, // padding2
+        0.0f  // padding3
+    });
+
+	_newParticleVectors.upload(vectorData);
+    _newParticleValues.upload(valueData);
+    
 	_spatialLookup.upload(std::vector<Entry>(particleCount, Entry{ 0, 0 }));
     _startIndices.upload(std::vector<unsigned int>(hashSize, MAX_INT));
+
+    GLuint zero = 0;
+    glGenBuffers(1, &_newParticleCounterBuffer);
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, _newParticleCounterBuffer);
+    glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), nullptr, GL_DYNAMIC_DRAW);
+    glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), &zero);
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
 }
 
 void Fluid::Update(float dt) {
@@ -82,23 +114,20 @@ void Fluid::Update(float dt) {
     
 
     const int groupSize = 512;
-    int numGroups = (_positions.count() + groupSize - 1) / groupSize;
+    int numGroups = (_params.particleCount + groupSize - 1) / groupSize;
 
 	// Step 0: Predict positions based on velocities
 	_predictedPosShader.use();
-	_positions.bindTo(1);
-	_predictedPositions.bindTo(2);
-	_velocities.bindTo(3);
-	_simParams.bindTo(8);
+	_particleVectors.bindTo(0);
+	_simParams.bindTo(6);
     _predictedPosShader.dispatch(numGroups);
 	_predictedPosShader.wait();
 
     // Step 1: Update spatial lookup keys,
-
     _updateSpatialLookup.use();
-	_predictedPositions.bindTo(2);
-    _spatialLookup.bindTo(6);
-    _simParams.bindTo(8);
+	_particleVectors.bindTo(0);
+    _spatialLookup.bindTo(4);
+    _simParams.bindTo(6);
     _updateSpatialLookup.dispatch(numGroups);
 	_updateSpatialLookup.wait();
 
@@ -110,41 +139,36 @@ void Fluid::Update(float dt) {
  
 	// Step 4: Update start indices
     _buildStartIndices.use();
-    _spatialLookup.bindTo(6);
-    _startIndices.bindTo(7);
-    _simParams.bindTo(8);
+    _spatialLookup.bindTo(4);
+    _startIndices.bindTo(5);
+    _simParams.bindTo(6);
     _buildStartIndices.dispatch(numGroups);
 	_buildStartIndices.wait();
 
 	// Step 5: Calculate densities
 	_densityStep.use();
-	_predictedPositions.bindTo(2);
-	_densities.bindTo(4);
-	_nearDensities.bindTo(5);
-	_spatialLookup.bindTo(6);
-	_startIndices.bindTo(7);
-	_simParams.bindTo(8);
+	_particleVectors.bindTo(0);
+	_particleValues.bindTo(1);
+	_spatialLookup.bindTo(4);
+	_startIndices.bindTo(5);
+	_simParams.bindTo(6);
 	_densityStep.dispatch(numGroups);
 	_densityStep.wait();
 
 	// Step 6: Calculate forces
 	_forceStep.use();
-	_positions.bindTo(1);
-	_predictedPositions.bindTo(2);
-	_velocities.bindTo(3);
-	_densities.bindTo(4);
-	_nearDensities.bindTo(5);
-	_spatialLookup.bindTo(6);
-	_startIndices.bindTo(7);
-	_simParams.bindTo(8);
+	_particleVectors.bindTo(0);
+	_particleValues.bindTo(1);
+	_spatialLookup.bindTo(4);
+	_startIndices.bindTo(5);
+	_simParams.bindTo(6);
 	_forceStep.dispatch(numGroups);
 	_forceStep.wait();
 
 	// Step 7: Update positions and velocities
 	_fluidStep.use();
-    _positions.bindTo(1);
-    _velocities.bindTo(3);
-    _simParams.bindTo(8);
+    _particleVectors.bindTo(1);
+    _simParams.bindTo(6);
     _fluidStep.dispatch(numGroups);
     _fluidStep.wait();
 }
@@ -152,11 +176,11 @@ void Fluid::Update(float dt) {
 
 void Fluid::SortSpatialLookup() {
     GLuint N = _params.particleCount;
-    GLuint localSize = 256;
-    const GLuint groups = (N + localSize - 1) / localSize;       
+    GLuint localSize = 512;
+    const GLuint numGroups = (N + localSize - 1) / localSize;       
 
     _bitonicSortShader.use();
-    _spatialLookup.bindTo(6);
+    _spatialLookup.bindTo(4);
 
     _bitonicSortShader.setUint("u_N", N);
 
@@ -166,7 +190,7 @@ void Fluid::SortSpatialLookup() {
             _bitonicSortShader.setUint("u_stride", stride);
 
             // ← dispatch here, not after the loops
-            _bitonicSortShader.dispatch(groups, 1, 1);
+            _bitonicSortShader.dispatch(numGroups);
             _bitonicSortShader.wait();
         }
     }
@@ -174,8 +198,7 @@ void Fluid::SortSpatialLookup() {
 
 
 void Fluid::BindRenderBuffers() {
-    _positions.bindTo(1);
-    _velocities.bindTo(3);
+	_particleVectors.bindTo(0);
 }
 
 void Fluid::SetIsInteracting(bool state) { _params.isInteracting = state; }
