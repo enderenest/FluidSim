@@ -1,5 +1,6 @@
 #version 430 core
 
+in vec2  texCoord;
 in vec3 velocity;
 
 out vec4 FragColor;
@@ -43,10 +44,10 @@ vec3 velocityToColor(float t)
 
 void main()
 {
-    vec2 centred = (gl_PointCoord - vec2(0.5)) * 2.0;
+    vec2 centred = (texCoord - vec2(0.5)) * 2.0;
     float d2     = dot(centred, centred);
     float delta  = fwidth(sqrt(d2));
-    float alpha  = 1.0 - smoothstep(1.0 - delta, 1.0 + delta, d2);
+    float alpha = 1.0;  
 
 
     float speed = length(velocity);

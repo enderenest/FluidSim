@@ -26,19 +26,19 @@
 // velocity += pressureAcceleration * dt;
 
 const unsigned int WIDTH = 1920, HEIGHT = 1080;
-const unsigned int PARTICLE_COUNT = 1024 * 32;
+const unsigned int PARTICLE_COUNT = 1024 * 16;
 const unsigned int SPATIAL_HASH_SIZE = PARTICLE_COUNT * 4;
-const float PARTICLE_RADIUS = 0.008f;
-const float MASS = 0.08f;
+const float PARTICLE_RADIUS = 0.01f;
+const float MASS = 0.1f;
 const float GRAVITY_ACCELERATION = 1.2f;
 const float COLLISION_DAMPING = 0.6f;
 const float BOUNDARY_X = 1.2f;
 const float BOUNDARY_Y = 0.7f;
 const float BOUNDARY_Z = 0.7f;
-const float SPACING = 0.025f;
-const float SMOOTHING_RADIUS = 0.08f;
-const float PRESSURE_MULTIPLIER = 2.0f;
-const float TARGET_DENSITY = 1000.0f;
+const float SPACING = 0.05f;
+const float SMOOTHING_RADIUS = 0.15f;
+const float PRESSURE_MULTIPLIER = 1.0f;
+const float TARGET_DENSITY = 500.0f;
 const float VISCOSITY_STRENGTH = 0.35f;
 const float NEAR_DENSITY_MULTIPLIER = 0.2f;
 const float DELTA_TIME = 0.016f;
@@ -355,15 +355,16 @@ int main() {
 		fluid.Update(DELTA_TIME);
 
 		shaderProgram.Activate();
+
 		glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 		glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
-
 		fluid.BindRenderBuffers();
 		vao1.Bind();
-		glUniform1f(glGetUniformLocation(shaderProgram.ID, "scale"), PARTICLE_RADIUS);
-		glDrawElementsInstanced(GL_TRIANGLES, GLsizei(sphereIndices.size()), GL_UNSIGNED_INT, 0, PARTICLE_COUNT);
+		unsigned int liveCount = fluid.GetParticleCount();
+		//std::cout << " liveCount = " << fluid.GetParticleCount() << std::endl;
+		glDrawElementsInstanced(GL_TRIANGLES, GLsizei(sphereIndices.size()), GL_UNSIGNED_INT, 0, liveCount);
 
 		lineShader.Activate();
 		glUniformMatrix4fv(glGetUniformLocation(lineShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));

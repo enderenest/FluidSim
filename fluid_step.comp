@@ -42,7 +42,7 @@ struct SimulationParameters {
 layout(local_size_x = 512, local_size_y = 1, local_size_z = 1) in;
 
 layout(std430, binding = 0) buffer VectorData { ParticleVectors vecData[]; };
-layout(std430, binding = 8) buffer SimParamsBuffer { SimulationParameters sim; };
+layout(std430, binding = 6) buffer SimParamsBuffer { SimulationParameters sim; };
 
 // Math constants
 const uint MAX_INT = 0xffffffffu;

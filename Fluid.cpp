@@ -10,7 +10,7 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
 	  _spatialLookup(nextPowerOfTwo(particleCount), GL_DYNAMIC_DRAW),
       _startIndices(hashSize, GL_DYNAMIC_DRAW),
       _simParams(1, GL_DYNAMIC_DRAW),
-
+        
       _predictedPosShader("predicted_positions.comp"),
 	  _densityStep("density_step.comp"),
 	  _forceStep("force_step.comp"),
@@ -19,7 +19,8 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
 	  _updateSpatialLookup("update_spatial_lookup.comp"),
 	  _buildStartIndices("build_start_indices.comp"),
 	  _tagParticles("tag_particles.comp"),
-      _resampleParticles("resample_particles.comp")
+      _resampleParticles("resample_particles.comp"),
+	  _resetMergeFlags("reset_merge_flags.comp")
 {
 	// Initialize simulation parameters
     _params.dt = 0.016f;
@@ -70,31 +71,40 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
         valueData[i].mass = mass;
         valueData[i].density = 0.0f;
         valueData[i].nearDensity = 0.0f;
-        valueData[i].mergeFlag = 0;
+		valueData[i].particleRadius = particleRadius;
 		valueData[i].tag = 0;
-        valueData[i].padding1 = valueData[i].padding2 = valueData[i].padding3 = 0.0f;
+		valueData[i].mergeFlag = 0;
+        valueData[i].padding1 = valueData[i].padding2 = 0.0f;
+    }
+
+    std::vector<ParticleVectors> newVectorData(particleCount * 2);
+    std::vector<ParticleValues> newValueData(particleCount * 2);
+
+    for (unsigned int i = 0; i < particleCount; ++i) {
+        unsigned int z = i / (particlesPerAxis * particlesPerAxis);
+        unsigned int y = (i / particlesPerAxis) % particlesPerAxis;
+        unsigned int x = i % particlesPerAxis;
+
+        float fx = (static_cast<float>(x) - particlesPerAxis / 2.0f + 0.5f) * spacing;
+        float fy = (static_cast<float>(y) - particlesPerAxis / 2.0f + 0.5f) * spacing;
+        float fz = (static_cast<float>(z) - particlesPerAxis / 2.0f + 0.5f) * spacing;
+
+        newVectorData[i].position = glm::vec4(fx, fy, fz, 1.0f);
+        newVectorData[i].predictedPosition = glm::vec4(fx, fy, fz, 1.0f);
+        newVectorData[i].velocity = glm::vec4(0.0f);
+        newValueData[i].mass = mass;
+        newValueData[i].density = 0.0f;
+        newValueData[i].nearDensity = 0.0f;
+        newValueData[i].particleRadius = particleRadius;
+        newValueData[i].tag = 0;
+        newValueData[i].mergeFlag = 0;
+        newValueData[i].padding1 = newValueData[i].padding2 = 0.0f;
     }
 
 	_particleVectors.upload(vectorData);
 	_particleValues.upload(valueData);
-
-    vectorData.resize(particleCount * 2, ParticleVectors{
-        glm::vec4(0.0f), glm::vec4(0.0f), glm::vec4(0.0f)
-    });
-
-    valueData.resize(particleCount * 2, ParticleValues{
-        0.0f, // mass
-        0.0f, // density
-        0.0f, // nearDensity
-        0u,   // mergeFlag
-        0u,   // tag
-        0.0f, // padding1
-        0.0f, // padding2
-        0.0f  // padding3
-    });
-
-	_newParticleVectors.upload(vectorData);
-    _newParticleValues.upload(valueData);
+	_newParticleVectors.upload(newVectorData);
+	_newParticleValues.upload(newValueData);
     
 	int paddedCount = nextPowerOfTwo(particleCount);
     std::vector<Entry> lookupData(paddedCount);
@@ -126,63 +136,169 @@ void Fluid::Update(float dt) {
     
 
     const int groupSize = 512;
-    int numGroups = (_params.particleCount + groupSize - 1) / groupSize;
+    int oldCount = _params.particleCount;
+    int oldNumGroups = (oldCount + groupSize - 1) / groupSize;
 
 	// Step 0: Predict positions based on velocities
 	_predictedPosShader.use();
 	_particleVectors.bindTo(0);
 	_simParams.bindTo(6);
-    _predictedPosShader.dispatch(numGroups);
+    _predictedPosShader.dispatch(oldNumGroups);
 	_predictedPosShader.wait();
 
-    // Step 1: Update spatial lookup keys,
-    _updateSpatialLookup.use();
-	_particleVectors.bindTo(0);
-    _spatialLookup.bindTo(4);
-    _simParams.bindTo(6);
-    _updateSpatialLookup.dispatch(numGroups);
-	_updateSpatialLookup.wait();
+    // Step 1: Update spatial hashing
+	UpdateSpatialHashing(oldNumGroups);
 
-    // Step 2: Sort spatial lookup
-    SortSpatialLookup();
-
-	// Step 3: Clear start indices
-    _startIndices.upload(std::vector<unsigned int>(_params.hashSize, MAX_INT));
- 
-	// Step 4: Update start indices
-    _buildStartIndices.use();
-    _spatialLookup.bindTo(4);
-    _startIndices.bindTo(5);
-    _simParams.bindTo(6);
-    _buildStartIndices.dispatch(numGroups);
-	_buildStartIndices.wait();
-
-	// Step 5: Calculate densities
+	// Step 2: Calculate densities
 	_densityStep.use();
 	_particleVectors.bindTo(0);
 	_particleValues.bindTo(1);
 	_spatialLookup.bindTo(4);
 	_startIndices.bindTo(5);
 	_simParams.bindTo(6);
-	_densityStep.dispatch(numGroups);
+	_densityStep.dispatch(oldNumGroups);
 	_densityStep.wait();
 
-	// Step 6: Calculate forces
+    // Step 3: Adaptive sampling
+    // 3a) Tag each particle KEEP/SPLIT/MERGE
+    _tagParticles.use();
+    _particleValues.bindTo(1);
+    _simParams.bindTo(6);
+    _tagParticles.dispatch(oldNumGroups);
+    _tagParticles.wait();
+
+    // 3b) Reset atomic counter and merge flags
+	_resetMergeFlags.use();
+	_particleValues.bindTo(1);
+	_simParams.bindTo(6);
+	_resetMergeFlags.dispatch(oldNumGroups);
+	_resetMergeFlags.wait();
+
+    resetParticleCounter();
+
+    // 3c) Run resampling: write KEEP/SPLIT/MERGE into newVec/ValueData
+    _resampleParticles.use();
+    _particleVectors.bindTo(0);
+    _particleValues.bindTo(1);
+    _spatialLookup.bindTo(4);
+    _startIndices.bindTo(5);
+    _newParticleVectors.bindTo(2);
+    _newParticleValues.bindTo(3);
+    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 7, _newParticleCounterBuffer);
+    _simParams.bindTo(6);
+
+    _resampleParticles.dispatch(oldNumGroups);
+    _resampleParticles.wait();
+
+    // 3d) Read back the new particle count
+    glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT);
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, _newParticleCounterBuffer);
+    GLuint* counterPtr = (GLuint*)glMapBuffer(GL_ATOMIC_COUNTER_BUFFER, GL_READ_ONLY);
+    GLuint newCount = *counterPtr;
+    glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+
+    // 3e) Update our C++ state and GPU sim‐params
+    _params.particleCount = newCount;
+    std::cout << "RESAMPLED COUNT = " << newCount << "\n";
+    _params.paddedParticleCount = nextPowerOfTwo(newCount);
+    _simParams.upload({ _params });
+
+    int newNumGroups = (newCount + groupSize - 1) / groupSize;
+
+    // 3f) Swap in the new buffers so the rest of the pipeline uses them
+    GLuint a = _particleVectors.getID();
+    GLuint b = _newParticleVectors.getID();
+    std::swap(a, b);
+    _particleVectors.setID(a);
+    _newParticleVectors.setID(b);
+
+    GLuint c = _particleValues.getID();
+    GLuint d = _newParticleValues.getID();
+    std::swap(c, d);
+    _particleValues.setID(c);
+    _newParticleValues.setID(d);
+
+    //BindRenderBuffers();
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
+
+    std::vector<glm::vec4> snapshot(10);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _particleVectors.getID());
+    glGetBufferSubData(
+        GL_SHADER_STORAGE_BUFFER,
+        0,
+        sizeof(glm::vec4) * snapshot.size(),
+        snapshot.data()
+    );
+    for (int i = 0; i < (int)snapshot.size(); ++i) {
+        auto& p = snapshot[i];
+        std::cout << "pos[" << i << "] = "
+            << p.x << "," << p.y << "," << p.z << "\n";
+    }
+
+	// Step 4: Update spatial lookup with new particle count
+	UpdateSpatialHashing(newNumGroups);
+
+
+    // Step 5: Again calculate densities
+    _densityStep.use();
+    _particleVectors.bindTo(0);
+    _particleValues.bindTo(1);
+    _spatialLookup.bindTo(4);
+    _startIndices.bindTo(5);
+    _simParams.bindTo(6);
+    _densityStep.dispatch(newNumGroups);
+    _densityStep.wait();
+
+	// Step 6: Calculate forces with new particle count
 	_forceStep.use();
 	_particleVectors.bindTo(0);
 	_particleValues.bindTo(1);
 	_spatialLookup.bindTo(4);
 	_startIndices.bindTo(5);
 	_simParams.bindTo(6);
-	_forceStep.dispatch(numGroups);
+	_forceStep.dispatch(newNumGroups);
 	_forceStep.wait();
 
-	// Step 7: Update positions and velocities
+	// Step 7: Update positions and velocities with new particle count
 	_fluidStep.use();
-    _particleVectors.bindTo(1);
+    _particleVectors.bindTo(0);
     _simParams.bindTo(6);
-    _fluidStep.dispatch(numGroups);
+    _fluidStep.dispatch(newNumGroups);
     _fluidStep.wait();
+}
+
+void Fluid::resetParticleCounter() {
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, _newParticleCounterBuffer);
+    GLuint zero = 0;
+    glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), &zero);
+    glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT);
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+}
+
+
+void Fluid::UpdateSpatialHashing(unsigned int groups) {
+    // Step 1: Update spatial lookup keys
+    _updateSpatialLookup.use();
+    _particleVectors.bindTo(0);
+    _spatialLookup.bindTo(4);
+    _simParams.bindTo(6);
+    _updateSpatialLookup.dispatch(groups);
+    _updateSpatialLookup.wait();
+
+    // Step 2: Sort spatial lookup
+    SortSpatialLookup();
+
+    // Step 3: Clear start indices
+    _startIndices.upload(std::vector<unsigned int>(_params.hashSize, MAX_INT));
+
+    // Step 4: Update start indices
+    _buildStartIndices.use();
+    _spatialLookup.bindTo(4);
+    _startIndices.bindTo(5);
+    _simParams.bindTo(6);
+    _buildStartIndices.dispatch(groups);
+    _buildStartIndices.wait();
 }
 
 GLuint Fluid::nextPowerOfTwo(GLuint x) {
@@ -213,6 +329,7 @@ void Fluid::SortSpatialLookup() {
 
 void Fluid::BindRenderBuffers() {
 	_particleVectors.bindTo(0);
+	_particleValues.bindTo(1);
 }
 
 void Fluid::SetIsInteracting(bool state) { _params.isInteracting = state; }
@@ -240,6 +357,8 @@ void Fluid::SetViscosityStrength(float viscosityStrength) { _params.viscosityStr
 
 float Fluid::GetNearDensityMultiplier() { return _params.nearDensityMultiplier; }
 void Fluid::SetNearDensityMultiplier(float nearDensityMultiplier) { _params.nearDensityMultiplier = nearDensityMultiplier; }
+
+unsigned int Fluid::GetParticleCount() const { return _params.particleCount; }
 
 
 

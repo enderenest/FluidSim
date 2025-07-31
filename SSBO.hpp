@@ -90,6 +90,10 @@ public:
         return _id;
 	}
 
+    void setID(GLuint x) { 
+        _id = x; 
+    }
+
 private:
     GLuint _id;   // OpenGL buffer handle
     size_t _count;    // Number of T elements

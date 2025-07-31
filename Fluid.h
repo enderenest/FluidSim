@@ -63,13 +63,13 @@ struct ParticleValues {
 	float mass;
 	float density;
 	float nearDensity;
+	float particleRadius;
 	uint32_t mergeFlag;
 	uint32_t tag; // 0 = KEEP, 1 = SPLIT, 2 = MERGE
 
 	// Padding to ensure the struct is 16 bytes aligned
 	float padding1;     
-	float padding2;    
-	float padding3;  
+	float padding2;
 };
 
 class Fluid {  
@@ -87,6 +87,7 @@ class Fluid {
 
 		GLuint _newParticleCounterBuffer; // bind to 7
 
+
 		ComputeShader _predictedPosShader;
 		ComputeShader _updateSpatialLookup;
 		ComputeShader _densityStep;
@@ -96,6 +97,7 @@ class Fluid {
 		ComputeShader _buildStartIndices;
 		ComputeShader _tagParticles;
 		ComputeShader _resampleParticles;
+		ComputeShader _resetMergeFlags;
 
 		SimulationParameters _params;
 		
@@ -104,8 +106,10 @@ class Fluid {
 
 		void Update(float dt);
 
+		void UpdateSpatialHashing(unsigned int groups);
+
+		void resetParticleCounter();
 		static GLuint nextPowerOfTwo(GLuint x);
-		void padSpatialLookup();
 		void SortSpatialLookup();
 
 		void BindRenderBuffers();
@@ -126,6 +130,7 @@ class Fluid {
 		void SetViscosityStrength(float strength);
 		float GetNearDensityMultiplier();
 		void SetNearDensityMultiplier(float nearDensityMultiplier);
+		unsigned int GetParticleCount() const;
 };  
 
 #endif // FLUID_CLASS_H

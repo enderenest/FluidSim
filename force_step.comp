@@ -15,13 +15,13 @@ struct ParticleValues {
 	float mass;
 	float density;
 	float nearDensity;
+	float particleRadius;
 	uint mergeFlag;
 	uint tag; // 0 = KEEP, 1 = SPLIT, 2 = MERGE
 
 	// Padding to ensure the struct is 16 bytes aligned
 	float padding1;     
-	float padding2;    
-	float padding3;  
+	float padding2;
 };
 
 struct SimulationParameters {
@@ -189,10 +189,11 @@ vec3 CalculatePressureForce(uint i) {
 				float nearSlope = SpikyPow3KernelDerivative(sim.smoothingRadius, distance);
                 float density = valData[particleIndex].density;
 				float nearDensity = valData[particleIndex].nearDensity;
+                float mass = valData[particleIndex].mass;
 				float sharedPressure = CalculateSharedPressure(valData[i].density, density); 
 				float sharedNearPressure = CalculateNearSharedPressure(valData[i].nearDensity, nearDensity);
-                pressureForce += sharedPressure * slope * direction * sim.mass / density;
-                pressureForce += sharedNearPressure * nearSlope * direction * sim.mass / nearDensity;
+                pressureForce += sharedPressure * slope * direction * mass / density;
+                pressureForce += sharedNearPressure * nearSlope * direction * mass / nearDensity;
 			}
 		}
     }
