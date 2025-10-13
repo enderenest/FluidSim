@@ -2,12 +2,12 @@
 #include <iostream>
 
 
-Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const float mass, const float gravityAcceleration, const float collisionDamping, const float spacing, const float pressureMultiplier, const float targetDensity, const float smoothingRadius, const unsigned int hashSize, const float interactionRadius, const float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ)
-    : _particleVectors(particleCount, GL_DYNAMIC_DRAW),
-      _particleValues(particleCount, GL_DYNAMIC_DRAW),
-      _newParticleVectors(particleCount * 2, GL_DYNAMIC_DRAW),
-      _newParticleValues(particleCount * 2, GL_DYNAMIC_DRAW),
-	  _spatialLookup(nextPowerOfTwo(particleCount), GL_DYNAMIC_DRAW),
+Fluid::Fluid(const unsigned int initialParticleCount, const unsigned int mergeSplitCoeff, const unsigned int cooldown_frames, const float particleRadius, const float mass, const float gravityAcceleration, const float collisionDamping, const float spacing, const float pressureMultiplier, const float targetDensity, const float smoothingRadius, const unsigned int hashSize, const float interactionRadius, const float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ, float high_density_factor, float low_density_factor, float max_mass_factor, float min_mass_factor)
+    : _particleVectors(initialParticleCount * mergeSplitCoeff, GL_DYNAMIC_DRAW),
+      _particleValues(initialParticleCount * mergeSplitCoeff, GL_DYNAMIC_DRAW),
+      _newParticleVectors(initialParticleCount * mergeSplitCoeff, GL_DYNAMIC_DRAW),
+      _newParticleValues(initialParticleCount * mergeSplitCoeff, GL_DYNAMIC_DRAW),
+	  _spatialLookup(nextPowerOfTwo(initialParticleCount * mergeSplitCoeff), GL_DYNAMIC_DRAW),
       _startIndices(hashSize, GL_DYNAMIC_DRAW),
       _simParams(1, GL_DYNAMIC_DRAW),
         
@@ -40,8 +40,20 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
     _params.interactionRadius = interactionRadius;
     _params.interactionStrength = interactionStrength;
 
-	_params.particleCount = particleCount;
-	_params.paddedParticleCount = nextPowerOfTwo(particleCount);
+	_params.high_density_factor = high_density_factor;
+	_params.low_density_factor = low_density_factor;
+	_params.max_mass_factor = max_mass_factor;
+	_params.min_mass_factor = min_mass_factor;
+
+	_params.cooldown_frames = cooldown_frames;
+
+	_params.mergeSplitCoefficient = mergeSplitCoeff;
+	_params.initialParticleCount = initialParticleCount;
+	_params.currentParticleCount = initialParticleCount;
+	_params.maxParticleCount = initialParticleCount * mergeSplitCoeff;
+	_params.lookupCapacity = nextPowerOfTwo(_params.maxParticleCount);
+	_params.paddedCurrentParticleCount = std::min(nextPowerOfTwo(_params.currentParticleCount),_params.lookupCapacity);
+
 	_params.hashSize = hashSize;
 	_params.spacing = spacing;
 	_params.particleRadius = particleRadius;
@@ -49,14 +61,25 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
 	_params.boundaryY = boundaryY;
 	_params.boundaryZ = boundaryZ;
 
+	_params.padding1 = 0.0f;
+	_params.padding2 = 0.0f;
+	_params.padding3 = 0.0f;
+
     _simParams.upload(std::vector<SimulationParameters>{_params});
 
-	std::vector<ParticleVectors> vectorData(particleCount);
-	std::vector<ParticleValues> valueData(particleCount);
+	unsigned int maxCapacity = initialParticleCount * mergeSplitCoeff;
 
-    unsigned int particlesPerAxis = static_cast<unsigned int>(std::ceil(std::cbrt(particleCount)));
+	// Initialize all of them zero first, then set the first 'particleCount' elements
+    std::vector<ParticleVectors> vectorData(maxCapacity, {});
+    std::vector<ParticleValues>  valueData(maxCapacity, {});
 
-    for (unsigned int i = 0; i < particleCount; ++i) {
+    std::vector<ParticleVectors> newVectorData(maxCapacity, {});
+    std::vector<ParticleValues>  newValueData(maxCapacity, {});
+
+	// Arrange particles in a cubic form
+    unsigned int particlesPerAxis = static_cast<unsigned int>(std::ceil(std::cbrt(_params.currentParticleCount)));
+
+    for (unsigned int i = 0; i < _params.currentParticleCount; ++i) {
         unsigned int z = i / (particlesPerAxis * particlesPerAxis);
         unsigned int y = (i / particlesPerAxis) % particlesPerAxis;
         unsigned int x = i % particlesPerAxis;
@@ -74,20 +97,7 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
 		valueData[i].particleRadius = particleRadius;
 		valueData[i].tag = 0;
 		valueData[i].mergeFlag = 0;
-        valueData[i].padding1 = valueData[i].padding2 = 0.0f;
-    }
-
-    std::vector<ParticleVectors> newVectorData(particleCount * 2);
-    std::vector<ParticleValues> newValueData(particleCount * 2);
-
-    for (unsigned int i = 0; i < particleCount; ++i) {
-        unsigned int z = i / (particlesPerAxis * particlesPerAxis);
-        unsigned int y = (i / particlesPerAxis) % particlesPerAxis;
-        unsigned int x = i % particlesPerAxis;
-
-        float fx = (static_cast<float>(x) - particlesPerAxis / 2.0f + 0.5f) * spacing;
-        float fy = (static_cast<float>(y) - particlesPerAxis / 2.0f + 0.5f) * spacing;
-        float fz = (static_cast<float>(z) - particlesPerAxis / 2.0f + 0.5f) * spacing;
+        valueData[i].padding = 0.0f;
 
         newVectorData[i].position = glm::vec4(fx, fy, fz, 1.0f);
         newVectorData[i].predictedPosition = glm::vec4(fx, fy, fz, 1.0f);
@@ -98,7 +108,7 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
         newValueData[i].particleRadius = particleRadius;
         newValueData[i].tag = 0;
         newValueData[i].mergeFlag = 0;
-        newValueData[i].padding1 = newValueData[i].padding2 = 0.0f;
+        newValueData[i].padding = 0.0f;
     }
 
 	_particleVectors.upload(vectorData);
@@ -106,14 +116,13 @@ Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const
 	_newParticleVectors.upload(newVectorData);
 	_newParticleValues.upload(newValueData);
     
-	int paddedCount = nextPowerOfTwo(particleCount);
-    std::vector<Entry> lookupData(paddedCount);
+    std::vector<Entry> lookupData(_params.lookupCapacity);
 
-    for (unsigned i = 0; i < particleCount; ++i) {
+    for (unsigned i = 0; i < _params.currentParticleCount; ++i) {
         lookupData[i].index = 0u;
         lookupData[i].key = 0u;          // placeholder
     }
-    for (unsigned i = particleCount; i < paddedCount; ++i) {
+    for (unsigned i = _params.currentParticleCount; i < _params.lookupCapacity; ++i) {
         lookupData[i].index = -1;
         lookupData[i].key = 0xFFFFFFFFu; // always sorts to the back
     }
@@ -136,7 +145,7 @@ void Fluid::Update(float dt) {
     
 
     const int groupSize = 512;
-    int oldCount = _params.particleCount;
+    int oldCount = _params.currentParticleCount;
     int oldNumGroups = (oldCount + groupSize - 1) / groupSize;
 
 	// Step 0: Predict positions based on velocities
@@ -199,9 +208,9 @@ void Fluid::Update(float dt) {
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
 
     // 3e) Update our C++ state and GPU sim‐params
-    _params.particleCount = newCount;
+    _params.currentParticleCount = newCount;
     std::cout << "RESAMPLED COUNT = " << newCount << "\n";
-    _params.paddedParticleCount = nextPowerOfTwo(newCount);
+    _params.paddedCurrentParticleCount = nextPowerOfTwo(newCount);
     _simParams.upload({ _params });
 
     int newNumGroups = (newCount + groupSize - 1) / groupSize;
@@ -219,10 +228,10 @@ void Fluid::Update(float dt) {
     _particleValues.setID(c);
     _newParticleValues.setID(d);
 
-    //BindRenderBuffers();
+    BindRenderBuffers();
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
 
-    std::vector<glm::vec4> snapshot(10);
+    /*std::vector<glm::vec4> snapshot(10);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _particleVectors.getID());
     glGetBufferSubData(
         GL_SHADER_STORAGE_BUFFER,
@@ -234,7 +243,7 @@ void Fluid::Update(float dt) {
         auto& p = snapshot[i];
         std::cout << "pos[" << i << "] = "
             << p.x << "," << p.y << "," << p.z << "\n";
-    }
+    }*/
 
 	// Step 4: Update spatial lookup with new particle count
 	UpdateSpatialHashing(newNumGroups);
@@ -308,7 +317,7 @@ GLuint Fluid::nextPowerOfTwo(GLuint x) {
 }
 
 void Fluid::SortSpatialLookup() {
-    const GLuint actualN = _params.particleCount;
+    const GLuint actualN = _params.currentParticleCount;
     const GLuint paddedN = nextPowerOfTwo(actualN);
     const GLuint localSize = 512;
     const GLuint numGroups = (paddedN + localSize - 1) / localSize;
@@ -358,7 +367,7 @@ void Fluid::SetViscosityStrength(float viscosityStrength) { _params.viscosityStr
 float Fluid::GetNearDensityMultiplier() { return _params.nearDensityMultiplier; }
 void Fluid::SetNearDensityMultiplier(float nearDensityMultiplier) { _params.nearDensityMultiplier = nearDensityMultiplier; }
 
-unsigned int Fluid::GetParticleCount() const { return _params.particleCount; }
+unsigned int Fluid::GetParticleCount() const { return _params.currentParticleCount; }
 
 
 

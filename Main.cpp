@@ -1,20 +1,20 @@
 #include<iostream>
 #include<glad/glad.h>
 #include<GLFW/glfw3.h>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include<glm/gtc/matrix_transform.hpp>
+#include<glm/gtc/type_ptr.hpp>
 
 #include "Fluid.h"
-#include"shaderClass.h"
-#include"ComputeShader.h"
-#include"VAO.h"
-#include"VBO.h"
-#include"EBO.h"
+#include "shaderClass.h"
+#include "ComputeShader.h"
+#include "VAO.h"
+#include "VBO.h"
+#include "EBO.h"
 #include "tiny_obj_loader.h"
 #include "Camera.h"
 
-#include <vector>
-#include <cmath>
+#include<vector>
+#include<cmath>
 
 // influence = SmoothingKernel(smoothingRadius, distance)
 // density += influence * mass;
@@ -26,22 +26,32 @@
 // velocity += pressureAcceleration * dt;
 
 const unsigned int WIDTH = 1920, HEIGHT = 1080;
-const unsigned int PARTICLE_COUNT = 1024 * 16;
-const unsigned int SPATIAL_HASH_SIZE = PARTICLE_COUNT * 4;
+const unsigned int MERGE_SPLIT_COEFF = 4;
+const unsigned int INITIAL_PARTICLE_COUNT = 1024 * 8;
+const unsigned int MAX_PARTICLE_COUNT = INITIAL_PARTICLE_COUNT * MERGE_SPLIT_COEFF;
+const unsigned int MIN_PARTICLE_COUNT = INITIAL_PARTICLE_COUNT / MERGE_SPLIT_COEFF;
+const unsigned int SPATIAL_HASH_SIZE = MAX_PARTICLE_COUNT * 4;
 const float PARTICLE_RADIUS = 0.01f;
 const float MASS = 0.1f;
-const float GRAVITY_ACCELERATION = 1.2f;
-const float COLLISION_DAMPING = 0.6f;
+const float GRAVITY_ACCELERATION = 1.5f;
+const float COLLISION_DAMPING = 0.5f;
 const float BOUNDARY_X = 1.2f;
 const float BOUNDARY_Y = 0.7f;
 const float BOUNDARY_Z = 0.7f;
-const float SPACING = 0.05f;
-const float SMOOTHING_RADIUS = 0.15f;
-const float PRESSURE_MULTIPLIER = 1.0f;
-const float TARGET_DENSITY = 500.0f;
-const float VISCOSITY_STRENGTH = 0.35f;
-const float NEAR_DENSITY_MULTIPLIER = 0.2f;
+const float SPACING = 0.04f;
+const float SMOOTHING_RADIUS = 0.12f;
+const float PRESSURE_MULTIPLIER = 1.5f;
+const float TARGET_DENSITY = 250.0f;
+const float VISCOSITY_STRENGTH = 0.2f;
+const float NEAR_DENSITY_MULTIPLIER = 0.1f;
 const float DELTA_TIME = 0.016f;
+
+const float HIGH_DENSITY_FACTOR = 1.2f;
+const float LOW_DENSITY_FACTOR = 0.85f;
+const float MAX_MASS_FACTOR = 4.0f;
+const float MIN_MASS_FACTOR = 0.25f;
+
+const unsigned int COOLDOWN_FRAMES = 10;
 
 const float INTERACTION_RADIUS = 0.3f;
 const float INTERACTION_STRENGTH = 15.0f;
@@ -173,11 +183,11 @@ int main() {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
 	glBindVertexArray(0);
 
-	Fluid fluid(PARTICLE_COUNT, PARTICLE_RADIUS, MASS, GRAVITY_ACCELERATION, COLLISION_DAMPING, SPACING, PRESSURE_MULTIPLIER, TARGET_DENSITY, SMOOTHING_RADIUS, SPATIAL_HASH_SIZE, INTERACTION_RADIUS, INTERACTION_STRENGTH, VISCOSITY_STRENGTH, NEAR_DENSITY_MULTIPLIER, BOUNDARY_X, BOUNDARY_Y, BOUNDARY_Z);
+	Fluid fluid(INITIAL_PARTICLE_COUNT, MERGE_SPLIT_COEFF, COOLDOWN_FRAMES, PARTICLE_RADIUS, MASS, GRAVITY_ACCELERATION, COLLISION_DAMPING, SPACING, PRESSURE_MULTIPLIER, TARGET_DENSITY, SMOOTHING_RADIUS, SPATIAL_HASH_SIZE, INTERACTION_RADIUS, INTERACTION_STRENGTH, VISCOSITY_STRENGTH, NEAR_DENSITY_MULTIPLIER, BOUNDARY_X, BOUNDARY_Y, BOUNDARY_Z, HIGH_DENSITY_FACTOR, LOW_DENSITY_FACTOR, MAX_MASS_FACTOR, MIN_MASS_FACTOR);
 
 	std::vector<glm::vec3> sphereVertices;
 	std::vector<GLuint> sphereIndices;
-	CreateUVSphere(sphereVertices, sphereIndices, 4, 4, 1.0f); // I am not sure about using 1.0f scale or PARTICLE_RADIUS
+	CreateUVSphere(sphereVertices, sphereIndices, 8, 8, 1.0f); // I am not sure about using 1.0f scale or PARTICLE_RADIUS
 
 	VAO vao1;
 	vao1.Bind();
@@ -212,24 +222,29 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// ------------------ KEYBOARD CONTROLS -----------------------
+
+		// key up - increase pressure multiplier
 		int upState = glfwGetKey(window, GLFW_KEY_UP);
 		if (upState == GLFW_PRESS && !upLastFrame) {
 			fluid.SetPressureMultiplier(fluid.GetPressureMultiplier() + 0.5f);
 		}
 		upLastFrame = (upState == GLFW_PRESS);
 
+		// key down - decrease pressure multiplier
 		int downState = glfwGetKey(window, GLFW_KEY_DOWN);
 		if (downState == GLFW_PRESS && !downLastFrame) {
 			fluid.SetPressureMultiplier(fluid.GetPressureMultiplier() - 0.5f);
 		}
 		downLastFrame = (downState == GLFW_PRESS);
 
+		// key 1 - increase target density
 		int oneState = glfwGetKey(window, GLFW_KEY_1);
 		if (oneState == GLFW_PRESS && !oneLastFrame) {
 			fluid.SetTargetDensity(fluid.GetTargetDensity() + 50.0f);
 		}
 		oneLastFrame = (oneState == GLFW_PRESS);
 
+		// key 2 - decrease target density
 		int twoState = glfwGetKey(window, GLFW_KEY_2);
 		if (twoState == GLFW_PRESS && !twoLastFrame) {
 			if (fluid.GetTargetDensity() > 3.0f)
@@ -237,12 +252,14 @@ int main() {
 		}
 		twoLastFrame = (twoState == GLFW_PRESS);
 
+		// key v - increase viscosity strength
 		int vState = glfwGetKey(window, GLFW_KEY_V);
 		if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
 			fluid.SetViscosityStrength(fluid.GetViscosityStrength() + 0.1f);
 		}
 		vLastFrame = (vState == GLFW_PRESS);
 
+		// key b - decrease viscosity strength
 		int bState = glfwGetKey(window, GLFW_KEY_B);
 		if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
 			if (fluid.GetViscosityStrength() > 0.2f)
@@ -250,12 +267,14 @@ int main() {
 		}
 		bLastFrame = (bState == GLFW_PRESS);
 
+		// key n - increase near density multiplier
 		int nState = glfwGetKey(window, GLFW_KEY_N);
 		if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
 			fluid.SetNearDensityMultiplier(fluid.GetNearDensityMultiplier() + 0.1f);
 		}
 		nLastFrame = (nState == GLFW_PRESS);
 
+		// key m - decrease near density multiplier
 		int mState = glfwGetKey(window, GLFW_KEY_M);
 		if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
 			if (fluid.GetNearDensityMultiplier() > 0.1f)
@@ -263,21 +282,25 @@ int main() {
 		}
 		mLastFrame = (mState == GLFW_PRESS);
 
+		// key g - set gravity to zero
 		if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
 			fluid.SetGravity(0.0f);
 
+		// key e - set gravity to normal
 		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
 			fluid.SetGravity(GRAVITY_ACCELERATION);
 
-
+		// key p - pause simulation
 		if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
 			fluid.SetPaused(true);
 		}
 
+		// key o - unpause simulation
 		if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) {
 			fluid.SetPaused(false);
 		}
 
+		// key esc - close window
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 			glfwSetWindowShouldClose(window, true);
 		}

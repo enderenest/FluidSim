@@ -13,10 +13,9 @@ struct ParticleValues {
 	float particleRadius;
 	uint mergeFlag;
 	uint tag; // 0 = KEEP, 1 = SPLIT, 2 = MERGE
-
-	// Padding to ensure the struct is 16 bytes aligned
-	float padding1;     
-	float padding2;
+	uint cooldown;
+   
+	float padding;
 };
 
 layout (location = 0) in vec3 aPos;  // Static unit circle geometry

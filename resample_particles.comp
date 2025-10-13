@@ -18,10 +18,9 @@ struct ParticleValues {
 	float particleRadius;
 	uint mergeFlag;
 	uint tag; // 0 = KEEP, 1 = SPLIT, 2 = MERGE
-
-	// Padding to ensure the struct is 16 bytes aligned
-	float padding1;     
-	float padding2;
+	uint cooldown;
+   
+	float padding;
 };
 
 struct SimulationParameters {
@@ -42,14 +41,29 @@ struct SimulationParameters {
 	float interactionRadius;
 	float interactionStrength;
 
-	uint particleCount;
-	uint paddedParticleCount;
-	uint hashSize;
+	float high_density_factor;
+	float low_density_factor;
+	float max_mass_factor;
+	float min_mass_factor;
+
+	uint cooldown_frames;
+
+	uint initialParticleCount;       // constant
+	uint currentParticleCount;	     // dynamic, can change due to merge/split
+	uint maxParticleCount;           // constant
+	uint lookupCapacity;             // constant, always a power of two >= maxParticleCount
+	uint paddedCurrentParticleCount; // dynamic, always a power of two >= currentParticleCount
+	uint hashSize;					 // constant
+	uint mergeSplitCoefficient;		 // constant, coefficient for max/min particle count
 	float spacing;
 	float particleRadius;
 	float boundaryX;
 	float boundaryY;
 	float boundaryZ;
+
+	float padding1;
+	float padding2;
+	float padding3;
 };
 
 layout(local_size_x = 512, local_size_y = 1, local_size_z = 1) in;
@@ -79,10 +93,13 @@ float RandomFloat(uint seed) {
 }
 
 vec3 GetRandomDirection3D(uint idx) {
-    float x = RandomFloat(idx * 928371u) * 2.0 - 1.0; // [-1, 1]
-    float y = RandomFloat(idx * 128931u) * 2.0 - 1.0; // [-1, 1]
-    float z = RandomFloat(idx * 743281u) * 2.0 - 1.0; // [-1, 1]
-    return normalize(vec3(x, y, z));
+    float x = RandomFloat(idx * 928371u) * 2.0 - 1.0;
+    float y = RandomFloat(idx * 128931u) * 2.0 - 1.0;
+    float z = RandomFloat(idx * 743281u) * 2.0 - 1.0;
+    vec3 v = vec3(x, y, z);
+    float L2 = dot(v, v);
+    if (L2 < 1e-12) v = vec3(1.0, 0.0, 0.0);
+    return v * inversesqrt(max(L2, 1e-12));
 }
 
 ivec3 PositionsToCellCoord(vec3 point, float radius) {
@@ -106,7 +123,7 @@ uint GetKeyFromHash(uint hash) {
 
 void main() {
     uint i = gl_GlobalInvocationID.x;
-    if (i >= sim.particleCount) return;
+    if (i >= sim.currentParticleCount) return;
 
     uint tag = valData[i].tag;
     vec3 pos = vecData[i].position.xyz;
@@ -120,18 +137,19 @@ void main() {
     // KEEP
     if (tag == 0u) {
         uint id = atomicCounterIncrement(newParticleCounter);
-        if (id >= sim.paddedParticleCount) {
+        if (id >= sim.maxParticleCount) {
             return;
         }
-        newVecData[id].position = vec4(pos, 0.0);
+        newVecData[id].position          = vec4(pos, 0.0);
         newVecData[id].predictedPosition = vec4(pos + vel * sim.dt, 0.0);
-        newVecData[id].velocity = vec4(vel, 0.0);
-        newValData[id].mass = mass;
-        newValData[id].density = 0.0;
-        newValData[id].nearDensity = 0.0;
-        newValData[id].particleRadius = particleRadius;
-        newValData[id].tag = 0u;
-        newValData[id].mergeFlag = 0u; // Reset merge flag
+        newVecData[id].velocity          = vec4(vel, 0.0);
+        newValData[id].mass              = mass;
+        newValData[id].density           = 0.0;
+        newValData[id].nearDensity       = 0.0;
+        newValData[id].particleRadius    = particleRadius;
+        newValData[id].tag               = 0u; // Reset tag to KEEP
+        newValData[id].mergeFlag         = 0u; // Reset merge flag
+        newValData[id].cooldown          = valData[i].cooldown; // already decremented in tag_particles.comp
         return;
     }
 
@@ -142,110 +160,136 @@ void main() {
         vec3 offset = dir * offsetDist;
 
         uint id1 = atomicCounterIncrement(newParticleCounter);
-        if (id1 >= sim.paddedParticleCount) {
+        if (id1 >= sim.maxParticleCount) {
             return;
         }
-        newVecData[id1].position = vec4(pos + offset, 0.0);
+        newVecData[id1].position          = vec4(pos + offset, 0.0);
         newVecData[id1].predictedPosition = vec4(pos + offset + vel * sim.dt, 0.0);
-        newVecData[id1].velocity = vec4(vel, 0.0);
-        newValData[id1].mass = mass * 0.5;
-        newValData[id1].density = 0.0;
-        newValData[id1].nearDensity = 0.0;
-        newValData[id1].particleRadius = particleRadius * splitScale;
-        newValData[id1].tag = 0u;
-        newValData[id1].mergeFlag = 0u; // Reset merge flag
+        newVecData[id1].velocity          = vec4(vel, 0.0);
+        newValData[id1].mass              = mass * 0.5;
+        newValData[id1].density           = 0.0;
+        newValData[id1].nearDensity       = 0.0;
+        newValData[id1].particleRadius    = particleRadius * splitScale;
+        newValData[id1].tag               = 0u; // Reset tag to KEEP
+        newValData[id1].mergeFlag         = 0u; // Reset merge flag
+        newValData[id1].cooldown          = sim.cooldown_frames;
+
 
 
 
         uint id2 = atomicCounterIncrement(newParticleCounter);
-        if (id2 >= sim.paddedParticleCount) {
+        if (id2 >= sim.maxParticleCount) {
             return;
         }
-        newVecData[id2].position = vec4(pos - offset, 0.0);
+        newVecData[id2].position          = vec4(pos - offset, 0.0);
         newVecData[id2].predictedPosition = vec4(pos - offset + vel * sim.dt, 0.0);
-        newVecData[id2].velocity = vec4(vel, 0.0);
-        newValData[id2].mass = mass * 0.5;
-        newValData[id2].density = 0.0;
-        newValData[id2].nearDensity = 0.0;
-        newValData[id2].particleRadius = particleRadius * splitScale;
-        newValData[id2].tag = 0u;
-        newValData[id2].mergeFlag = 0u; // Reset merge flag
+        newVecData[id2].velocity          = vec4(vel, 0.0);
+        newValData[id2].mass              = mass * 0.5;
+        newValData[id2].density           = 0.0;
+        newValData[id2].nearDensity       = 0.0;
+        newValData[id2].particleRadius    = particleRadius * splitScale;
+        newValData[id2].tag               = 0u; // Reset tag to KEEP
+        newValData[id2].mergeFlag         = 0u; // Reset merge flag
+        newValData[id2].cooldown          = sim.cooldown_frames;
 
         return;
     }
 
     // MERGE
     else if (tag == 2u) {
+        // Lock i for this pass
         if (atomicCompSwap(valData[i].mergeFlag, 0u, 1u) != 0u) {
-            // another thread already grabbed i for merge
-            return;
+            return; // already taken by someone else
         }
+
+        bool merged = false;
 
         ivec3 cellCoord = PositionsToCellCoord(pos, sim.smoothingRadius);
 
-        for (int k = 0; k < 27; ++k) {
-            ivec3 offset = ivec3(
-                int(k % 3) - 1,
-                int((k / 3) % 3) - 1,
-                int(k / 9) - 1
-            );
+        // Try all 27 neighbor cells
+        for (int k = 0; k < 27 && !merged; ++k) {
+            ivec3 offset = ivec3(int(k % 3) - 1, int((k / 3) % 3) - 1, int(k / 9) - 1);
             ivec3 neighborCell = cellCoord + offset;
 
             uint key = GetKeyFromHash(HashCell(neighborCell.x, neighborCell.y, neighborCell.z));
             uint cellStart = startIndices[key];
             if (cellStart == MAX_INT) continue;
 
+            // Scan this cell’s range
             for (uint j = cellStart; j < spatialLookup.length(); ++j) {
                 if (spatialLookup[j].key != key) break;
 
-                uint neighborIndex = uint(spatialLookup[j].index);
-                if (neighborIndex <= i) continue;
-                if (valData[neighborIndex].tag != 2u) continue;
-                if (atomicCompSwap( valData[neighborIndex].mergeFlag, 0u, 1u ) != 0u) continue;
+                uint n = uint(spatialLookup[j].index);
+                if (n <= i) continue;                   // avoid double-work / self
+                if (valData[n].tag != 2u) continue;     // partner must want merge
+                if (atomicCompSwap(valData[n].mergeFlag, 0u, 1u) != 0u) continue; // lock partner
 
-                vec3 pos2 = vecData[neighborIndex].position.xyz;
-                vec3 vel2 = vecData[neighborIndex].velocity.xyz;
-                float mass2 = valData[neighborIndex].mass;
+                // Build merged particle
+                vec3 pos2  = vecData[n].position.xyz;
+                vec3 vel2  = vecData[n].velocity.xyz;
+                float m2   = valData[n].mass;
 
-                vec3 mergedPos = (mass * pos + mass2 * pos2) / (mass + mass2);
-                vec3 mergedVel = (mass * vel + mass2 * vel2) / (mass + mass2);
-                float mergedMass = mass + mass2;
-
-                atomicExchange( valData[i].mergeFlag, 1u );
+                vec3 mergedPos = (mass * pos + m2 * pos2) / (mass + m2);
+                vec3 mergedVel = (mass * vel + m2 * vel2) / (mass + m2);
+                float mergedMass = mass + m2;
 
                 uint id = atomicCounterIncrement(newParticleCounter);
-                newVecData[id].position = vec4(mergedPos, 0.0);
-                newVecData[id].predictedPosition = vec4(mergedPos + mergedVel * sim.dt, 0.0);
-                newVecData[id].velocity = vec4(mergedVel, 0.0);
-                newValData[id].mass = mergedMass;
-                newValData[id].density = 0.0;
-                newValData[id].nearDensity = 0.0;
-                newValData[id].particleRadius = particleRadius * mergeScale;
-                newValData[id].tag = 0u;
-                newValData[id].mergeFlag = 0u; // Reset merge flag
-
-                return;
+                if (id < sim.maxParticleCount) {
+                    newVecData[id].position          = vec4(mergedPos, 0.0);
+                    newVecData[id].predictedPosition = vec4(mergedPos + mergedVel * sim.dt, 0.0);
+                    newVecData[id].velocity          = vec4(mergedVel, 0.0);
+                    newValData[id].mass              = mergedMass;
+                    newValData[id].density           = 0.0;
+                    newValData[id].nearDensity       = 0.0;
+                    newValData[id].particleRadius    = particleRadius * mergeScale;
+                    newValData[id].tag               = 0u;
+                    newValData[id].mergeFlag         = 0u;
+                    newValData[id].cooldown          = sim.cooldown_frames; // if you added cooldown
+                    merged = true;
+                }
+                break; // stop scanning this cell once we found a partner
             }
         }
+
+        // Fallback: after trying ALL 27 cells, if no partner, keep i
+        if (!merged) {
+            // DO NOT reset valData[i].mergeFlag here. Leave it as 1 (locked for this pass).
+            uint id = atomicCounterIncrement(newParticleCounter);
+            if (id < sim.maxParticleCount) {
+                newVecData[id].position          = vec4(pos, 0.0);
+                newVecData[id].predictedPosition = vec4(pos + vel * sim.dt, 0.0);
+                newVecData[id].velocity          = vec4(vel, 0.0);
+                newValData[id].mass              = mass;
+                newValData[id].density           = 0.0;
+                newValData[id].nearDensity       = 0.0;
+                newValData[id].particleRadius    = particleRadius;
+                newValData[id].tag               = 0u;
+                newValData[id].mergeFlag         = 0u;
+                newValData[id].cooldown          = valData[i].cooldown;
+            }
+        }
+
+        return;
     }
 
     else {
         // If the tag is not recognized, we can just keep the particle as is
         uint id = atomicCounterIncrement(newParticleCounter);
 
-        if (id >= sim.paddedParticleCount) {
+        if (id >= sim.maxParticleCount) {
             return;
         }
 
-        newVecData[id].position = vec4(pos, 0.0);
+        newVecData[id].position          = vec4(pos, 0.0);
         newVecData[id].predictedPosition = vec4(pos, 0.0);
-        newVecData[id].velocity = vec4(vel, 0.0);
-        newValData[id].mass = mass;
-        newValData[id].density = 0.0;
-        newValData[id].nearDensity = 0.0;
-        newValData[id].particleRadius = particleRadius;
-        newValData[id].tag = 0u; // Default to KEEP
-        newValData[id].mergeFlag = 0u; // Reset merge flag
+        newVecData[id].velocity          = vec4(vel, 0.0);
+        newValData[id].mass              = mass;
+        newValData[id].density           = 0.0;
+        newValData[id].nearDensity       = 0.0;
+        newValData[id].particleRadius    = particleRadius;
+        newValData[id].tag               = 0u; // Default to KEEP
+        newValData[id].mergeFlag         = 0u; // Reset merge flag
+        newValData[id].cooldown          = valData[i].cooldown; // already decremented in tag_particles.comp
     }
 }
 

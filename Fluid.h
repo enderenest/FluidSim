@@ -36,14 +36,29 @@ struct SimulationParameters {
 	float interactionRadius;
 	float interactionStrength;
 
-	uint32_t particleCount;
-	uint32_t paddedParticleCount;
-	uint32_t hashSize;
+	float high_density_factor;
+	float low_density_factor;
+	float max_mass_factor;
+	float min_mass_factor;
+
+	uint32_t cooldown_frames;
+
+	uint32_t initialParticleCount;       // constant
+	uint32_t currentParticleCount;	     // dynamic, can change due to merge/split
+	uint32_t maxParticleCount;           // constant
+	uint32_t lookupCapacity;             // constant, always a power of two >= maxParticleCount
+	uint32_t paddedCurrentParticleCount; // dynamic, always a power of two >= currentParticleCount
+	uint32_t hashSize;					 // constant
+	uint32_t mergeSplitCoefficient;		 // constant, coefficient for max/min particle count
 	float spacing;
 	float particleRadius;
 	float boundaryX;
 	float boundaryY;
 	float boundaryZ;
+
+	float padding1;
+	float padding2;
+	float padding3;
 };
 
 struct Entry {
@@ -66,10 +81,9 @@ struct ParticleValues {
 	float particleRadius;
 	uint32_t mergeFlag;
 	uint32_t tag; // 0 = KEEP, 1 = SPLIT, 2 = MERGE
-
-	// Padding to ensure the struct is 16 bytes aligned
-	float padding1;     
-	float padding2;
+	uint32_t cooldown;
+   
+	float padding;
 };
 
 class Fluid {  
@@ -102,7 +116,7 @@ class Fluid {
 		SimulationParameters _params;
 		
 	public:  
-		Fluid(unsigned int particleCount, float particleRadius, const float mass, const float gravity, const float collisionDamping, const float spacing, const float pressureMultiplier, const float targetDensity, const float smoothingRadius, const unsigned int hashSize, const float interactionRadius, const float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ);
+		Fluid(unsigned int initialParticleCount, unsigned int mergeSplitCount, unsigned int cooldown_frames,float particleRadius, const float mass, const float gravity, const float collisionDamping, const float spacing, const float pressureMultiplier, const float targetDensity, const float smoothingRadius, const unsigned int hashSize, const float interactionRadius, const float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ, float high_density_factor, float low_density_factor, float max_mass_factor, float min_mass_factor);
 
 		void Update(float dt);
 

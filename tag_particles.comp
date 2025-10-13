@@ -7,10 +7,9 @@ struct ParticleValues {
 	float particleRadius;
 	uint mergeFlag;
 	uint tag; // 0 = KEEP, 1 = SPLIT, 2 = MERGE
-
-	// Padding to ensure the struct is 16 bytes aligned
-	float padding1;     
-	float padding2;
+	uint cooldown;
+   
+	float padding;
 };
 
 struct SimulationParameters {
@@ -31,14 +30,29 @@ struct SimulationParameters {
 	float interactionRadius;
 	float interactionStrength;
 
-	uint particleCount;
-	uint paddedParticleCount;
-	uint hashSize;
+	float high_density_factor;
+	float low_density_factor;
+	float max_mass_factor;
+	float min_mass_factor;
+
+	uint cooldown_frames;
+
+	uint initialParticleCount;       // constant
+	uint currentParticleCount;	     // dynamic, can change due to merge/split
+	uint maxParticleCount;           // constant
+	uint lookupCapacity;             // constant, always a power of two >= maxParticleCount
+	uint paddedCurrentParticleCount; // dynamic, always a power of two >= currentParticleCount
+	uint hashSize;					 // constant
+	uint mergeSplitCoefficient;		 // constant, coefficient for max/min particle count
 	float spacing;
 	float particleRadius;
 	float boundaryX;
 	float boundaryY;
 	float boundaryZ;
+
+	float padding1;
+	float padding2;
+	float padding3;
 };
 
 layout(local_size_x = 512) in;
@@ -46,22 +60,24 @@ layout(local_size_x = 512) in;
 layout(std430, binding = 1) buffer ValueData { ParticleValues valData[]; };
 layout(std430, binding = 6) buffer SimParamsBuffer { SimulationParameters sim; };
 
-const float HIGH_FACTOR   = 1.1;
-const float LOW_FACTOR    = 0.9;
-const float MIN_MASS_FAC  = 0.5;
-const float MAX_MASS_FAC  = 2.0;
-
 void main() {
     uint i = gl_GlobalInvocationID.x;
-    if (i >= sim.particleCount) return;
+    if (i >= sim.currentParticleCount) return;
+
+	// If cooling down, tick down and force KEEP this frame.
+    if (valData[i].cooldown > 0u) {
+        valData[i].cooldown -= 1u;
+        valData[i].tag = 0u;          // KEEP while cooling
+        return;
+    }
 
     float rho  = valData[i].density;
     float mass = valData[i].mass;
 
-    float upper = HIGH_FACTOR * sim.targetDensity;
-    float lower = LOW_FACTOR  * sim.targetDensity;
-    float minMass = MIN_MASS_FAC * sim.mass;
-    float maxMass = MAX_MASS_FAC * sim.mass;
+    float upper = sim.high_density_factor * sim.targetDensity;
+    float lower = sim.low_density_factor  * sim.targetDensity;
+    float minMass = sim.min_mass_factor * sim.mass;
+    float maxMass = sim.max_mass_factor * sim.mass;
 
     // Too sparse -> split
     if (rho < lower && mass > minMass) {
