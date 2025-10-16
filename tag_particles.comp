@@ -55,7 +55,7 @@ struct SimulationParameters {
 	float padding3;
 };
 
-layout(local_size_x = 512) in;
+layout(local_size_x = 256) in;
 
 layout(std430, binding = 1) buffer ValueData { ParticleValues valData[]; };
 layout(std430, binding = 6) buffer SimParamsBuffer { SimulationParameters sim; };

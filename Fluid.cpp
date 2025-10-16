@@ -144,7 +144,7 @@ void Fluid::Update(float dt) {
     _simParams.upload(std::vector<SimulationParameters>{_params});
     
 
-    const int groupSize = 512;
+    const int groupSize = 256;
     int oldCount = _params.currentParticleCount;
     int oldNumGroups = (oldCount + groupSize - 1) / groupSize;
 
@@ -209,7 +209,7 @@ void Fluid::Update(float dt) {
 
     // 3e) Update our C++ state and GPU sim‐params
     _params.currentParticleCount = newCount;
-    std::cout << "RESAMPLED COUNT = " << newCount << "\n";
+    // std::cout << "RESAMPLED COUNT = " << newCount << "\n";
     _params.paddedCurrentParticleCount = nextPowerOfTwo(newCount);
     _simParams.upload({ _params });
 
@@ -319,7 +319,7 @@ GLuint Fluid::nextPowerOfTwo(GLuint x) {
 void Fluid::SortSpatialLookup() {
     const GLuint actualN = _params.currentParticleCount;
     const GLuint paddedN = nextPowerOfTwo(actualN);
-    const GLuint localSize = 512;
+    const GLuint localSize = 256;
     const GLuint numGroups = (paddedN + localSize - 1) / localSize;
 
     _bitonicSortShader.use();

@@ -27,27 +27,27 @@
 
 const unsigned int WIDTH = 1920, HEIGHT = 1080;
 const unsigned int MERGE_SPLIT_COEFF = 4;
-const unsigned int INITIAL_PARTICLE_COUNT = 1024 * 8;
+const unsigned int INITIAL_PARTICLE_COUNT = 1024 * 32;
 const unsigned int MAX_PARTICLE_COUNT = INITIAL_PARTICLE_COUNT * MERGE_SPLIT_COEFF;
 const unsigned int MIN_PARTICLE_COUNT = INITIAL_PARTICLE_COUNT / MERGE_SPLIT_COEFF;
 const unsigned int SPATIAL_HASH_SIZE = MAX_PARTICLE_COUNT * 4;
-const float PARTICLE_RADIUS = 0.01f;
+const float PARTICLE_RADIUS = 0.007f;
 const float MASS = 0.1f;
 const float GRAVITY_ACCELERATION = 1.5f;
 const float COLLISION_DAMPING = 0.5f;
 const float BOUNDARY_X = 1.2f;
 const float BOUNDARY_Y = 0.7f;
 const float BOUNDARY_Z = 0.7f;
-const float SPACING = 0.04f;
+const float SPACING = 0.05f;
 const float SMOOTHING_RADIUS = 0.12f;
-const float PRESSURE_MULTIPLIER = 1.5f;
-const float TARGET_DENSITY = 250.0f;
+const float PRESSURE_MULTIPLIER = 2.0f;
+const float TARGET_DENSITY = 800.0f;
 const float VISCOSITY_STRENGTH = 0.2f;
 const float NEAR_DENSITY_MULTIPLIER = 0.1f;
 const float DELTA_TIME = 0.016f;
 
 const float HIGH_DENSITY_FACTOR = 1.2f;
-const float LOW_DENSITY_FACTOR = 0.85f;
+const float LOW_DENSITY_FACTOR = 0.82f;
 const float MAX_MASS_FACTOR = 4.0f;
 const float MIN_MASS_FACTOR = 0.25f;
 
