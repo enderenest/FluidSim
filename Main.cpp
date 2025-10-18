@@ -25,13 +25,13 @@
 // pressureAcceleration = pressureForce / density;
 // velocity += pressureAcceleration * dt;
 
-const unsigned int WIDTH = 1920, HEIGHT = 1080;
-const unsigned int MERGE_SPLIT_COEFF = 4;
-const unsigned int INITIAL_PARTICLE_COUNT = 1024 * 32;
-const unsigned int MAX_PARTICLE_COUNT = INITIAL_PARTICLE_COUNT * MERGE_SPLIT_COEFF;
-const unsigned int MIN_PARTICLE_COUNT = INITIAL_PARTICLE_COUNT / MERGE_SPLIT_COEFF;
-const unsigned int SPATIAL_HASH_SIZE = MAX_PARTICLE_COUNT * 4;
-const float PARTICLE_RADIUS = 0.007f;
+const int WIDTH = 1920, HEIGHT = 1080;
+const int MERGE_SPLIT_COEFF = 4;
+const int INITIAL_PARTICLE_COUNT = 1024 * 8;
+const int MAX_PARTICLE_COUNT = INITIAL_PARTICLE_COUNT * MERGE_SPLIT_COEFF;
+const int MIN_PARTICLE_COUNT = INITIAL_PARTICLE_COUNT / MERGE_SPLIT_COEFF;
+const int SPATIAL_HASH_SIZE = MAX_PARTICLE_COUNT * 4;
+const float PARTICLE_RADIUS = 0.01f;
 const float MASS = 0.1f;
 const float GRAVITY_ACCELERATION = 1.5f;
 const float COLLISION_DAMPING = 0.5f;
@@ -41,7 +41,7 @@ const float BOUNDARY_Z = 0.7f;
 const float SPACING = 0.05f;
 const float SMOOTHING_RADIUS = 0.12f;
 const float PRESSURE_MULTIPLIER = 2.0f;
-const float TARGET_DENSITY = 800.0f;
+const float TARGET_DENSITY = 300.0f;
 const float VISCOSITY_STRENGTH = 0.2f;
 const float NEAR_DENSITY_MULTIPLIER = 0.1f;
 const float DELTA_TIME = 0.016f;
@@ -51,7 +51,7 @@ const float LOW_DENSITY_FACTOR = 0.82f;
 const float MAX_MASS_FACTOR = 4.0f;
 const float MIN_MASS_FACTOR = 0.25f;
 
-const unsigned int COOLDOWN_FRAMES = 10;
+const int COOLDOWN_FRAMES = 10;
 
 const float INTERACTION_RADIUS = 0.3f;
 const float INTERACTION_STRENGTH = 15.0f;
@@ -68,12 +68,13 @@ bool mLastFrame = false;
 const float FOV = 60.0f;
 const float MOVEMENT_SPEED = 2.0f;
 const float MOUSE_SENSITIVITY = 0.1f;
-glm::vec3 cameraPosition(0.0f, 1.0f, 2.0f);
-glm::vec3 cameraTarget(0.0f, 0.0f, 0.0f);
-glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
+glm::vec3 CAM_POS(0.0f, 1.0f, 2.0f);
+glm::vec3 CAM_TARGET(0.0f, 0.0f, 0.0f);
+glm::vec3 CAM_UP(0.0f, 1.0f, 0.0f);
 
-Camera camera(cameraPosition, cameraTarget, cameraUp, MOVEMENT_SPEED, MOUSE_SENSITIVITY);
+Camera camera(CAM_POS, CAM_TARGET, CAM_UP, MOVEMENT_SPEED, MOUSE_SENSITIVITY);
 
+// Create the 3D sphere particle
 static void CreateUVSphere(std::vector<glm::vec3>& verts,
 	std::vector<GLuint>& inds,
 	int latSegs = 16,
@@ -108,7 +109,6 @@ static void CreateUVSphere(std::vector<glm::vec3>& verts,
 			int i2 = y * (longSegs + 1) + (x + 1);
 			int i3 = (y + 1) * (longSegs + 1) + (x + 1);
 
-			
 			inds.push_back(i0);
 			inds.push_back(i1);
 			inds.push_back(i2);
@@ -385,7 +385,7 @@ int main() {
 
 		fluid.BindRenderBuffers();
 		vao1.Bind();
-		unsigned int liveCount = fluid.GetParticleCount();
+		int liveCount = fluid.GetParticleCount();
 		//std::cout << " liveCount = " << fluid.GetParticleCount() << std::endl;
 		glDrawElementsInstanced(GL_TRIANGLES, GLsizei(sphereIndices.size()), GL_UNSIGNED_INT, 0, liveCount);
 

@@ -1,11 +1,11 @@
 #include "Camera.h"
 
 Camera::Camera(glm::vec3 pos, glm::vec3 target, glm::vec3 up, float movSpeed, float mouseSens)
-    : positionVec(pos),
-    targetVec(target),
-    upVec(up),
-    MovementSpeed(movSpeed),
-    MouseSensitivity(mouseSens)
+    : positionVec(pos)
+    , targetVec(target)
+    , upVec(up)
+    , MovementSpeed(movSpeed)
+    , MouseSensitivity(mouseSens)
 {
     front = glm::normalize(target - positionVec);
     worldUp = upVec;

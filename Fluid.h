@@ -15,7 +15,7 @@
 
 const float PI = 3.14159265359f;
 const float EPSILON = std::numeric_limits<float>::epsilon();
-const unsigned int MAX_INT = std::numeric_limits<unsigned int>::max();
+const int MAX_INT = std::numeric_limits<int>::max();
 
 
 struct SimulationParameters {
@@ -62,7 +62,7 @@ struct SimulationParameters {
 };
 
 struct Entry {
-	int index;
+	unsigned int index;
 	unsigned int key;
 };
 
@@ -88,15 +88,42 @@ struct ParticleValues {
 
 class Fluid {  
 	private : 
+		// ---- immutable configuration ----
+		const int   _initialParticleCount;
+		const int   _mergeSplitCoeff;
+		const int   _cooldown_frames;
+		const int   _hashSize;
+
+		const float _particleRadius;
+		const float _mass;
+		const float _gravityAcceleration;
+		const float _collisionDamping;
+		const float _spacing;
+		const float _pressureMultiplier;
+		const float _targetDensity;
+		const float _smoothingRadius;
+		const float _interactionRadius;
+		const float _interactionStrength;
+		const float _viscosityStrength;
+		const float _nearDensityMultiplier;
+		const float _boundaryX, _boundaryY, _boundaryZ;
+		const float _high_density_factor, _low_density_factor;
+		const float _max_mass_factor, _min_mass_factor;
+
+		// ---- immutable derived values ----
+		const int   _maxParticleCount;      // initial * coeff
+		const int   _lookupCapacity;        // nextPowerOfTwo(_maxParticleCount)
+
+		// ---- SSBO Buffers ----
 		SSBO <ParticleVectors> _particleVectors; // bind to 0
 		SSBO <ParticleValues> _particleValues; // bind to 1
 
-		//Ping-pong buffers for simulation steps
+		// Ping-pong buffers for simulation steps
 		SSBO <ParticleVectors> _newParticleVectors; // bind to 2
 		SSBO <ParticleValues> _newParticleValues; // bind to 3
 
 		SSBO <Entry> _spatialLookup; // bind to 4
-		SSBO <unsigned int> _startIndices; // bind to 5
+		SSBO <int> _startIndices; // bind to 5
 		SSBO <SimulationParameters> _simParams; // bind to 6
 
 		GLuint _newParticleCounterBuffer; // bind to 7
@@ -116,11 +143,11 @@ class Fluid {
 		SimulationParameters _params;
 		
 	public:  
-		Fluid(unsigned int initialParticleCount, unsigned int mergeSplitCount, unsigned int cooldown_frames,float particleRadius, const float mass, const float gravity, const float collisionDamping, const float spacing, const float pressureMultiplier, const float targetDensity, const float smoothingRadius, const unsigned int hashSize, const float interactionRadius, const float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ, float high_density_factor, float low_density_factor, float max_mass_factor, float min_mass_factor);
+		Fluid(int initialParticleCount, int mergeSplitCount, int cooldown_frames,  float particleRadius, const float mass,  float gravity,  float collisionDamping,  float spacing,  float pressureMultiplier,  float targetDensity,  float smoothingRadius,  int hashSize,  float interactionRadius,  float interactionStrength,  float viscosityStrength,  float nearDensityMultiplier,  float boundaryX,  float boundaryY,  float boundaryZ,  float high_density_factor,  float low_density_factor,  float max_mass_factor,  float min_mass_factor);
 
 		void Update(float dt);
 
-		void UpdateSpatialHashing(unsigned int groups);
+		void UpdateSpatialHashing(int groups);
 
 		void resetParticleCounter();
 		static GLuint nextPowerOfTwo(GLuint x);
@@ -133,18 +160,18 @@ class Fluid {
 		void SetInteractionRadius(float radius);
 		void SetInteractionPosition(glm::vec3 pos);
 		void SetInteractionStrength(float strength);
-		float GetPressureMultiplier();
+		float GetPressureMultiplier() const;
 		void SetPressureMultiplier(float pressureMultiplier);
-		float GetTargetDensity();
+		float GetTargetDensity() const;
 		void SetTargetDensity(float targetDensity);
-		float GetGravity();
+		float GetGravity() const;
 		void SetGravity(float g);
 		void SetPaused(bool isPaused);
-		float GetViscosityStrength();
+		float GetViscosityStrength() const;
 		void SetViscosityStrength(float strength);
-		float GetNearDensityMultiplier();
+		float GetNearDensityMultiplier() const;
 		void SetNearDensityMultiplier(float nearDensityMultiplier);
-		unsigned int GetParticleCount() const;
+		int GetParticleCount() const;
 };  
 
 #endif // FLUID_CLASS_H

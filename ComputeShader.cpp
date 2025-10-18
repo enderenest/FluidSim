@@ -31,7 +31,7 @@ void ComputeShader::use() const
 	glUseProgram(_id);
 }
 
-void ComputeShader::dispatch(unsigned int groupsX, unsigned int groupsY, unsigned int groupsZ) const 
+void ComputeShader::dispatch(int groupsX, int groupsY, int groupsZ) const 
 {
 	glDispatchCompute(groupsX, groupsY, groupsZ);
 }
@@ -46,12 +46,12 @@ void ComputeShader::setFloat(const char* name, float value) const
 	glUniform1f(glGetUniformLocation(_id, name), value);
 }
 
-void ComputeShader::setUint(const char* name, const unsigned int value) const 
+void ComputeShader::setUint(const char* name, const int value) const 
 {
 	glUniform1ui(glGetUniformLocation(_id, name), value);
 }
 
-unsigned int ComputeShader::getID() { return _id; }
+int ComputeShader::getID() { return _id; }
 
 void ComputeShader::wait() const 
 {

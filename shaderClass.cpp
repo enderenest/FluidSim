@@ -53,7 +53,7 @@ void Shader::Activate() { glUseProgram(ID); }
 
 void Shader::Delete() { glDeleteProgram(ID); }
 
-void Shader::compileErrors(unsigned int shader, const char* type)
+void Shader::compileErrors(int shader, const char* type)
 {
 	GLint hasCompiled;
 	char infoLog[1024];

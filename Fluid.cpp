@@ -2,27 +2,53 @@
 #include <iostream>
 
 
-Fluid::Fluid(const unsigned int initialParticleCount, const unsigned int mergeSplitCoeff, const unsigned int cooldown_frames, const float particleRadius, const float mass, const float gravityAcceleration, const float collisionDamping, const float spacing, const float pressureMultiplier, const float targetDensity, const float smoothingRadius, const unsigned int hashSize, const float interactionRadius, const float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ, float high_density_factor, float low_density_factor, float max_mass_factor, float min_mass_factor)
-    : _particleVectors(initialParticleCount * mergeSplitCoeff, GL_DYNAMIC_DRAW),
-      _particleValues(initialParticleCount * mergeSplitCoeff, GL_DYNAMIC_DRAW),
-      _newParticleVectors(initialParticleCount * mergeSplitCoeff, GL_DYNAMIC_DRAW),
-      _newParticleValues(initialParticleCount * mergeSplitCoeff, GL_DYNAMIC_DRAW),
-	  _spatialLookup(nextPowerOfTwo(initialParticleCount * mergeSplitCoeff), GL_DYNAMIC_DRAW),
-      _startIndices(hashSize, GL_DYNAMIC_DRAW),
-      _simParams(1, GL_DYNAMIC_DRAW),
-        
-      _predictedPosShader("predicted_positions.comp"),
-	  _densityStep("density_step.comp"),
-	  _forceStep("force_step.comp"),
-      _fluidStep("fluid_step.comp"),
-	  _bitonicSortShader("bitonic_sort.comp"),
-	  _updateSpatialLookup("update_spatial_lookup.comp"),
-	  _buildStartIndices("build_start_indices.comp"),
-	  _tagParticles("tag_particles.comp"),
-      _resampleParticles("resample_particles.comp"),
-	  _resetMergeFlags("reset_merge_flags.comp")
+Fluid::Fluid(int initialParticleCount, int mergeSplitCoeff, int cooldown_frames, float particleRadius, float mass, float gravityAcceleration, float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, float smoothingRadius, int hashSize, float interactionRadius, float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ, float high_density_factor, float low_density_factor, float max_mass_factor, float min_mass_factor)
+    : _initialParticleCount(initialParticleCount)
+    , _mergeSplitCoeff(mergeSplitCoeff)
+    , _cooldown_frames(cooldown_frames)
+    , _hashSize(hashSize)
+    , _particleRadius(particleRadius)
+    , _mass(mass)
+    , _gravityAcceleration(gravityAcceleration)
+    , _collisionDamping(collisionDamping)
+    , _spacing(spacing)
+    , _pressureMultiplier(pressureMultiplier)
+    , _targetDensity(targetDensity)
+    , _smoothingRadius(smoothingRadius)
+    , _interactionRadius(interactionRadius)
+    , _interactionStrength(interactionStrength)
+    , _viscosityStrength(viscosityStrength)
+    , _nearDensityMultiplier(nearDensityMultiplier)
+    , _boundaryX(boundaryX), _boundaryY(boundaryY), _boundaryZ(boundaryZ)
+    , _high_density_factor(high_density_factor)
+    , _low_density_factor(low_density_factor)
+    , _max_mass_factor(max_mass_factor)
+    , _min_mass_factor(min_mass_factor)
+    // ---- derived ----
+    , _maxParticleCount(_initialParticleCount* _mergeSplitCoeff)
+    , _lookupCapacity(nextPowerOfTwo(_maxParticleCount))
+    // ---- buffers using the derived values ----
+    , _particleVectors(_maxParticleCount, GL_DYNAMIC_DRAW)
+    , _particleValues(_maxParticleCount, GL_DYNAMIC_DRAW)
+    , _newParticleVectors(_maxParticleCount, GL_DYNAMIC_DRAW)
+    , _newParticleValues(_maxParticleCount, GL_DYNAMIC_DRAW)
+    , _spatialLookup(_lookupCapacity, GL_DYNAMIC_DRAW)
+    , _startIndices(_hashSize, GL_DYNAMIC_DRAW)
+    , _simParams(1, GL_DYNAMIC_DRAW)
+    // ---- shaders ----
+    , _predictedPosShader("predicted_positions.comp")
+    , _densityStep("density_step.comp")
+    , _forceStep("force_step.comp")
+    , _fluidStep("fluid_step.comp")
+    , _bitonicSortShader("bitonic_sort.comp")
+    , _updateSpatialLookup("update_spatial_lookup.comp")
+    , _buildStartIndices("build_start_indices.comp")
+    , _tagParticles("tag_particles.comp")
+    , _resampleParticles("resample_particles.comp")
+    , _resetMergeFlags("reset_merge_flags.comp")
 {
 	// Initialize simulation parameters
+    _params = {};
     _params.dt = 0.016f;
     _params.gravityAcceleration = gravityAcceleration;
     _params.mass = mass;
@@ -67,7 +93,7 @@ Fluid::Fluid(const unsigned int initialParticleCount, const unsigned int mergeSp
 
     _simParams.upload(std::vector<SimulationParameters>{_params});
 
-	unsigned int maxCapacity = initialParticleCount * mergeSplitCoeff;
+	int maxCapacity = initialParticleCount * mergeSplitCoeff;
 
 	// Initialize all of them zero first, then set the first 'particleCount' elements
     std::vector<ParticleVectors> vectorData(maxCapacity, {});
@@ -76,17 +102,22 @@ Fluid::Fluid(const unsigned int initialParticleCount, const unsigned int mergeSp
     std::vector<ParticleVectors> newVectorData(maxCapacity, {});
     std::vector<ParticleValues>  newValueData(maxCapacity, {});
 
-	// Arrange particles in a cubic form
-    unsigned int particlesPerAxis = static_cast<unsigned int>(std::ceil(std::cbrt(_params.currentParticleCount)));
+    const uint32_t count = _params.currentParticleCount;
+    if (count == 0u) { /* handle empty */ }
 
-    for (unsigned int i = 0; i < _params.currentParticleCount; ++i) {
-        unsigned int z = i / (particlesPerAxis * particlesPerAxis);
-        unsigned int y = (i / particlesPerAxis) % particlesPerAxis;
-        unsigned int x = i % particlesPerAxis;
+    const uint32_t perAxis = static_cast<uint32_t>(
+        std::ceil(std::cbrt(static_cast<double>(count)))
+        );
+    const uint32_t perAxis2 = perAxis * perAxis;
 
-        float fx = (static_cast<float>(x) - particlesPerAxis / 2.0f + 0.5f) * spacing;
-        float fy = (static_cast<float>(y) - particlesPerAxis / 2.0f + 0.5f) * spacing;
-        float fz = (static_cast<float>(z) - particlesPerAxis / 2.0f + 0.5f) * spacing;
+    for (uint32_t i = 0; i < count; ++i) {
+        const uint32_t z = i / perAxis2;
+        const uint32_t y = (i / perAxis) % perAxis;
+        const uint32_t x = i % perAxis;
+
+        const float fx = (static_cast<float>(x) - 0.5f * static_cast<float>(perAxis) + 0.5f) * _spacing;
+        const float fy = (static_cast<float>(y) - 0.5f * static_cast<float>(perAxis) + 0.5f) * _spacing;
+        const float fz = (static_cast<float>(z) - 0.5f * static_cast<float>(perAxis) + 0.5f) * _spacing;
 
 		vectorData[i].position = glm::vec4(fx, fy, fz, 1.0f);
 		vectorData[i].predictedPosition = glm::vec4(fx, fy, fz, 1.0f);
@@ -118,17 +149,17 @@ Fluid::Fluid(const unsigned int initialParticleCount, const unsigned int mergeSp
     
     std::vector<Entry> lookupData(_params.lookupCapacity);
 
-    for (unsigned i = 0; i < _params.currentParticleCount; ++i) {
+    for (size_t i = 0; i < _params.currentParticleCount; ++i) {
         lookupData[i].index = 0u;
         lookupData[i].key = 0u;          // placeholder
     }
-    for (unsigned i = _params.currentParticleCount; i < _params.lookupCapacity; ++i) {
+    for (size_t i = _params.currentParticleCount; i < _params.lookupCapacity; ++i) {
         lookupData[i].index = -1;
         lookupData[i].key = 0xFFFFFFFFu; // always sorts to the back
     }
 
     _spatialLookup.upload(lookupData);
-    _startIndices.upload(std::vector<unsigned int>(hashSize, MAX_INT));
+    _startIndices.upload(std::vector<int>(hashSize, MAX_INT));
 
     GLuint zero = 0;
     glGenBuffers(1, &_newParticleCounterBuffer);
@@ -209,7 +240,7 @@ void Fluid::Update(float dt) {
 
     // 3e) Update our C++ state and GPU sim‐params
     _params.currentParticleCount = newCount;
-    // std::cout << "RESAMPLED COUNT = " << newCount << "\n";
+    std::cout << "RESAMPLED COUNT = " << newCount << "\n";
     _params.paddedCurrentParticleCount = nextPowerOfTwo(newCount);
     _simParams.upload({ _params });
 
@@ -231,7 +262,7 @@ void Fluid::Update(float dt) {
     BindRenderBuffers();
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
 
-    /*std::vector<glm::vec4> snapshot(10);
+    std::vector<glm::vec4> snapshot(10);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _particleVectors.getID());
     glGetBufferSubData(
         GL_SHADER_STORAGE_BUFFER,
@@ -243,7 +274,7 @@ void Fluid::Update(float dt) {
         auto& p = snapshot[i];
         std::cout << "pos[" << i << "] = "
             << p.x << "," << p.y << "," << p.z << "\n";
-    }*/
+    }
 
 	// Step 4: Update spatial lookup with new particle count
 	UpdateSpatialHashing(newNumGroups);
@@ -286,7 +317,7 @@ void Fluid::resetParticleCounter() {
 }
 
 
-void Fluid::UpdateSpatialHashing(unsigned int groups) {
+void Fluid::UpdateSpatialHashing(int groups) {
     // Step 1: Update spatial lookup keys
     _updateSpatialLookup.use();
     _particleVectors.bindTo(0);
@@ -299,7 +330,7 @@ void Fluid::UpdateSpatialHashing(unsigned int groups) {
     SortSpatialLookup();
 
     // Step 3: Clear start indices
-    _startIndices.upload(std::vector<unsigned int>(_params.hashSize, MAX_INT));
+    _startIndices.upload(std::vector<int>(_params.hashSize, MAX_INT));
 
     // Step 4: Update start indices
     _buildStartIndices.use();
@@ -350,24 +381,24 @@ void Fluid::SetInteractionPosition(glm::vec3 pos) {
 void Fluid::SetInteractionStrength(float strength) { _params.interactionStrength = strength; }
 void Fluid::SetInteractionRadius(float radius) { _params.interactionRadius = radius; }
 
-float Fluid::GetPressureMultiplier() { return _params.pressureMultiplier; }
+float Fluid::GetPressureMultiplier() const { return _params.pressureMultiplier; }
 void Fluid::SetPressureMultiplier(float pressureMultiplier) { _params.pressureMultiplier = pressureMultiplier; }
 
-float Fluid::GetTargetDensity() { return _params.targetDensity; }
+float Fluid::GetTargetDensity() const { return _params.targetDensity; }
 void Fluid::SetTargetDensity(float targetDensity) { _params.targetDensity = targetDensity; }
 
+float Fluid::GetGravity() const { return _params.gravityAcceleration; }
 void Fluid::SetGravity(float g) { _params.gravityAcceleration = g; }
-float Fluid::GetGravity() {return _params.gravityAcceleration;}
 
 void Fluid::SetPaused(bool isPaused) { _params.isPaused = isPaused; }
 
-float Fluid::GetViscosityStrength() { return _params.viscosityStrength; }
+float Fluid::GetViscosityStrength() const { return _params.viscosityStrength; }
 void Fluid::SetViscosityStrength(float viscosityStrength) { _params.viscosityStrength = viscosityStrength; }
 
-float Fluid::GetNearDensityMultiplier() { return _params.nearDensityMultiplier; }
+float Fluid::GetNearDensityMultiplier() const { return _params.nearDensityMultiplier; }
 void Fluid::SetNearDensityMultiplier(float nearDensityMultiplier) { _params.nearDensityMultiplier = nearDensityMultiplier; }
 
-unsigned int Fluid::GetParticleCount() const { return _params.currentParticleCount; }
+int Fluid::GetParticleCount() const { return _params.currentParticleCount; }
 
 
 
