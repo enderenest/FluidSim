@@ -3,6 +3,8 @@
 struct Entry {
 	int index;
 	uint key;
+
+	float padding1, padding2;
 };
 
 struct ParticleVectors {

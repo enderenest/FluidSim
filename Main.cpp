@@ -31,23 +31,23 @@ const int INITIAL_PARTICLE_COUNT = 1024 * 8;
 const int MAX_PARTICLE_COUNT = INITIAL_PARTICLE_COUNT * MERGE_SPLIT_COEFF;
 const int MIN_PARTICLE_COUNT = INITIAL_PARTICLE_COUNT / MERGE_SPLIT_COEFF;
 const int SPATIAL_HASH_SIZE = MAX_PARTICLE_COUNT * 4;
-const float PARTICLE_RADIUS = 0.01f;
+const float PARTICLE_RADIUS = 0.008f;
 const float MASS = 0.1f;
 const float GRAVITY_ACCELERATION = 1.5f;
 const float COLLISION_DAMPING = 0.5f;
 const float BOUNDARY_X = 1.2f;
 const float BOUNDARY_Y = 0.7f;
 const float BOUNDARY_Z = 0.7f;
-const float SPACING = 0.05f;
+const float SPACING = 0.04f;
 const float SMOOTHING_RADIUS = 0.12f;
 const float PRESSURE_MULTIPLIER = 2.0f;
 const float TARGET_DENSITY = 300.0f;
 const float VISCOSITY_STRENGTH = 0.2f;
 const float NEAR_DENSITY_MULTIPLIER = 0.1f;
-const float DELTA_TIME = 0.016f;
+const float DELTA_TIME = 1.0f / 60.0f;
 
 const float HIGH_DENSITY_FACTOR = 1.2f;
-const float LOW_DENSITY_FACTOR = 0.82f;
+const float LOW_DENSITY_FACTOR = 0.8f;
 const float MAX_MASS_FACTOR = 4.0f;
 const float MIN_MASS_FACTOR = 0.25f;
 
@@ -133,7 +133,6 @@ int main() {
 		glfwTerminate();
 		return -1;
 	}
-
 	glfwMakeContextCurrent(window);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -143,6 +142,8 @@ int main() {
 
 	glViewport(0, 0, WIDTH, HEIGHT);
 	glEnable(GL_DEPTH_TEST);
+
+	glfwSwapInterval(1); // Restrict the FPS to the screen refresh rate which is 144hz 
 
 	Shader shaderProgram("default.vert", "default.frag");
 
@@ -183,11 +184,11 @@ int main() {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
 	glBindVertexArray(0);
 
-	Fluid fluid(INITIAL_PARTICLE_COUNT, MERGE_SPLIT_COEFF, COOLDOWN_FRAMES, PARTICLE_RADIUS, MASS, GRAVITY_ACCELERATION, COLLISION_DAMPING, SPACING, PRESSURE_MULTIPLIER, TARGET_DENSITY, SMOOTHING_RADIUS, SPATIAL_HASH_SIZE, INTERACTION_RADIUS, INTERACTION_STRENGTH, VISCOSITY_STRENGTH, NEAR_DENSITY_MULTIPLIER, BOUNDARY_X, BOUNDARY_Y, BOUNDARY_Z, HIGH_DENSITY_FACTOR, LOW_DENSITY_FACTOR, MAX_MASS_FACTOR, MIN_MASS_FACTOR);
+	Fluid fluid(INITIAL_PARTICLE_COUNT, MERGE_SPLIT_COEFF, COOLDOWN_FRAMES, DELTA_TIME, PARTICLE_RADIUS, MASS, GRAVITY_ACCELERATION, COLLISION_DAMPING, SPACING, PRESSURE_MULTIPLIER, TARGET_DENSITY, SMOOTHING_RADIUS, SPATIAL_HASH_SIZE, INTERACTION_RADIUS, INTERACTION_STRENGTH, VISCOSITY_STRENGTH, NEAR_DENSITY_MULTIPLIER, BOUNDARY_X, BOUNDARY_Y, BOUNDARY_Z, HIGH_DENSITY_FACTOR, LOW_DENSITY_FACTOR, MAX_MASS_FACTOR, MIN_MASS_FACTOR);
 
 	std::vector<glm::vec3> sphereVertices;
 	std::vector<GLuint> sphereIndices;
-	CreateUVSphere(sphereVertices, sphereIndices, 8, 8, 1.0f); // I am not sure about using 1.0f scale or PARTICLE_RADIUS
+	CreateUVSphere(sphereVertices, sphereIndices, 16, 16, 1.0f); // I am not sure about using 1.0f scale or PARTICLE_RADIUS
 
 	VAO vao1;
 	vao1.Bind();
@@ -204,19 +205,17 @@ int main() {
 	vboSphere.Unbind();
 	eboSphere.Unbind();
 
-	double lastTime = glfwGetTime();
-	int  nbFrames = 0;
+	double lastFrameTime = glfwGetTime();
+	double fpsAccum = 0.0;     // seconds accumulated
+	int    fpsFrames = 0;      // frames accumulated
 
 	while (!glfwWindowShouldClose(window)) {
-		double currentTime = glfwGetTime();
-		nbFrames++;
-		if (currentTime - lastTime >= 1.0) {
-			int fps = nbFrames;
-			std::string title = "Fluid Particles -> FPS: " + std::to_string(fps);
-			glfwSetWindowTitle(window, title.c_str());
-			nbFrames = 0;
-			lastTime += 1.0;
-		}
+		double now = glfwGetTime();
+		double dt = now - lastFrameTime;
+		lastFrameTime = now;
+
+		fpsAccum += dt;
+		fpsFrames += 1;
 
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -395,8 +394,19 @@ int main() {
 		glUniformMatrix4fv(glGetUniformLocation(lineShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
 		glBindVertexArray(boundaryVAO);
-		glDrawArrays(GL_LINES, 0, boundaryLines.size());
+		glDrawArrays(GL_LINES, 0, GLsizei(boundaryLines.size()));
 		glBindVertexArray(0);
+
+		if (fpsAccum >= 1.0) {
+			double fpsExact = fpsFrames / fpsAccum;            // average over the last ~1s
+			int fpsRounded = static_cast<int>(std::round(fpsExact));
+			std::string title = "Fluid Particles -> FPS: " + std::to_string(fpsRounded);
+			glfwSetWindowTitle(window, title.c_str());
+
+			// reset the window
+			fpsAccum -= 1.0;   // keep leftover (if 1.23s passed, keep 0.23s)
+			fpsFrames = 0;
+		}
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

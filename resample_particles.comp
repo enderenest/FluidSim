@@ -3,6 +3,8 @@
 struct Entry {
 	int index;
 	uint key;
+
+    float padding1, padding2;
 };
 
 struct ParticleVectors {
@@ -174,9 +176,6 @@ void main() {
         newValData[id1].mergeFlag         = 0u; // Reset merge flag
         newValData[id1].cooldown          = sim.cooldown_frames;
 
-
-
-
         uint id2 = atomicCounterIncrement(newParticleCounter);
         if (id2 >= sim.maxParticleCount) {
             return;
@@ -253,7 +252,6 @@ void main() {
 
         // Fallback: after trying ALL 27 cells, if no partner, keep i
         if (!merged) {
-            // DO NOT reset valData[i].mergeFlag here. Leave it as 1 (locked for this pass).
             uint id = atomicCounterIncrement(newParticleCounter);
             if (id < sim.maxParticleCount) {
                 newVecData[id].position          = vec4(pos, 0.0);

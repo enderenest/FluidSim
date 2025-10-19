@@ -64,6 +64,9 @@ struct SimulationParameters {
 struct Entry {
 	unsigned int index;
 	unsigned int key;
+
+	float padding1;
+	float padding2;
 };
 
 // Alligned to 16 bytes because of glm::vec4
@@ -143,7 +146,7 @@ class Fluid {
 		SimulationParameters _params;
 		
 	public:  
-		Fluid(int initialParticleCount, int mergeSplitCount, int cooldown_frames,  float particleRadius, const float mass,  float gravity,  float collisionDamping,  float spacing,  float pressureMultiplier,  float targetDensity,  float smoothingRadius,  int hashSize,  float interactionRadius,  float interactionStrength,  float viscosityStrength,  float nearDensityMultiplier,  float boundaryX,  float boundaryY,  float boundaryZ,  float high_density_factor,  float low_density_factor,  float max_mass_factor,  float min_mass_factor);
+		Fluid(int initialParticleCount, int mergeSplitCount, int cooldown_frames, float delta_time, float particleRadius, const float mass,  float gravity,  float collisionDamping,  float spacing,  float pressureMultiplier,  float targetDensity,  float smoothingRadius,  int hashSize,  float interactionRadius,  float interactionStrength,  float viscosityStrength,  float nearDensityMultiplier,  float boundaryX,  float boundaryY,  float boundaryZ,  float high_density_factor,  float low_density_factor,  float max_mass_factor,  float min_mass_factor);
 
 		void Update(float dt);
 

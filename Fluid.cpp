@@ -2,7 +2,7 @@
 #include <iostream>
 
 
-Fluid::Fluid(int initialParticleCount, int mergeSplitCoeff, int cooldown_frames, float particleRadius, float mass, float gravityAcceleration, float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, float smoothingRadius, int hashSize, float interactionRadius, float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ, float high_density_factor, float low_density_factor, float max_mass_factor, float min_mass_factor)
+Fluid::Fluid(int initialParticleCount, int mergeSplitCoeff, int cooldown_frames, float delta_time, float particleRadius, float mass, float gravityAcceleration, float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, float smoothingRadius, int hashSize, float interactionRadius, float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ, float high_density_factor, float low_density_factor, float max_mass_factor, float min_mass_factor)
     : _initialParticleCount(initialParticleCount)
     , _mergeSplitCoeff(mergeSplitCoeff)
     , _cooldown_frames(cooldown_frames)
@@ -49,7 +49,7 @@ Fluid::Fluid(int initialParticleCount, int mergeSplitCoeff, int cooldown_frames,
 {
 	// Initialize simulation parameters
     _params = {};
-    _params.dt = 0.016f;
+    _params.dt = delta_time;
     _params.gravityAcceleration = gravityAcceleration;
     _params.mass = mass;
     _params.collisionDamping = collisionDamping;
@@ -152,10 +152,12 @@ Fluid::Fluid(int initialParticleCount, int mergeSplitCoeff, int cooldown_frames,
     for (size_t i = 0; i < _params.currentParticleCount; ++i) {
         lookupData[i].index = 0u;
         lookupData[i].key = 0u;          // placeholder
+        lookupData[i].padding1 = lookupData[i].padding2 = 0.0f;
     }
     for (size_t i = _params.currentParticleCount; i < _params.lookupCapacity; ++i) {
         lookupData[i].index = -1;
         lookupData[i].key = 0xFFFFFFFFu; // always sorts to the back
+        lookupData[i].padding1 = lookupData[i].padding2 = 0.0f;
     }
 
     _spatialLookup.upload(lookupData);
@@ -240,7 +242,7 @@ void Fluid::Update(float dt) {
 
     // 3e) Update our C++ state and GPU sim‐params
     _params.currentParticleCount = newCount;
-    std::cout << "RESAMPLED COUNT = " << newCount << "\n";
+    // std::cout << "RESAMPLED COUNT = " << newCount << "\n";
     _params.paddedCurrentParticleCount = nextPowerOfTwo(newCount);
     _simParams.upload({ _params });
 
@@ -262,7 +264,7 @@ void Fluid::Update(float dt) {
     BindRenderBuffers();
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
 
-    std::vector<glm::vec4> snapshot(10);
+    /*std::vector<glm::vec4> snapshot(10);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _particleVectors.getID());
     glGetBufferSubData(
         GL_SHADER_STORAGE_BUFFER,
@@ -274,7 +276,7 @@ void Fluid::Update(float dt) {
         auto& p = snapshot[i];
         std::cout << "pos[" << i << "] = "
             << p.x << "," << p.y << "," << p.z << "\n";
-    }
+    }*/
 
 	// Step 4: Update spatial lookup with new particle count
 	UpdateSpatialHashing(newNumGroups);
@@ -312,8 +314,9 @@ void Fluid::resetParticleCounter() {
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, _newParticleCounterBuffer);
     GLuint zero = 0;
     glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), &zero);
-    glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT);
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 7, _newParticleCounterBuffer);
+    glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT);
 }
 
 
