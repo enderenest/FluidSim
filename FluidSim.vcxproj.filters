@@ -112,9 +112,6 @@
     <None Include="force_step.comp">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="sphere.mtl">
-      <Filter>Resource Files\Models</Filter>
-    </None>
     <None Include="tag_particles.comp">
       <Filter>Resource Files\Shaders</Filter>
     </None>
@@ -124,10 +121,5 @@
     <None Include="reset_merge_flags.comp">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Object Include="sphere.obj">
-      <Filter>Resource Files\Models</Filter>
-    </Object>
   </ItemGroup>
 </Project>
