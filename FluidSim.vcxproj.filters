@@ -121,5 +121,1145 @@
     <None Include="reset_merge_flags.comp">
       <Filter>Resource Files\Shaders</Filter>
     </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\1.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\2.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\3.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\4.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\5.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\6.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\7.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\8.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\9.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\10.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\11.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\12.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\13.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\14.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\15.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\16.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\17.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\18.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\19.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\20.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\21.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\22.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\23.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\24.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\25.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\26.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\27.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\28.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\29.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\30.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\31.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\32.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\33.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\34.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\35.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\36.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\37.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\38.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\39.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\40.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\41.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\42.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\43.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\44.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\45.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\46.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\47.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\48.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\49.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\50.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\51.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\52.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\53.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\54.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\55.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\56.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\57.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\58.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\59.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\60.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\61.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\62.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\63.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\64.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\65.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\66.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\67.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\68.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\69.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\70.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\71.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\72.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\73.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\74.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\75.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\76.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\77.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\78.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\79.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\80.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\81.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\82.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\83.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\84.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\85.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\86.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\87.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\88.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\89.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\90.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\91.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\92.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\93.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\94.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\95.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\96.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\97.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\98.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\99.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\100.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\101.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\102.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\103.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\104.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\105.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\106.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\107.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\108.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\109.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\110.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\111.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\112.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\113.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\114.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\115.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\116.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\117.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\118.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\119.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\120.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\121.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\122.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\123.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\124.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\125.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\126.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\127.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\128.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\129.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\130.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\131.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\132.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\133.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\134.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\135.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\136.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\137.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\138.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\139.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\140.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\141.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\142.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\143.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\144.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\145.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\146.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\147.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\148.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\149.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\150.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\151.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\152.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\153.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\154.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\155.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\156.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\157.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\158.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\159.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\160.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\161.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\162.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\163.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\164.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\165.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\166.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\167.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\168.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\169.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\170.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\171.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\172.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\173.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\174.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\175.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\176.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\177.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\178.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\179.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\180.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\181.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\182.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\183.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\184.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\185.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\186.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\187.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\188.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\189.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\190.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\191.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\192.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\193.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\194.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\195.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\196.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\197.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\198.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\199.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\200.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\201.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\202.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\203.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\204.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\205.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\206.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\207.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\208.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\209.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\210.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\211.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\212.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\213.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\214.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\215.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\216.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\217.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\218.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\219.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\220.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\221.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\222.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\223.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\224.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\225.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\226.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\227.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\228.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\229.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\230.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\231.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\232.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\233.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\234.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\235.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\236.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\237.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\238.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\239.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\240.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\241.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\242.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\243.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\244.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\245.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\246.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\247.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\248.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\249.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\250.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\251.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\252.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\253.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\254.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\255.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\256.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\257.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\258.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\259.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\260.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\281.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\282.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\283.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\284.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\285.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\286.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\287.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\288.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\289.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\290.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\291.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\292.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\293.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\294.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\295.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\296.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\297.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\298.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\299.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\300.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\301.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\302.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\303.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\304.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\305.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\306.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\307.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\308.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\309.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\310.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\311.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\312.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\313.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\314.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\315.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\316.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\317.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\318.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\319.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\320.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\321.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\322.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\323.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\324.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\325.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\326.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\327.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\328.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\329.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\330.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\331.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\332.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\333.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\334.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\335.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\336.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\337.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\338.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\339.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\340.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\341.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\342.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\343.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\344.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\345.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\346.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\347.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\348.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\349.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\350.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\351.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\352.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\353.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\354.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\355.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\356.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\357.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\358.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\359.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\360.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\361.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\362.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\363.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\364.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\365.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\366.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\367.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\368.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\369.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\370.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\371.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\372.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\373.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\374.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\375.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\376.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\377.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\378.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\379.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\380.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\381.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\382.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\383.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\384.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\385.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\386.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\387.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\388.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\389.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\390.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\391.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\392.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\393.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\394.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\395.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\396.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\397.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\398.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\399.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
+    <None Include="..\MeshsegBenchmark-1.0\data\off\400.off">
+      <Filter>Resource Files\Models</Filter>
+    </None>
   </ItemGroup>
 </Project>
