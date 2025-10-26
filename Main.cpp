@@ -120,9 +120,56 @@ static void CreateUVSphere(std::vector<glm::vec3>& verts,
 	}
 }
 
+void glDebugOutput(GLenum source,
+	GLenum type,
+	unsigned int id,
+	GLenum severity,
+	GLsizei length,
+	const char* message,
+	const void* userParam)
+{
+	printf("!!! Debug callback !!!\n");
+	printf("Debug message: id %d, %s\n", id, message);
+
+	printf("Message source: ");
+	switch (source)
+	{
+	case GL_DEBUG_SOURCE_API:             printf("API\n"); break;
+	case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   printf("Window System\n"); break;
+	case GL_DEBUG_SOURCE_SHADER_COMPILER: printf("Shader Compiler\n"); break;
+	case GL_DEBUG_SOURCE_THIRD_PARTY:     printf("Third Party\n"); break;
+	case GL_DEBUG_SOURCE_APPLICATION:     printf("Application\n"); break;
+	case GL_DEBUG_SOURCE_OTHER:           printf("Other\n"); break;
+	}
+
+	printf("Error type: ");
+	switch (type)
+	{
+	case GL_DEBUG_TYPE_ERROR:               printf("Error\n"); break;
+	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: printf("Deprecated Behaviour\n"); break;
+	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  printf("Undefined Behaviour\n"); break;
+	case GL_DEBUG_TYPE_PORTABILITY:         printf("Portability\n"); break;
+	case GL_DEBUG_TYPE_PERFORMANCE:         printf("Performance\n"); break;
+	case GL_DEBUG_TYPE_MARKER:              printf("Marker\n"); break;
+	case GL_DEBUG_TYPE_PUSH_GROUP:          printf("Push Group\n"); break;
+	case GL_DEBUG_TYPE_POP_GROUP:           printf("Pop Group\n"); break;
+	case GL_DEBUG_TYPE_OTHER:               printf("Other\n"); break;
+	}
+
+	printf("Severity: ");
+	switch (severity)
+	{
+	case GL_DEBUG_SEVERITY_HIGH:         printf("High\n"); break;
+	case GL_DEBUG_SEVERITY_MEDIUM:       printf("Medium\n"); break;
+	case GL_DEBUG_SEVERITY_LOW:          printf("Low\n"); break;
+	case GL_DEBUG_SEVERITY_NOTIFICATION: printf("Notification\n"); break;
+	}
+}
+
 
 int main() {
 	glfwInit();
+	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -142,6 +189,18 @@ int main() {
 
 	glViewport(0, 0, WIDTH, HEIGHT);
 	glEnable(GL_DEPTH_TEST);
+
+	// Debug context
+	int contextFLags = 0;
+	glGetIntegerv(GL_CONTEXT_FLAGS, &contextFLags);
+
+	if (contextFLags & GL_CONTEXT_FLAG_DEBUG_BIT) {
+		std::cout << "OpenGL Debug Context initialized\n";
+		glEnable(GL_DEBUG_OUTPUT);
+		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+		glDebugMessageCallback(glDebugOutput, NULL);
+		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+	}
 
 	glfwSwapInterval(1); // Restrict the FPS to the screen refresh rate which is 144hz 
 

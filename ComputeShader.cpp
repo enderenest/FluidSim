@@ -70,22 +70,39 @@ std::string ComputeShader::loadShaderSource(const char* filePath) const {
 	return ss.str();
 }
 
-void ComputeShader::checkCompileErrors(GLuint object, const std::string& type, const char* filename = nullptr) const
+void ComputeShader::checkCompileErrors(GLuint object,
+    const std::string& type,
+    const char* filename /* no default here in the definition */) const
 {
-	GLint success;
-	glGetShaderiv(object,
-		type[0] == 'P' ? GL_LINK_STATUS : GL_COMPILE_STATUS,
-		&success);
-	if (!success) {
-		char infoLog[1024];
-		if (type[0] == 'P') glGetProgramInfoLog(object, 1024, NULL, infoLog);
-		else              glGetShaderInfoLog(object, 1024, NULL, infoLog);
+    GLint success = 0;
 
-		std::cerr
-			<< "ERROR::" << type
-			<< (filename ? std::string(" [") + filename + "]" : std::string())
-			<< "\n" << infoLog
-			<< "\n -- --------------------------------------------------- --\n";
-	}
+    if (!type.empty() && (type[0] == 'P' /* e.g., "PROGRAM" */)) {
+        // PROGRAM path
+        glGetProgramiv(object, GL_LINK_STATUS, &success);
+        if (!success) {
+            GLint logLen = 0;
+            glGetProgramiv(object, GL_INFO_LOG_LENGTH, &logLen);
+            std::string infoLog(logLen, '\0');
+            glGetProgramInfoLog(object, logLen, nullptr, infoLog.data());
+            std::cerr << "ERROR::" << type
+                << (filename ? std::string(" [") + filename + "]" : std::string())
+                << "\n" << infoLog
+                << "\n -- --------------------------------------------------- --\n";
+        }
+    }
+    else {
+        // SHADER path
+        glGetShaderiv(object, GL_COMPILE_STATUS, &success);
+        if (!success) {
+            GLint logLen = 0;
+            glGetShaderiv(object, GL_INFO_LOG_LENGTH, &logLen);
+            std::string infoLog(logLen, '\0');
+            glGetShaderInfoLog(object, logLen, nullptr, infoLog.data());
+            std::cerr << "ERROR::" << type
+                << (filename ? std::string(" [") + filename + "]" : std::string())
+                << "\n" << infoLog
+                << "\n -- --------------------------------------------------- --\n";
+        }
+    }
 }
 

@@ -251,15 +251,13 @@ void Fluid::Update(float dt) {
     // 3f) Swap in the new buffers so the rest of the pipeline uses them
     GLuint a = _particleVectors.getID();
     GLuint b = _newParticleVectors.getID();
-    std::swap(a, b);
-    _particleVectors.setID(a);
-    _newParticleVectors.setID(b);
+    _particleVectors.setID(b);
+    _newParticleVectors.setID(a);
 
     GLuint c = _particleValues.getID();
     GLuint d = _newParticleValues.getID();
-    std::swap(c, d);
-    _particleValues.setID(c);
-    _newParticleValues.setID(d);
+    _particleValues.setID(d);
+    _newParticleValues.setID(c);
 
     BindRenderBuffers();
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
