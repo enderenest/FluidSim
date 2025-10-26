@@ -96,11 +96,11 @@ Fluid::Fluid(int initialParticleCount, int mergeSplitCoeff, int cooldown_frames,
 	int maxCapacity = initialParticleCount * mergeSplitCoeff;
 
 	// Initialize all of them zero first, then set the first 'particleCount' elements
-    std::vector<ParticleVectors> vectorData(maxCapacity, {});
-    std::vector<ParticleValues>  valueData(maxCapacity, {});
+    std::vector<ParticleVectors> vectorData(maxCapacity, ParticleVectors{});
+    std::vector<ParticleValues>  valueData(maxCapacity, ParticleValues{});
 
-    std::vector<ParticleVectors> newVectorData(maxCapacity, {});
-    std::vector<ParticleValues>  newValueData(maxCapacity, {});
+    std::vector<ParticleVectors> newVectorData(maxCapacity, ParticleVectors{});
+    std::vector<ParticleValues>  newValueData(maxCapacity, ParticleValues{});
 
     const uint32_t count = _params.currentParticleCount;
     if (count == 0u) { /* handle empty */ }
