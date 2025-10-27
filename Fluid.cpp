@@ -189,9 +189,12 @@ void Fluid::Update(float dt) {
 	_predictedPosShader.wait();
 
     // Step 1: Update spatial hashing
+	// !!! MAIN OPTIMIZATION BOTTLENECK IS HERE, WE ARE SORTING TWO TIMES !!!
 	UpdateSpatialHashing(oldNumGroups);
 
 	// Step 2: Calculate densities
+
+	// !!! WE MIGHT HAVE PROBLEM HERE THAT LEADS PERFORMANCE DROP OVER TIME !!!
 	_densityStep.use();
 	_particleVectors.bindTo(0);
 	_particleValues.bindTo(1);
@@ -219,15 +222,16 @@ void Fluid::Update(float dt) {
     resetParticleCounter();
 
     // 3c) Run resampling: write KEEP/SPLIT/MERGE into newVec/ValueData
+	// !!! TOO EXPANSIVE OPERATION, OPTIMIZE IT LATER !!!
     _resampleParticles.use();
     _particleVectors.bindTo(0);
     _particleValues.bindTo(1);
-    _spatialLookup.bindTo(4);
-    _startIndices.bindTo(5);
     _newParticleVectors.bindTo(2);
     _newParticleValues.bindTo(3);
-    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 7, _newParticleCounterBuffer);
+    _spatialLookup.bindTo(4);
+    _startIndices.bindTo(5);
     _simParams.bindTo(6);
+    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 7, _newParticleCounterBuffer);
 
     _resampleParticles.dispatch(oldNumGroups);
     _resampleParticles.wait();
@@ -281,6 +285,7 @@ void Fluid::Update(float dt) {
 
 
     // Step 5: Again calculate densities
+	// !!! OPTIMIZATION PROBLEM, DO WE REALLY NEED TO CALCULATE DENSITIES TWICE???
     _densityStep.use();
     _particleVectors.bindTo(0);
     _particleValues.bindTo(1);
@@ -291,6 +296,7 @@ void Fluid::Update(float dt) {
     _densityStep.wait();
 
 	// Step 6: Calculate forces with new particle count
+	// !!! LOOKS LIKE WE HAVE OPTIMIZATION PROBLEMS HERE !!! THE MOST EXPENSIVE STEP !!! WHY???
 	_forceStep.use();
 	_particleVectors.bindTo(0);
 	_particleValues.bindTo(1);
@@ -318,13 +324,13 @@ void Fluid::resetParticleCounter() {
 }
 
 
-void Fluid::UpdateSpatialHashing(int groups) {
+void Fluid::UpdateSpatialHashing(int numGroups) {
     // Step 1: Update spatial lookup keys
     _updateSpatialLookup.use();
     _particleVectors.bindTo(0);
     _spatialLookup.bindTo(4);
     _simParams.bindTo(6);
-    _updateSpatialLookup.dispatch(groups);
+    _updateSpatialLookup.dispatch(numGroups);
     _updateSpatialLookup.wait();
 
     // Step 2: Sort spatial lookup
@@ -338,7 +344,7 @@ void Fluid::UpdateSpatialHashing(int groups) {
     _spatialLookup.bindTo(4);
     _startIndices.bindTo(5);
     _simParams.bindTo(6);
-    _buildStartIndices.dispatch(groups);
+    _buildStartIndices.dispatch(numGroups);
     _buildStartIndices.wait();
 }
 

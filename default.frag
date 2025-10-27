@@ -1,5 +1,7 @@
 #version 430 core
 
+layout(early_fragment_tests) in;
+
 in vec2  texCoord;
 in vec3 velocity;
 

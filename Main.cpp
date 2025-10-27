@@ -38,13 +38,13 @@ const float COLLISION_DAMPING = 0.5f;
 const float BOUNDARY_X = 1.2f;
 const float BOUNDARY_Y = 0.7f;
 const float BOUNDARY_Z = 0.7f;
-const float SPACING = 0.04f;
-const float SMOOTHING_RADIUS = 0.12f;
-const float PRESSURE_MULTIPLIER = 2.0f;
-const float TARGET_DENSITY = 300.0f;
-const float VISCOSITY_STRENGTH = 0.2f;
-const float NEAR_DENSITY_MULTIPLIER = 0.1f;
-const float DELTA_TIME = 1.0f / 60.0f;
+const float SPACING = 0.05f;
+const float SMOOTHING_RADIUS = 0.1f;
+const float PRESSURE_MULTIPLIER = 1.5f;
+const float TARGET_DENSITY = 400.0f;
+const float VISCOSITY_STRENGTH = 0.4f;
+const float NEAR_DENSITY_MULTIPLIER = 0.05f;
+const float DELTA_TIME = 1.0f / 120.0f;
 
 const float HIGH_DENSITY_FACTOR = 1.2f;
 const float LOW_DENSITY_FACTOR = 0.8f;
@@ -188,7 +188,12 @@ int main() {
 	}
 
 	glViewport(0, 0, WIDTH, HEIGHT);
+
+	// Early depth testing to avoid overdraw
 	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);      // or GL_LEQUAL
+	glClearDepth(1.0f);
+
 
 	// Debug context
 	int contextFLags = 0;
@@ -277,6 +282,7 @@ int main() {
 		fpsFrames += 1;
 
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// ------------------ KEYBOARD CONTROLS -----------------------
