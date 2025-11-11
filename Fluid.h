@@ -51,7 +51,25 @@ struct Entry {
 };
 
 class Fluid {  
-	private :  
+	private : 
+		// ---- immutable configuration ----
+		const int   _particleCount;
+		const int   _hashSize;
+		const float _particleRadius;
+		const float _mass;
+		const float _gravityAcceleration;
+		const float _collisionDamping;
+		const float _spacing;
+		const float _pressureMultiplier;
+		const float _targetDensity;
+		const float _smoothingRadius;
+		const float _interactionRadius;
+		const float _interactionStrength;
+		const float _viscosityStrength;
+		const float _nearDensityMultiplier;
+		const float _boundaryX, _boundaryY, _boundaryZ;
+
+		// ---- SSBO Buffers ----
 		SSBO <glm::vec4> _positions;
 		SSBO <glm::vec4> _predictedPositions;
 		SSBO <glm::vec4> _velocities; 
@@ -72,7 +90,7 @@ class Fluid {
 		SimulationParameters _params;
 
 	public:  
-		Fluid(unsigned int particleCount, float particleRadius, const float mass, const float gravity, const float collisionDamping, const float spacing, const float pressureMultiplier, const float targetDensity, const float smoothingRadius, const unsigned int hashSize, const float interactionRadius, const float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ);
+		Fluid(unsigned int particleCount, float particleRadius, float mass, float gravity, float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, const float smoothingRadius, unsigned int hashSize, float interactionRadius, float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ);
 
 		void Update(float dt);
 

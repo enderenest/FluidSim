@@ -2,23 +2,41 @@
 #include <iostream>
 
 
-Fluid::Fluid(const unsigned int particleCount, const float particleRadius, const float mass, const float gravityAcceleration, const float collisionDamping, const float spacing, const float pressureMultiplier, const float targetDensity, const float smoothingRadius, const unsigned int hashSize, const float interactionRadius, const float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ)
-    : _positions(particleCount, GL_DYNAMIC_DRAW),
-      _predictedPositions(particleCount, GL_DYNAMIC_DRAW),
-      _velocities(particleCount, GL_DYNAMIC_DRAW),
-      _densities(particleCount, GL_DYNAMIC_DRAW),
-      _nearDensities(particleCount, GL_DYNAMIC_DRAW),
-	  _spatialLookup(particleCount, GL_DYNAMIC_DRAW),
-      _startIndices(hashSize, GL_DYNAMIC_DRAW),
-      _simParams(1, GL_DYNAMIC_DRAW),
+Fluid::Fluid(unsigned int particleCount, float particleRadius, float mass, float gravityAcceleration, float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, float smoothingRadius, unsigned int hashSize, float interactionRadius, float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ)
+    : _particleCount(particleCount)
+    , _hashSize(hashSize)
+    , _particleRadius(particleRadius)
+    , _mass(mass)
+    , _gravityAcceleration(gravityAcceleration)
+    , _collisionDamping(collisionDamping)
+    , _spacing(spacing)
+    , _pressureMultiplier(pressureMultiplier)
+    , _targetDensity(targetDensity)
+    , _smoothingRadius(smoothingRadius)
+    , _interactionRadius(interactionRadius)
+    , _interactionStrength(interactionStrength)
+    , _viscosityStrength(viscosityStrength)
+    , _nearDensityMultiplier(nearDensityMultiplier)
+    , _boundaryX(boundaryX), _boundaryY(boundaryY), _boundaryZ(boundaryZ)
 
-      _predictedPosShader("predicted_positions.comp"),
-	  _densityStep("density_step.comp"),
-	  _forceStep("force_step.comp"),
-      _fluidStep("fluid_step.comp"),
-	  _bitonicSortShader("bitonic_sort.comp"),
-	  _updateSpatialLookup("update_spatial_lookup.comp"),
-	  _buildStartIndices("build_start_indices.comp")
+    // ---- buffers using the derived values ----
+    , _positions(particleCount, GL_DYNAMIC_DRAW)
+    , _predictedPositions(particleCount, GL_DYNAMIC_DRAW)
+    , _velocities(particleCount, GL_DYNAMIC_DRAW)
+    , _densities(particleCount, GL_DYNAMIC_DRAW)
+    , _nearDensities(particleCount, GL_DYNAMIC_DRAW)
+	, _spatialLookup(particleCount, GL_DYNAMIC_DRAW)
+    , _startIndices(hashSize, GL_DYNAMIC_DRAW)
+    , _simParams(1, GL_DYNAMIC_DRAW)
+
+    // ---- shaders ----
+    , _predictedPosShader("predicted_positions.comp")
+	, _densityStep("density_step.comp")
+	, _forceStep("force_step.comp")
+    , _fluidStep("fluid_step.comp")
+	, _bitonicSortShader("bitonic_sort.comp")
+	, _updateSpatialLookup("update_spatial_lookup.comp")
+	, _buildStartIndices("build_start_indices.comp")
 	  
 {
 	//Initialize simulation parameters
