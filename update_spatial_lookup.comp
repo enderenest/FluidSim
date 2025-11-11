@@ -9,15 +9,32 @@ layout(local_size_x = 512, local_size_y = 1, local_size_z = 1) in;
 
 layout(std430, binding = 2) buffer PredictedPositions { vec4 predictedPositions[]; };
 layout(std430, binding = 6) buffer SpatialLookup { Entry spatialLookup[]; };
-layout(std430, binding = 8) buffer SimulationParameters { 
-    float dt; float gravityAcceleration; float mass; float collisionDamping;
-    float smoothingRadius; float targetDensity; float pressureMultiplier;
-    float viscosityStrength; float nearDensityMultiplier;
-    uint isInteracting; uint isPaused;
-    float inputPositionX, inputPositionY, inputPositionZ; 
-    float interactionRadius; float interactionStrength;
-    uint particleCount; uint hashSize; float spacing;
-    float particleRadius; float boundaryX, boundaryY, boundaryZ;
+layout(std430, binding = 8) buffer SimulationParameters {   
+    float dt;
+    float gravityAcceleration;
+    float mass;
+    float collisionDamping;
+    float smoothingRadius;
+    float targetDensity;
+    float pressureMultiplier;
+    float viscosityStrength;
+    float nearDensityMultiplier;
+    
+    uint isInteracting;
+    uint isPaused;
+    float inputPositionX;
+    float inputPositionY;
+    float inputPositionZ;
+    float interactionRadius;
+    float interactionStrength;
+
+    uint particleCount;
+    uint hashSize;
+    float spacing;
+    float particleRadius;
+    float boundaryX;
+    float boundaryY;
+    float boundaryZ;
 };
 
 ivec3 PositionToCellCoord(vec3 point, float radius) {

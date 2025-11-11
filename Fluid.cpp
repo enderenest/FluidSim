@@ -152,7 +152,7 @@ void Fluid::Update(float dt) {
 
 void Fluid::SortSpatialLookup() {
     GLuint N = _params.particleCount;
-    GLuint localSize = 256;
+    GLuint localSize = 512;
     const GLuint groups = (N + localSize - 1) / localSize;       
 
     _bitonicSortShader.use();
