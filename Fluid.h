@@ -152,8 +152,8 @@ class Fluid {
 
 		void UpdateSpatialHashing(int groups);
 
-		void resetParticleCounter();
-		static GLuint nextPowerOfTwo(GLuint x);
+		void ResetParticleCounter();
+		static GLuint NextPowerOfTwo(GLuint x);
 		void SortSpatialLookup();
 
 		void BindRenderBuffers();

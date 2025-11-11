@@ -26,7 +26,7 @@ Fluid::Fluid(int initialParticleCount, int mergeSplitCoeff, int cooldown_frames,
     , _min_mass_factor(min_mass_factor)
     // ---- derived ----
     , _maxParticleCount(_initialParticleCount* _mergeSplitCoeff)
-    , _lookupCapacity(nextPowerOfTwo(_maxParticleCount))
+    , _lookupCapacity(NextPowerOfTwo(_maxParticleCount))
     // ---- buffers using the derived values ----
     , _particleVectors(_maxParticleCount, GL_DYNAMIC_DRAW)
     , _particleValues(_maxParticleCount, GL_DYNAMIC_DRAW)
@@ -77,8 +77,8 @@ Fluid::Fluid(int initialParticleCount, int mergeSplitCoeff, int cooldown_frames,
 	_params.initialParticleCount = initialParticleCount;
 	_params.currentParticleCount = initialParticleCount;
 	_params.maxParticleCount = initialParticleCount * mergeSplitCoeff;
-	_params.lookupCapacity = nextPowerOfTwo(_params.maxParticleCount);
-	_params.paddedCurrentParticleCount = std::min(nextPowerOfTwo(_params.currentParticleCount),_params.lookupCapacity);
+	_params.lookupCapacity = NextPowerOfTwo(_params.maxParticleCount);
+	_params.paddedCurrentParticleCount = std::min(NextPowerOfTwo(_params.currentParticleCount),_params.lookupCapacity);
 
 	_params.hashSize = hashSize;
 	_params.spacing = spacing;
@@ -219,7 +219,7 @@ void Fluid::Update(float dt) {
 	_resetMergeFlags.dispatch(oldNumGroups);
 	_resetMergeFlags.wait();
 
-    resetParticleCounter();
+    ResetParticleCounter();
 
     // 3c) Run resampling: write KEEP/SPLIT/MERGE into newVec/ValueData
 	// !!! TOO EXPANSIVE OPERATION, OPTIMIZE IT LATER !!!
@@ -247,7 +247,7 @@ void Fluid::Update(float dt) {
     // 3e) Update our C++ state and GPU sim‐params
     _params.currentParticleCount = newCount;
     // std::cout << "RESAMPLED COUNT = " << newCount << "\n";
-    _params.paddedCurrentParticleCount = nextPowerOfTwo(newCount);
+    _params.paddedCurrentParticleCount = NextPowerOfTwo(newCount);
     _simParams.upload({ _params });
 
     int newNumGroups = (newCount + groupSize - 1) / groupSize;
@@ -314,7 +314,7 @@ void Fluid::Update(float dt) {
     _fluidStep.wait();
 }
 
-void Fluid::resetParticleCounter() {
+void Fluid::ResetParticleCounter() {
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, _newParticleCounterBuffer);
     GLuint zero = 0;
     glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(GLuint), &zero);
@@ -348,7 +348,7 @@ void Fluid::UpdateSpatialHashing(int numGroups) {
     _buildStartIndices.wait();
 }
 
-GLuint Fluid::nextPowerOfTwo(GLuint x) {
+GLuint Fluid::NextPowerOfTwo(GLuint x) {
     GLuint p = 1;
     while (p < x) p <<= 1;
     return p;
@@ -356,7 +356,7 @@ GLuint Fluid::nextPowerOfTwo(GLuint x) {
 
 void Fluid::SortSpatialLookup() {
     const GLuint actualN = _params.currentParticleCount;
-    const GLuint paddedN = nextPowerOfTwo(actualN);
+    const GLuint paddedN = NextPowerOfTwo(actualN);
     const GLuint localSize = 256;
     const GLuint numGroups = (paddedN + localSize - 1) / localSize;
 
