@@ -7,11 +7,13 @@
 #include "ComputeShader.h"
 #include "SSBO.hpp"
 
-#include <glm/glm.hpp>  
+#include <glm/glm.hpp> 
+#include <glm/gtc/random.hpp>
 #include <glm/gtx/string_cast.hpp>  
 #include <vector>   
 #include <limits>  
 #include <numeric>
+
 
 const float PI = 3.14159265359f;
 const float EPSILON = std::numeric_limits<float>::epsilon();
@@ -35,6 +37,7 @@ struct SimulationParameters {
 	float inputPositionZ;
 	float interactionRadius;
 	float interactionStrength;
+	float jitter;
 
 	uint32_t particleCount;
 	uint32_t hashSize;
@@ -67,6 +70,7 @@ class Fluid {
 		const float _interactionStrength;
 		const float _viscosityStrength;
 		const float _nearDensityMultiplier;
+		const float _jitterFraction;
 		const float _boundaryX, _boundaryY, _boundaryZ;
 
 		// ---- SSBO Buffers ----
@@ -90,7 +94,7 @@ class Fluid {
 		SimulationParameters _params;
 
 	public:  
-		Fluid(unsigned int particleCount, float particleRadius, float mass, float gravity, float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, const float smoothingRadius, unsigned int hashSize, float interactionRadius, float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ);
+		Fluid(unsigned int particleCount, float particleRadius, float mass, float gravity, float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, const float smoothingRadius, unsigned int hashSize, float interactionRadius, float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ, float jitter);
 
 		void Update(float dt);
 

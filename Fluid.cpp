@@ -2,7 +2,7 @@
 #include <iostream>
 
 
-Fluid::Fluid(unsigned int particleCount, float particleRadius, float mass, float gravityAcceleration, float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, float smoothingRadius, unsigned int hashSize, float interactionRadius, float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ)
+Fluid::Fluid(unsigned int particleCount, float particleRadius, float mass, float gravityAcceleration, float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, float smoothingRadius, unsigned int hashSize, float interactionRadius, float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ, float jitterFraction)
     : _particleCount(particleCount)
     , _hashSize(hashSize)
     , _particleRadius(particleRadius)
@@ -17,6 +17,7 @@ Fluid::Fluid(unsigned int particleCount, float particleRadius, float mass, float
     , _interactionStrength(interactionStrength)
     , _viscosityStrength(viscosityStrength)
     , _nearDensityMultiplier(nearDensityMultiplier)
+    , _jitterFraction(jitterFraction)
     , _boundaryX(boundaryX), _boundaryY(boundaryY), _boundaryZ(boundaryZ)
 
     // ---- buffers using the derived values ----
@@ -61,6 +62,7 @@ Fluid::Fluid(unsigned int particleCount, float particleRadius, float mass, float
 	_params.hashSize = hashSize;
 	_params.spacing = spacing;
 	_params.particleRadius = particleRadius;
+    _params.jitter = jitterFraction;
 	_params.boundaryX = boundaryX;
 	_params.boundaryY = boundaryY;
 	_params.boundaryZ = boundaryZ;
@@ -81,7 +83,18 @@ Fluid::Fluid(unsigned int particleCount, float particleRadius, float mass, float
         float fy = (static_cast<float>(y) - particlesPerAxis / 2.0f + 0.5f) * spacing;
         float fz = (static_cast<float>(z) - particlesPerAxis / 2.0f + 0.5f) * spacing;
 
-        initialPositions[i] = glm::vec4(fx, fy, fz, 0.0f);
+        // Compute the jitter
+        glm::vec3 jitter = glm::linearRand(
+            glm::vec3(-jitterFraction),  // min in each axis
+            glm::vec3(jitterFraction)   // max in each axis
+        ) * spacing;
+
+        initialPositions[i] = glm::vec4(
+            fx + jitter.x,
+            fy + jitter.y,
+            fz + jitter.z,
+            0.0f
+        );
     }
 
     _positions.upload(initialPositions);

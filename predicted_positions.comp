@@ -5,7 +5,7 @@ layout(local_size_x=512, local_size_y=1, local_size_z=1) in;
 layout(std430, binding=1) buffer Positions { vec4 positions[]; };
 layout(std430, binding=2) buffer PredictedPositions { vec4 predictedPositions[]; };
 layout(std430, binding=3) buffer Velocities { vec4 velocities[]; };
-layout(std430, binding = 8) buffer SimulationParameters {   
+layout(std430, binding = 8) buffer SimulationParameters {
     float dt;
     float gravityAcceleration;
     float mass;
@@ -23,6 +23,7 @@ layout(std430, binding = 8) buffer SimulationParameters {
     float inputPositionZ;
     float interactionRadius;
     float interactionStrength;
+    float jitter;
 
     uint particleCount;
     uint hashSize;
