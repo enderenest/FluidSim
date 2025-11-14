@@ -16,7 +16,7 @@
     <Filter Include="Resource Files\Shaders">
       <UniqueIdentifier>{f77ddce0-8610-4348-83ed-8a63d463b581}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\Models">
+    <Filter Include="Resource Files\Assets">
       <UniqueIdentifier>{4b1633e9-1f9e-417a-abd5-d1b995923158}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -119,10 +119,16 @@
       <Filter>Resource Files\Shaders</Filter>
     </None>
     <None Include="..\..\Users\MSI\Desktop\cube_deformation\cube386.off">
-      <Filter>Resource Files\Models</Filter>
+      <Filter>Resource Files\Assets</Filter>
     </None>
     <None Include="..\..\Users\MSI\Desktop\cube_deformation\cube24578.off">
-      <Filter>Resource Files\Models</Filter>
+      <Filter>Resource Files\Assets</Filter>
+    </None>
+    <None Include="mesh.vert">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="mesh.frag">
+      <Filter>Resource Files\Shaders</Filter>
     </None>
   </ItemGroup>
 </Project>

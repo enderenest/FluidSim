@@ -7,13 +7,15 @@
 #include <cstdint>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
+#include <glad/glad.h>
 
 // Include your SSBO wrapper header
+#include "shaderClass.h"
 #include "SSBO.hpp"
 
 class Mesh {
 public:
-    Mesh() = default;
+    Mesh();
 
     // Load mesh data from file using Assimp.
     // Returns true on success, false on failure.
@@ -30,17 +32,28 @@ public:
     // --- Getters ---
 
     const std::vector<glm::vec3>& positions() const { return _positions; }
-    const std::vector<glm::vec3>& normals()   const { return _normals; }
-    const std::vector<uint32_t>& indices()   const { return _indices; }
+    const std::vector<glm::vec3>& normals() const { return _normals; }
+    const std::vector<uint32_t>& indices() const { return _indices; }
 
     glm::vec3 minBounds() const { return _minBounds; }
     glm::vec3 maxBounds() const { return _maxBounds; }
-    glm::vec3 center()    const { return 0.5f * (_minBounds + _maxBounds); }
+    glm::vec3 center() const { return 0.5f * (_minBounds + _maxBounds); }
 
-    std::size_t vertexCount()   const { return _positions.size(); }
+    std::size_t vertexCount() const { return _positions.size(); }
     std::size_t triangleCount() const { return _indices.size() / 3; }
 
+    void scale(const glm::vec3& scale);
+
+    void createDebugGLObjects();   // create VAO/VBO/EBO for rendering
+    void drawTriangles() const;    // draw filled or wireframe triangles
+    void drawVertices() const;     // draw points at each vertex
+
 private:
+    GLuint _vao = 0;
+    GLuint _vboPositions = 0;
+    GLuint _vboNormals = 0;
+    GLuint _eboIndices = 0;
+
     void computeBounds();
 
     // CPU-side data

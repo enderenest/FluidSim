@@ -9,6 +9,15 @@
 #include <iostream>
 #include <stdexcept>
 
+Mesh::Mesh()
+    : _gpuPositions(0)   // count = 0 -> GL buffer of size 0
+    , _gpuNormals(0)
+    , _gpuTriangles(0)
+{
+    // Other members (_vao, _vbo..., _minBounds, _maxBounds, vectors)
+    // are already initialized by their in-class initializers / default ctors.
+}
+
 bool Mesh::loadFromFile(const std::string& filePath)
 {
     Assimp::Importer importer;
@@ -133,6 +142,17 @@ void Mesh::uploadToGPU()
     _gpuTriangles.upload(gpuTriangles);
 }
 
+void Mesh::scale(const glm::vec3& scale)
+{
+    for (glm::vec3& p : _positions) {
+        p.x *= scale.x;
+        p.y *= scale.y;
+        p.z *= scale.z;
+    }
+
+    computeBounds();
+}
+
 void Mesh::bindForCompute(GLuint positionBinding,
     GLuint normalBinding,
     GLuint triangleBinding) const
@@ -140,4 +160,72 @@ void Mesh::bindForCompute(GLuint positionBinding,
     _gpuPositions.bindTo(positionBinding);
     _gpuNormals.bindTo(normalBinding);
     _gpuTriangles.bindTo(triangleBinding);
+}
+
+void Mesh::createDebugGLObjects()
+{
+    if (_vao != 0) return; // already created
+
+    glGenVertexArrays(1, &_vao);
+    glGenBuffers(1, &_vboPositions);
+    glGenBuffers(1, &_vboNormals);
+    glGenBuffers(1, &_eboIndices);
+
+    glBindVertexArray(_vao);
+
+    // --- Positions ---
+    glBindBuffer(GL_ARRAY_BUFFER, _vboPositions);
+    glBufferData(GL_ARRAY_BUFFER,
+        _positions.size() * sizeof(glm::vec3),
+        _positions.data(),
+        GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0); // location = 0
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+
+    // --- Normals ---
+    glBindBuffer(GL_ARRAY_BUFFER, _vboNormals);
+    glBufferData(GL_ARRAY_BUFFER,
+        _normals.size() * sizeof(glm::vec3),
+        _normals.data(),
+        GL_STATIC_DRAW);
+    glEnableVertexAttribArray(1); // location = 1
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+
+    // --- Indices ---
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _eboIndices);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+        _indices.size() * sizeof(uint32_t),
+        _indices.data(),
+        GL_STATIC_DRAW);
+
+    glBindVertexArray(0);
+}
+
+void Mesh::drawTriangles() const
+{
+    if (_vao == 0) return;
+
+    glBindVertexArray(_vao);
+
+    // To see triangle edges: wireframe
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    glDrawElements(GL_TRIANGLES,
+        static_cast<GLsizei>(_indices.size()),
+        GL_UNSIGNED_INT,
+        (void*)0);
+
+    // Reset if you changed polygon mode globally
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    glBindVertexArray(0);
+}
+
+void Mesh::drawVertices() const
+{
+    if (_vao == 0) return;
+
+    glBindVertexArray(_vao);
+    glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(_positions.size()));
+    glBindVertexArray(0);
 }

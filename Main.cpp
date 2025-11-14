@@ -7,6 +7,7 @@
 #include "Fluid.h"
 #include"shaderClass.h"
 #include"ComputeShader.h"
+#include "Mesh.h"
 #include"VAO.h"
 #include"VBO.h"
 #include"EBO.h"
@@ -26,7 +27,7 @@
 // velocity += pressureAcceleration * dt;
 
 const unsigned int WIDTH = 1920, HEIGHT = 1080;
-const unsigned int PARTICLE_COUNT = 1024 * 32;
+const unsigned int PARTICLE_COUNT = 1024 * 0;
 const unsigned int SPATIAL_HASH_SIZE = PARTICLE_COUNT * 4;
 const float PARTICLE_RADIUS = 0.0075f;
 const float MASS = 0.075f;
@@ -64,6 +65,8 @@ glm::vec3 cameraTarget(0.0f, 0.0f, 0.0f);
 glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
 
 Camera camera(cameraPosition, cameraTarget, cameraUp, MOVEMENT_SPEED, MOUSE_SENSITIVITY);
+
+Mesh cubeMesh;
 
 static void CreateUVSphere(std::vector<glm::vec3>& verts,
 	std::vector<GLuint>& inds,
@@ -202,49 +205,30 @@ int main() {
 	glfwSwapInterval(1); // Restrict the FPS to the screen refresh rate which is 144hz 
 
 	Shader shaderProgram("default.vert", "default.frag");
-
-	Shader lineShader("line.vert", "line.frag");
-
-	float line_boundary_x = BOUNDARY_X - PARTICLE_RADIUS;
-	float line_boundary_y = BOUNDARY_Y - PARTICLE_RADIUS;
-	float line_boundary_z = BOUNDARY_Z - PARTICLE_RADIUS;
-
-	std::vector<glm::vec3> boundaryLines = {
-		// bottom rectangle
-		{-line_boundary_x, -line_boundary_y, -line_boundary_z}, { line_boundary_x, -line_boundary_y, -line_boundary_z},
-		{ line_boundary_x, -line_boundary_y, -line_boundary_z}, { line_boundary_x,  line_boundary_y, -line_boundary_z},
-		{ line_boundary_x,  line_boundary_y, -line_boundary_z}, {-line_boundary_x,  line_boundary_y, -line_boundary_z},
-		{-line_boundary_x,  line_boundary_y, -line_boundary_z}, {-line_boundary_x, -line_boundary_y, -line_boundary_z},
-
-		// top rectangle
-		{-line_boundary_x, -line_boundary_y,  line_boundary_z}, { line_boundary_x, -line_boundary_y,  line_boundary_z},
-		{ line_boundary_x, -line_boundary_y,  line_boundary_z}, { line_boundary_x,  line_boundary_y,  line_boundary_z},
-		{ line_boundary_x,  line_boundary_y,  line_boundary_z}, {-line_boundary_x,  line_boundary_y,  line_boundary_z},
-		{-line_boundary_x,  line_boundary_y,  line_boundary_z}, {-line_boundary_x, -line_boundary_y,  line_boundary_z},
-
-		// vertical edges
-		{-line_boundary_x, -line_boundary_y, -line_boundary_z}, {-line_boundary_x, -line_boundary_y,  line_boundary_z},
-		{ line_boundary_x, -line_boundary_y, -line_boundary_z}, { line_boundary_x, -line_boundary_y,  line_boundary_z},
-		{ line_boundary_x,  line_boundary_y, -line_boundary_z}, { line_boundary_x,  line_boundary_y,  line_boundary_z},
-		{-line_boundary_x,  line_boundary_y, -line_boundary_z}, {-line_boundary_x,  line_boundary_y,  line_boundary_z},
-	};
-
-	GLuint boundaryVAO, boundaryVBO;
-	glGenVertexArrays(1, &boundaryVAO);
-	glGenBuffers(1, &boundaryVBO);
-
-	glBindVertexArray(boundaryVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, boundaryVBO);
-	glBufferData(GL_ARRAY_BUFFER, boundaryLines.size() * sizeof(glm::vec3), boundaryLines.data(), GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
-	glBindVertexArray(0);
+	Shader meshShader("mesh.vert", "mesh.frag");
 
 	Fluid fluid(DELTA_TIME, PARTICLE_COUNT, PARTICLE_RADIUS, MASS, GRAVITY_ACCELERATION, COLLISION_DAMPING, SPACING, PRESSURE_MULTIPLIER, TARGET_DENSITY, SMOOTHING_RADIUS, SPATIAL_HASH_SIZE, INTERACTION_RADIUS, INTERACTION_STRENGTH, VISCOSITY_STRENGTH, NEAR_DENSITY_MULTIPLIER, BOUNDARY_X, BOUNDARY_Y, BOUNDARY_Z, JITTER);
 
 	std::vector<glm::vec3> sphereVertices;
 	std::vector<GLuint> sphereIndices;
 	CreateUVSphere(sphereVertices, sphereIndices, 8, 8, 1.0f);
+
+	// Load the cube mesh
+	bool meshFlag = cubeMesh.loadFromFile("Assets/cube24578.off");
+	if (!meshFlag) {
+		std::cerr << "ERROR: Failed to load cube mesh.\n";
+	}
+
+	// Scale it to the rectangle
+	cubeMesh.scale(glm::vec3(2.0f, 0.5f, 1.0f));
+	cubeMesh.uploadToGPU();
+	cubeMesh.bindForCompute(
+		9, // position SSBO binding = 9
+		10, // normal SSBO binding = 10
+		11  // triangle SSBO binding = 11
+	);
+
+	cubeMesh.createDebugGLObjects();
 
 	VAO vao1;
 	vao1.Bind();
@@ -426,20 +410,18 @@ int main() {
 		glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 		glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
+		meshShader.Activate();
+		glUniformMatrix4fv(glGetUniformLocation(meshShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(meshShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(glGetUniformLocation(meshShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+		cubeMesh.drawTriangles();  // (or drawVertices)
 
 		fluid.BindRenderBuffers();
 		vao1.Bind();
 		glUniform1f(glGetUniformLocation(shaderProgram.ID, "scale"), PARTICLE_RADIUS);
 		glDrawElementsInstanced(GL_TRIANGLES, GLsizei(sphereIndices.size()), GL_UNSIGNED_INT, 0, PARTICLE_COUNT);
 
-		lineShader.Activate();
-		glUniformMatrix4fv(glGetUniformLocation(lineShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(glGetUniformLocation(lineShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-		glUniformMatrix4fv(glGetUniformLocation(lineShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-
-		glBindVertexArray(boundaryVAO);
-		glDrawArrays(GL_LINES, 0, boundaryLines.size());
-		glBindVertexArray(0);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -449,9 +431,7 @@ int main() {
 	vboSphere.Delete();
 	eboSphere.Delete();
 	shaderProgram.Delete();
-	glDeleteVertexArrays(1, &boundaryVAO);
-	glDeleteBuffers(1, &boundaryVBO);
-	lineShader.Delete();
+	meshShader.Delete();
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;
