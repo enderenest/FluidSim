@@ -157,6 +157,8 @@
     <ClInclude Include="VBO.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\Users\MSI\Desktop\cube_deformation\cube24578.off" />
+    <None Include="..\..\Users\MSI\Desktop\cube_deformation\cube386.off" />
     <None Include="bitonic_sort.comp" />
     <None Include="build_start_indices.comp" />
     <None Include="default.frag" />
@@ -167,17 +169,7 @@
     <None Include="line.frag" />
     <None Include="line.vert" />
     <None Include="predicted_positions.comp" />
-    <None Include="sphere.mtl">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </None>
     <None Include="update_spatial_lookup.comp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Object Include="sphere.obj">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </Object>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

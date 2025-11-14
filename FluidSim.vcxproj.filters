@@ -112,13 +112,11 @@
     <None Include="force_step.comp">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="sphere.mtl">
+    <None Include="..\..\Users\MSI\Desktop\cube_deformation\cube386.off">
       <Filter>Resource Files\Models</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Object Include="sphere.obj">
+    <None Include="..\..\Users\MSI\Desktop\cube_deformation\cube24578.off">
       <Filter>Resource Files\Models</Filter>
-    </Object>
+    </None>
   </ItemGroup>
 </Project>
