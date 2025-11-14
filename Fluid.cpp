@@ -69,33 +69,7 @@ Fluid::Fluid(float deltaTime, unsigned int particleCount, float particleRadius, 
 
     _simParams.upload(std::vector<SimulationParameters>{_params});
 
-    // Initialize positions in a grid
     std::vector<glm::vec4> initialPositions(_params.particleCount, glm::vec4(0.0f));
-
-    unsigned int particlesPerAxis = static_cast<unsigned int>(std::ceil(std::cbrt(particleCount)));
-
-    for (unsigned int i = 0; i < particleCount; ++i) {
-        unsigned int z = i / (particlesPerAxis * particlesPerAxis);
-        unsigned int y = (i / particlesPerAxis) % particlesPerAxis;
-        unsigned int x = i % particlesPerAxis;
-
-        float fx = (static_cast<float>(x) - particlesPerAxis / 2.0f + 0.5f) * spacing;
-        float fy = (static_cast<float>(y) - particlesPerAxis / 2.0f + 0.5f) * spacing;
-        float fz = (static_cast<float>(z) - particlesPerAxis / 2.0f + 0.5f) * spacing;
-
-        // Compute the jitter
-        glm::vec3 jitter = glm::linearRand(
-            glm::vec3(-jitterFraction),  // min in each axis
-            glm::vec3(jitterFraction)   // max in each axis
-        ) * spacing;
-
-        initialPositions[i] = glm::vec4(
-            fx + jitter.x,
-            fy + jitter.y,
-            fz + jitter.z,
-            0.0f
-        );
-    }
 
     _positions.upload(initialPositions);
     _predictedPositions.upload(initialPositions);
@@ -196,11 +170,73 @@ void Fluid::SortSpatialLookup() {
             _bitonicSortShader.setUint("u_size", size);
             _bitonicSortShader.setUint("u_stride", stride);
 
-            // ← dispatch here, not after the loops
             _bitonicSortShader.dispatch(groups, 1, 1);
             _bitonicSortShader.wait();
         }
     }
+}
+
+void Fluid::InitParticlesInsideCube(const Mesh& cubeMesh)
+{
+    glm::vec3 minB = cubeMesh.minBounds();
+    glm::vec3 maxB = cubeMesh.maxBounds();
+
+    float margin = 2.0f * _particleRadius;
+    glm::vec3 innerMin = minB + glm::vec3(margin);
+    glm::vec3 innerMax = maxB - glm::vec3(margin);
+    glm::vec3 center = 0.5f * (innerMin + innerMax);
+
+    // Your desired total particle count
+    const unsigned int N = _particleCount;
+
+    // Same logic as your old code: cubic lattice count
+    unsigned int perAxis = static_cast<unsigned int>(std::ceil(std::cbrt(N)));
+
+    // Half-extent of the lattice block
+    // (perAxis points with spacing ⇒ size ≈ (perAxis - 1) * _spacing)
+    glm::vec3 halfLatticeSize(
+        0.5f * (perAxis - 1) * _spacing,
+        0.5f * (perAxis - 1) * _spacing,
+        0.5f * (perAxis - 1) * _spacing
+    );
+
+    // Optional safety check: does the lattice fit inside the cube?
+    glm::vec3 halfCubeSize = 0.5f * (innerMax - innerMin);
+    if (halfLatticeSize.x > halfCubeSize.x ||
+        halfLatticeSize.y > halfCubeSize.y ||
+        halfLatticeSize.z > halfCubeSize.z) {
+        std::cerr << "Warning: desired lattice ("
+            << perAxis << "^3) may not fully fit inside cube interior.\n";
+    }
+
+    std::vector<glm::vec4> initialPositions;
+    initialPositions.reserve(N);
+
+    for (unsigned int i = 0; i < N; ++i) {
+        unsigned int iz = i / (perAxis * perAxis);
+        unsigned int iy = (i / perAxis) % perAxis;
+        unsigned int ix = i % perAxis;
+
+        float fx = (static_cast<float>(ix) - perAxis / 2.0f + 0.5f) * _spacing;
+        float fy = (static_cast<float>(iy) - perAxis / 2.0f + 0.5f) * _spacing;
+        float fz = (static_cast<float>(iz) - perAxis / 2.0f + 0.5f) * _spacing;
+
+        glm::vec3 jitter = glm::linearRand(
+            glm::vec3(-_jitterFraction),
+            glm::vec3(_jitterFraction)
+        ) * _spacing;
+
+        glm::vec3 p = center + glm::vec3(fx, fy, fz) + jitter;
+
+        initialPositions.emplace_back(p, 0.0f);
+    }
+
+    _positions.upload(initialPositions);
+    _predictedPositions.upload(initialPositions);
+
+    std::cout << "Initialized " << initialPositions.size()
+        << " particles in centered lattice ("
+        << perAxis << " x " << perAxis << " x " << perAxis << ").\n";
 }
 
 

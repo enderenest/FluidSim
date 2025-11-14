@@ -5,6 +5,7 @@
 #define GLM_ENABLE_EXPERIMENTAL 
 
 #include "ComputeShader.h"
+#include "Mesh.h"
 #include "SSBO.hpp"
 
 #include <glm/glm.hpp> 
@@ -101,6 +102,8 @@ class Fluid {
 		void SortSpatialLookup();
 
 		void BindRenderBuffers();
+
+		void InitParticlesInsideCube(const Mesh& cubeMesh);
 
 		// Setter/getter methods for keyboard controls
 		void SetIsInteracting(bool state);

@@ -27,7 +27,7 @@
 // velocity += pressureAcceleration * dt;
 
 const unsigned int WIDTH = 1920, HEIGHT = 1080;
-const unsigned int PARTICLE_COUNT = 1024 * 0;
+const unsigned int PARTICLE_COUNT = 1024 * 32;
 const unsigned int SPATIAL_HASH_SIZE = PARTICLE_COUNT * 4;
 const float PARTICLE_RADIUS = 0.0075f;
 const float MASS = 0.075f;
@@ -211,24 +211,17 @@ int main() {
 	std::vector<GLuint> sphereIndices;
 	CreateUVSphere(sphereVertices, sphereIndices, 8, 8, 1.0f);
 
-	// Create deformable cube mesh
+	// Load mesh
 	Mesh cubeMesh;
-
-	// Load the cube mesh
 	bool meshFlag = cubeMesh.loadFromFile("cube24578.off");
-	if (!meshFlag) {
-		std::cerr << "ERROR: Failed to load cube mesh.\n";
-	}
-
-	// Scale it to the rectangle
-	cubeMesh.scale(glm::vec3(2.0f, 1.0f, 1.0f));
+	// scale
+	cubeMesh.scale(glm::vec3(2.3f, 1.4f, 1.4f));
+	// init particles inside AABB
+	fluid.InitParticlesInsideCube(cubeMesh);
+	// upload + bind for compute
 	cubeMesh.uploadToGPU();
-	cubeMesh.bindForCompute(
-		9, // position SSBO binding = 9
-		10, // normal SSBO binding = 10
-		11  // triangle SSBO binding = 11
-	);
-
+	cubeMesh.bindForCompute(9, 10, 11);
+	// create VAO for drawing
 	cubeMesh.createDebugGLObjects();
 
 	VAO vao1;
@@ -337,13 +330,13 @@ int main() {
 
 		// ------------------ CAMERA CONTROLS -------------------------
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-			camera.ProcessKeyboard(FORWARD, DELTA_TIME);
+			camera.ProcessKeyboard(FORWARD, 0.016f);
 		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-			camera.ProcessKeyboard(BACKWARD, DELTA_TIME);
+			camera.ProcessKeyboard(BACKWARD, 0.016f);
 		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-			camera.ProcessKeyboard(LEFT, DELTA_TIME);
+			camera.ProcessKeyboard(LEFT, 0.016f);
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-			camera.ProcessKeyboard(RIGHT, DELTA_TIME);
+			camera.ProcessKeyboard(RIGHT, 0.016f);
 
 		static bool firstMouse = true;
 		static double lastX = WIDTH * 0.5, lastY = HEIGHT * 0.5;
@@ -406,23 +399,25 @@ int main() {
 
 		fluid.Update(DELTA_TIME);
 
-		shaderProgram.Activate();
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-
+		// 1) Draw fluid cube mesh
 		meshShader.Activate();
 		glUniformMatrix4fv(glGetUniformLocation(meshShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(glGetUniformLocation(meshShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 		glUniformMatrix4fv(glGetUniformLocation(meshShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
-		cubeMesh.drawTriangles();  // (or drawVertices)
+		cubeMesh.drawTriangles();
+
+		// 2) Draw fluid particles
+		shaderProgram.Activate();
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
 		fluid.BindRenderBuffers();
 		vao1.Bind();
+
 		glUniform1f(glGetUniformLocation(shaderProgram.ID, "scale"), PARTICLE_RADIUS);
 		glDrawElementsInstanced(GL_TRIANGLES, GLsizei(sphereIndices.size()), GL_UNSIGNED_INT, 0, PARTICLE_COUNT);
-
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
