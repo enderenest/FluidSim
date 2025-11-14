@@ -10,7 +10,6 @@
 #include <glad/glad.h>
 
 // Include your SSBO wrapper header
-#include "shaderClass.h"
 #include "SSBO.hpp"
 
 class Mesh {

@@ -66,8 +66,6 @@ glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
 
 Camera camera(cameraPosition, cameraTarget, cameraUp, MOVEMENT_SPEED, MOUSE_SENSITIVITY);
 
-Mesh cubeMesh;
-
 static void CreateUVSphere(std::vector<glm::vec3>& verts,
 	std::vector<GLuint>& inds,
 	int latSegs = 16,
@@ -213,14 +211,17 @@ int main() {
 	std::vector<GLuint> sphereIndices;
 	CreateUVSphere(sphereVertices, sphereIndices, 8, 8, 1.0f);
 
+	// Create deformable cube mesh
+	Mesh cubeMesh;
+
 	// Load the cube mesh
-	bool meshFlag = cubeMesh.loadFromFile("Assets/cube24578.off");
+	bool meshFlag = cubeMesh.loadFromFile("cube24578.off");
 	if (!meshFlag) {
 		std::cerr << "ERROR: Failed to load cube mesh.\n";
 	}
 
 	// Scale it to the rectangle
-	cubeMesh.scale(glm::vec3(2.0f, 0.5f, 1.0f));
+	cubeMesh.scale(glm::vec3(2.0f, 1.0f, 1.0f));
 	cubeMesh.uploadToGPU();
 	cubeMesh.bindForCompute(
 		9, // position SSBO binding = 9
