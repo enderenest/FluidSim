@@ -2,7 +2,7 @@
 #include <iostream>
 
 
-Fluid::Fluid(unsigned int particleCount, float particleRadius, float mass, float gravityAcceleration, float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, float smoothingRadius, unsigned int hashSize, float interactionRadius, float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ, float jitterFraction)
+Fluid::Fluid(float deltaTime, unsigned int particleCount, float particleRadius, float mass, float gravityAcceleration, float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, float smoothingRadius, unsigned int hashSize, float interactionRadius, float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ, float jitterFraction)
     : _particleCount(particleCount)
     , _hashSize(hashSize)
     , _particleRadius(particleRadius)
@@ -41,7 +41,7 @@ Fluid::Fluid(unsigned int particleCount, float particleRadius, float mass, float
 	  
 {
 	//Initialize simulation parameters
-    _params.dt = 0.016f;
+    _params.dt = deltaTime;
     _params.gravityAcceleration = gravityAcceleration;
     _params.mass = mass;
     _params.collisionDamping = collisionDamping;

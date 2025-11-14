@@ -94,7 +94,7 @@ class Fluid {
 		SimulationParameters _params;
 
 	public:  
-		Fluid(unsigned int particleCount, float particleRadius, float mass, float gravity, float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, const float smoothingRadius, unsigned int hashSize, float interactionRadius, float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ, float jitter);
+		Fluid(float deltaTime, unsigned int particleCount, float particleRadius, float mass, float gravity, float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, const float smoothingRadius, unsigned int hashSize, float interactionRadius, float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ, float jitter);
 
 		void Update(float dt);
 
