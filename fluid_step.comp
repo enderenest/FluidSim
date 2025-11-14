@@ -5,11 +5,20 @@ struct Entry {
     uint key;
 };
 
+const float IMPACT_SCALE      = 1000.0;
+const float INV_IMPACT_SCALE  = 1.0 / IMPACT_SCALE;
+const float WALL_AMPLITUDE    = 0.03;   // tweak for how “soft” walls are
+const float PI                = 3.14159265359;
+
 layout(local_size_x = 512, local_size_y = 1, local_size_z = 1) in;
 
 // Buffer declarations for particle data
 layout(std430, binding = 1) buffer Positions { vec4 positions[]; };
 layout(std430, binding = 3) buffer Velocities { vec4 velocities[]; };
+layout(std430, binding = 9) buffer WallImpacts
+{
+    uint wallImpact[4]; // 0:+X, 1:-X, 2:+Z, 3:-Z
+};
 layout(std430, binding = 8) buffer SimulationParameters {
     float dt;
     float gravityAcceleration;
@@ -34,39 +43,105 @@ layout(std430, binding = 8) buffer SimulationParameters {
     uint hashSize;
     float spacing;
     float particleRadius;
-    float boundaryX;
-    float boundaryY;
-    float boundaryZ;
+    float scaleX;
+	float scaleY;
+	float scaleZ;
+
+	float boundaryCenterX;
+	float boundaryCenterY;
+	float boundaryCenterZ;
+	float padding0; 
+
+	float boundaryHalfX;
+	float boundaryHalfY;
+	float boundaryHalfZ;
+	float padding1;
 };
 
 // Math constants
 const uint MAX_INT = 0xffffffffu;
-const float PI = 3.14159265359f;
 const float EPSILON = 1e-6f;
 
 
-void HandleBoundaryCollisions(uint index) {
-    vec3 halfBounds = vec3(boundaryX  - particleRadius, 
-                           boundaryY  - particleRadius,
-                           boundaryZ  - particleRadius);
+void HandleBoundaryCollisions(uint index)
+{
+    vec3 pos = positions[index].xyz;
+    vec3 vel = velocities[index].xyz;
 
-    if (abs(positions[index].x) > halfBounds.x) {
-        positions[index].x = halfBounds.x * sign(positions[index].x);
-        velocities[index].x *= - collisionDamping;
+    vec3 center = vec3(boundaryCenterX,
+                       boundaryCenterY,
+                       boundaryCenterZ);
+
+    vec3 halfBounds = vec3(boundaryHalfX,
+                           boundaryHalfY,
+                           boundaryHalfZ);
+
+    vec3 rel = pos - center; // position relative to cube center
+
+    // --- X walls (deformable) ---
+    if (abs(rel.x) > halfBounds.x) {
+        float signX = sign(rel.x);         // +1 for +X wall, -1 for -X wall
+        rel.x = halfBounds.x * signX;
+
+        // normal at this wall
+        vec3 n  = vec3(signX, 0.0, 0.0);
+        float vn = dot(vel, n);            // velocity component along normal
+
+        // bounce
+        vel.x *= -collisionDamping;
+
+        // store back
+        pos = center + rel;
+
+        // accumulate impact for deformation: we use |vn|
+        float impact = abs(vn);
+        float scaled = impact * IMPACT_SCALE;
+        scaled = clamp(scaled, 0.0, 1e9);  // optional safety
+
+        uint inc = uint(scaled);
+
+        int faceIndex = (signX > 0.0) ? 0 : 1; // 0:+X, 1:-X
+        atomicAdd(wallImpact[faceIndex], inc);
     }
 
-    if (abs(positions[index].y) > halfBounds.y) {
-        positions[index].y = halfBounds.y * sign(positions[index].y);
-        velocities[index].y *= - collisionDamping;
+    // --- Y walls (floor + ceiling, NOT deformable) ---
+    if (abs(rel.y) > halfBounds.y) {
+        float signY = sign(rel.y);
+        rel.y = halfBounds.y * signY;
+
+        vel.y *= -collisionDamping;
+
+        pos = center + rel;
     }
 
-    if (abs(positions[index].z) > halfBounds.z) {
-        positions[index].z = halfBounds.z * sign(positions[index].z);
-        velocities[index].z *= - collisionDamping;
+    // --- Z walls (deformable) ---
+    if (abs(rel.z) > halfBounds.z) {
+        float signZ = sign(rel.z);         // +1 for +Z wall, -1 for -Z wall
+        rel.z = halfBounds.z * signZ;
+
+        vec3 n  = vec3(0.0, 0.0, signZ);
+        float vn = dot(vel, n);
+
+        vel.z *= -collisionDamping;
+        pos = center + rel;
+
+        float impact = abs(vn);
+        float scaled = impact * IMPACT_SCALE;
+        scaled = clamp(scaled, 0.0, 1e9);
+
+        uint inc = uint(scaled);
+
+        int faceIndex = (signZ > 0.0) ? 2 : 3; // 2:+Z, 3:-Z
+        atomicAdd(wallImpact[faceIndex], inc);
     }
 
-    positions[index].w = 0.0f;
+    positions[index].xyz = pos;
+    positions[index].w   = 0.0;
+    velocities[index].xyz = vel;
 }
+
+
+
 
 void main() {
     uint index = gl_GlobalInvocationID.x;

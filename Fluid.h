@@ -44,9 +44,19 @@ struct SimulationParameters {
 	uint32_t hashSize;
 	float spacing;
 	float particleRadius;
-	float boundaryX;
-	float boundaryY;
-	float boundaryZ;
+	float scaleX;
+	float scaleY;
+	float scaleZ;
+
+	float boundaryCenterX;
+	float boundaryCenterY;
+	float boundaryCenterZ;
+	float padding0; 
+
+	float boundaryHalfX;
+	float boundaryHalfY;
+	float boundaryHalfZ;
+	float padding1;
 };
 
 struct Entry {
@@ -72,17 +82,18 @@ class Fluid {
 		const float _viscosityStrength;
 		const float _nearDensityMultiplier;
 		const float _jitterFraction;
-		const float _boundaryX, _boundaryY, _boundaryZ;
+		const float _scaleX, _scaleY, _scaleZ;
 
 		// ---- SSBO Buffers ----
-		SSBO <glm::vec4> _positions;
-		SSBO <glm::vec4> _predictedPositions;
-		SSBO <glm::vec4> _velocities; 
-		SSBO <float> _densities;  
-		SSBO <float> _nearDensities;
-		SSBO <Entry> _spatialLookup;
-		SSBO <unsigned int> _startIndices;
-		SSBO <SimulationParameters> _simParams;
+		SSBO <glm::vec4> _positions;			// bind to 1
+		SSBO <glm::vec4> _predictedPositions;   // bind to 2
+		SSBO <glm::vec4> _velocities;			// bind to 3
+		SSBO <float> _densities;				// bind to 4
+		SSBO <float> _nearDensities;			// bind to 5
+		SSBO <Entry> _spatialLookup;			// bind to 6
+		SSBO <unsigned int> _startIndices;		// bind to 7
+		SSBO <SimulationParameters> _simParams;	// bind to 8
+		SSBO<unsigned int> _wallImpacts;				// bind to 9
 
 		ComputeShader _predictedPosShader;
 		ComputeShader _updateSpatialLookup;
@@ -95,7 +106,7 @@ class Fluid {
 		SimulationParameters _params;
 
 	public:  
-		Fluid(float deltaTime, unsigned int particleCount, float particleRadius, float mass, float gravity, float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, const float smoothingRadius, unsigned int hashSize, float interactionRadius, float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ, float jitter);
+		Fluid(float deltaTime, unsigned int particleCount, float particleRadius, float mass, float gravity, float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, const float smoothingRadius, unsigned int hashSize, float interactionRadius, float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float scaleX, float scaleY, float scaleZ, float jitter);
 
 		void Update(float dt);
 
@@ -104,6 +115,10 @@ class Fluid {
 		void BindRenderBuffers();
 
 		void InitParticlesInsideCube(const Mesh& cubeMesh);
+
+		void SetBoundsFromMesh(const Mesh& cubeMesh);
+
+		void ResetWallImpacts();
 
 		// Setter/getter methods for keyboard controls
 		void SetIsInteracting(bool state);

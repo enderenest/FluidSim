@@ -229,3 +229,5 @@ void Mesh::drawVertices() const
     glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(_positions.size()));
     glBindVertexArray(0);
 }
+
+

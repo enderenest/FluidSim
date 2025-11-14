@@ -29,9 +29,19 @@ layout(std430, binding = 8) buffer SimulationParameters {
     uint hashSize;
     float spacing;
     float particleRadius;
-    float boundaryX;
-    float boundaryY;
-    float boundaryZ;
+    float scaleX;
+	float scaleY;
+	float scaleZ;
+
+	float boundaryCenterX;
+	float boundaryCenterY;
+	float boundaryCenterZ;
+	float padding0; 
+
+	float boundaryHalfX;
+	float boundaryHalfY;
+	float boundaryHalfZ;
+	float padding1;
 };
 
 void main() {

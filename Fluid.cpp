@@ -2,7 +2,7 @@
 #include <iostream>
 
 
-Fluid::Fluid(float deltaTime, unsigned int particleCount, float particleRadius, float mass, float gravityAcceleration, float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, float smoothingRadius, unsigned int hashSize, float interactionRadius, float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float boundaryX, float boundaryY, float boundaryZ, float jitterFraction)
+Fluid::Fluid(float deltaTime, unsigned int particleCount, float particleRadius, float mass, float gravityAcceleration, float collisionDamping, float spacing, float pressureMultiplier, float targetDensity, float smoothingRadius, unsigned int hashSize, float interactionRadius, float interactionStrength, float viscosityStrength, float nearDensityMultiplier, float scaleX, float scaleY, float scaleZ, float jitterFraction)
     : _particleCount(particleCount)
     , _hashSize(hashSize)
     , _particleRadius(particleRadius)
@@ -18,7 +18,7 @@ Fluid::Fluid(float deltaTime, unsigned int particleCount, float particleRadius, 
     , _viscosityStrength(viscosityStrength)
     , _nearDensityMultiplier(nearDensityMultiplier)
     , _jitterFraction(jitterFraction)
-    , _boundaryX(boundaryX), _boundaryY(boundaryY), _boundaryZ(boundaryZ)
+    , _scaleX(scaleX), _scaleY(scaleY), _scaleZ(scaleZ)
 
     // ---- buffers using the derived values ----
     , _positions(particleCount, GL_DYNAMIC_DRAW)
@@ -29,6 +29,7 @@ Fluid::Fluid(float deltaTime, unsigned int particleCount, float particleRadius, 
 	, _spatialLookup(particleCount, GL_DYNAMIC_DRAW)
     , _startIndices(hashSize, GL_DYNAMIC_DRAW)
     , _simParams(1, GL_DYNAMIC_DRAW)
+    , _wallImpacts(4, GL_DYNAMIC_DRAW)
 
     // ---- shaders ----
     , _predictedPosShader("predicted_positions.comp")
@@ -63,13 +64,14 @@ Fluid::Fluid(float deltaTime, unsigned int particleCount, float particleRadius, 
 	_params.spacing = spacing;
 	_params.particleRadius = particleRadius;
     _params.jitter = jitterFraction;
-	_params.boundaryX = boundaryX;
-	_params.boundaryY = boundaryY;
-	_params.boundaryZ = boundaryZ;
+	_params.scaleX = scaleX;
+	_params.scaleY = scaleY;
+	_params.scaleZ = scaleZ;
 
     _simParams.upload(std::vector<SimulationParameters>{_params});
 
     std::vector<glm::vec4> initialPositions(_params.particleCount, glm::vec4(0.0f));
+    std::vector<unsigned int> zero(4, 0u);
 
     _positions.upload(initialPositions);
     _predictedPositions.upload(initialPositions);
@@ -78,6 +80,9 @@ Fluid::Fluid(float deltaTime, unsigned int particleCount, float particleRadius, 
     _nearDensities.upload(std::vector<float>(particleCount, 0.0f));
 	_spatialLookup.upload(std::vector<Entry>(particleCount, Entry{ 0, 0 }));
     _startIndices.upload(std::vector<unsigned int>(hashSize, MAX_INT));
+    _wallImpacts.upload(zero);
+
+    _wallImpacts.bindTo(9);
 }
 
 void Fluid::Update(float dt) {
@@ -239,6 +244,37 @@ void Fluid::InitParticlesInsideCube(const Mesh& cubeMesh)
         << perAxis << " x " << perAxis << " x " << perAxis << ").\n";
 }
 
+void Fluid::SetBoundsFromMesh(const Mesh& cubeMesh)
+{
+    glm::vec3 minB = cubeMesh.minBounds();
+    glm::vec3 maxB = cubeMesh.maxBounds();
+
+    glm::vec3 center = 0.5f * (minB + maxB);
+    glm::vec3 half = 0.5f * (maxB - minB);
+
+    _params.boundaryCenterX = center.x;
+    _params.boundaryCenterY = center.y;
+    _params.boundaryCenterZ = center.z;
+
+    // subtract particle radius so they don’t start half outside
+    _params.boundaryHalfX = half.x - _particleRadius;
+    _params.boundaryHalfY = half.y - _particleRadius;
+    _params.boundaryHalfZ = half.z - _particleRadius;
+
+    _simParams.upload(std::vector<SimulationParameters>{ _params });
+
+    std::cout << "Bounds from mesh: center=("
+        << center.x << ", " << center.y << ", " << center.z
+        << ") half=("
+        << half.x << ", " << half.y << ", " << half.z << ")\n";
+}
+
+
+void Fluid::ResetWallImpacts()
+{
+    std::vector<unsigned int> zero(4, 0u);
+    _wallImpacts.upload(zero);
+}
 
 void Fluid::BindRenderBuffers() {
     _positions.bindTo(1);

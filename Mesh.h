@@ -47,6 +47,7 @@ public:
     void drawTriangles() const;    // draw filled or wireframe triangles
     void drawVertices() const;     // draw points at each vertex
 
+
 private:
     GLuint _vao = 0;
     GLuint _vboPositions = 0;
@@ -64,9 +65,9 @@ private:
     glm::vec3 _maxBounds{ 0.0f };
 
     // GPU-side SSBOs
-    SSBO<glm::vec4>  _gpuPositions;
-    SSBO<glm::vec4>  _gpuNormals;
-    SSBO<glm::uvec3> _gpuTriangles;
+    SSBO<glm::vec4>  _gpuPositions; // bind to 10
+    SSBO<glm::vec4>  _gpuNormals;   // bind to 11
+    SSBO<glm::uvec3> _gpuTriangles; // bind to 12
 };
 
 

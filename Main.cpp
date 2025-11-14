@@ -33,10 +33,10 @@ const float PARTICLE_RADIUS = 0.0075f;
 const float MASS = 0.075f;
 const float GRAVITY_ACCELERATION = 1.2f;
 const float COLLISION_DAMPING = 0.8f;
-const float BOUNDARY_X = 1.2f;
-const float BOUNDARY_Y = 0.7f;
-const float BOUNDARY_Z = 0.7f;
-const float SPACING = 0.025f;
+const float SCALE_X = 2.4f;
+const float SCALE_Y = 1.4f;
+const float SCALE_Z = 1.4f;
+const float SPACING = 0.03f;
 const float SMOOTHING_RADIUS = 0.085f;
 const float PRESSURE_MULTIPLIER = 2.0f;
 const float TARGET_DENSITY = 1000.0f;
@@ -205,7 +205,7 @@ int main() {
 	Shader shaderProgram("default.vert", "default.frag");
 	Shader meshShader("mesh.vert", "mesh.frag");
 
-	Fluid fluid(DELTA_TIME, PARTICLE_COUNT, PARTICLE_RADIUS, MASS, GRAVITY_ACCELERATION, COLLISION_DAMPING, SPACING, PRESSURE_MULTIPLIER, TARGET_DENSITY, SMOOTHING_RADIUS, SPATIAL_HASH_SIZE, INTERACTION_RADIUS, INTERACTION_STRENGTH, VISCOSITY_STRENGTH, NEAR_DENSITY_MULTIPLIER, BOUNDARY_X, BOUNDARY_Y, BOUNDARY_Z, JITTER);
+	Fluid fluid(DELTA_TIME, PARTICLE_COUNT, PARTICLE_RADIUS, MASS, GRAVITY_ACCELERATION, COLLISION_DAMPING, SPACING, PRESSURE_MULTIPLIER, TARGET_DENSITY, SMOOTHING_RADIUS, SPATIAL_HASH_SIZE, INTERACTION_RADIUS, INTERACTION_STRENGTH, VISCOSITY_STRENGTH, NEAR_DENSITY_MULTIPLIER, SCALE_X, SCALE_Y, SCALE_Z, JITTER);
 
 	std::vector<glm::vec3> sphereVertices;
 	std::vector<GLuint> sphereIndices;
@@ -214,13 +214,18 @@ int main() {
 	// Load mesh
 	Mesh cubeMesh;
 	bool meshFlag = cubeMesh.loadFromFile("cube24578.off");
+
 	// scale
-	cubeMesh.scale(glm::vec3(2.3f, 1.4f, 1.4f));
-	// init particles inside AABB
+	cubeMesh.scale(glm::vec3(SCALE_X, SCALE_Y, SCALE_Z));
+
+	// Use cube bounds for both fluid init and boundaries
+	fluid.SetBoundsFromMesh(cubeMesh);
 	fluid.InitParticlesInsideCube(cubeMesh);
+
 	// upload + bind for compute
 	cubeMesh.uploadToGPU();
 	cubeMesh.bindForCompute(9, 10, 11);
+
 	// create VAO for drawing
 	cubeMesh.createDebugGLObjects();
 
@@ -399,8 +404,13 @@ int main() {
 
 		fluid.Update(DELTA_TIME);
 
+		glm::vec3 center = cubeMesh.center();
+		glm::vec3 half = 0.5f * (cubeMesh.maxBounds() - cubeMesh.minBounds());
+
 		// 1) Draw fluid cube mesh
 		meshShader.Activate();
+		glUniform3fv(glGetUniformLocation(meshShader.ID, "boundaryCenter"), 1, glm::value_ptr(center));
+		glUniform3fv(glGetUniformLocation(meshShader.ID, "boundaryHalf"), 1, glm::value_ptr(half));
 		glUniformMatrix4fv(glGetUniformLocation(meshShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(glGetUniformLocation(meshShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 		glUniformMatrix4fv(glGetUniformLocation(meshShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
